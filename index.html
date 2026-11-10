@@ -1,7 +1,440 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>總覽｜跨攝影機研究地圖</title><style>
-:root{--ink:#e7f0f3;--muted:#a7bec8;--bg:#09121e;--panel:#122231;--line:#294052;--a:#5ce0bf;--b:#f6c782}*{box-sizing:border-box}html{scroll-behavior:smooth}body{background:var(--bg);color:var(--ink);margin:0;font:16px/1.7 system-ui,-apple-system,"Microsoft JhengHei",sans-serif}a{color:var(--a)}header{position:sticky;top:0;z-index:9;background:#09121ef2;border-bottom:1px solid var(--line)}.nav{max-width:1220px;margin:auto;display:flex;gap:22px;align-items:center;padding:13px 22px;overflow-x:auto;white-space:nowrap}.nav b{margin-right:auto;color:var(--a);font-size:14px;letter-spacing:.08em}.nav a{color:#c4d6dc;font-size:14px;text-decoration:none}.nav a[aria-current]{color:var(--a);font-weight:bold}main{max-width:1200px;margin:auto;padding:0 24px 90px}.intro{padding:76px 0 36px;max-width:900px}.eyebrow,.kicker{color:var(--a);letter-spacing:.15em;font-size:12px;font-weight:800}h1{font-size:clamp(36px,5.5vw,64px);line-height:1.15;letter-spacing:-.04em;margin:14px 0 22px}h2{font-size:clamp(25px,3vw,37px);line-height:1.25;margin:55px 0 14px}h3{font-size:20px;line-height:1.35;margin:0 0 10px}p{color:var(--muted);margin:10px 0 18px}.lead{font-size:19px;line-height:1.8}.small,small{font-size:13px;color:var(--muted)}.callout{border-left:3px solid var(--b);background:#292a2a;padding:16px 20px;border-radius:4px;margin:26px 0;color:#eddfc4}.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.table-wrap,.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}table{width:100%;border-collapse:collapse;min-width:680px;background:#101e2b;font-size:14px}th,td{padding:14px;text-align:left;border-bottom:1px solid #253b4b;vertical-align:top}th{color:var(--a)}td{color:#d2dfe3}.dataset-map{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.dataset-map div{background:#122635;border:1px solid var(--line);padding:20px;border-radius:14px}.dataset-map b{display:block;color:var(--a);margin-bottom:12px}.dataset-map span{display:inline-block;border-radius:6px;padding:4px 8px;background:#1e3948;margin:3px;font-size:13px}.map{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.map a{background:#122635;border:1px solid #315060;border-radius:14px;padding:22px;text-decoration:none;transition:.2s;color:var(--ink)}.map a:hover{border-color:var(--a);transform:translateY(-2px)}.map b{display:block;font-size:20px}.map small{color:#9ebcc4}.pipeline{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.pipeline span{flex:1;min-width:120px;background:#17303d;border:1px solid #335263;text-align:center;padding:14px 8px;border-radius:8px}.pipeline i{font-style:normal;color:var(--a)}.hero-svg{width:100%;height:auto;display:block;background:#112430;border:1px solid #29485b;border-radius:15px}.source-line{margin-top:30px;font-size:13px}.tag{color:var(--a);font-size:13px;font-weight:700}.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.flow span,.flow div{padding:12px;border:1px solid var(--line);background:#162d3b;border-radius:8px}.flow span:not(:last-child):after{content:' →';color:var(--a)}details{border:1px solid var(--line);border-radius:10px;margin:10px 0;padding:14px;background:var(--panel)}summary{cursor:pointer;font-weight:700}footer{border-top:1px solid var(--line);padding:26px 0;color:#90a8b1;font-size:13px}svg{max-width:100%;height:auto}@media(max-width:760px){.grid,.grid3,.dataset-map,.map{grid-template-columns:1fr}.intro{padding:45px 0 20px}.nav{gap:18px}.nav b{margin-right:0}h2{margin-top:42px}main{padding:0 17px 70px}}
-</style></head><body><header><nav class="nav"><b>REID / 研究地圖</b><a href="index.html" aria-current="page">總覽</a><a href="features.html">特徵</a><a href="fusion.html">融合</a><a href="cameras.html">攝影機差異</a><a href="datasets.html">資料集</a></nav></header><main><div class="intro"><span class="eyebrow">TECHNICAL EXPLORATION / UNIFORM REID</span><h1>同制服人員，<br>如何跨攝影機辨識？</h1><p class="lead">從現有研究探索身分線索、融合方法、攝影機差異和資料集。以一般 RGB 監視器為起點，讓圖表說明資料怎麼流動、方法如何工作。</p><span class="tag">會議報告 × 技術探索　／　2026 文獻整理</span></div>
-<div class="callout"><b>問題定義：</b>人員穿相同制服；同一人會因攝影機視角、距離、光線而看起來不同；不同人也可能因制服相同而看起來相似。系統要比較不同軌跡，並保留未知／待確認。</div>
-<div class="card"><div class="tag">系統地圖 · 箭頭表示資料流向</div><h2 style="margin-top:8px">多台鏡頭如何匯集成身分候選？</h2><p>同一段人物軌跡分成多種資料表示，每一支模型處理不同線索，再於特徵或比對分數階段結合；時空資訊提供候選可行性條件。</p><div style="overflow-x:auto"><svg style="min-width:900px;width:100%;background:#0b1927;border-radius:12px" viewBox="0 0 1100 520" role="img" aria-label="多攝影機影片處理與三種身分線索、融合、未知人員決策完整資料流程"><defs><marker id="arrow-map" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#70dbbd"/></marker></defs><g font-family="sans-serif"><g fill="#173340" stroke="#567282"><rect x="25" y="55" width="150" height="75" rx="10"/><rect x="25" y="160" width="150" height="75" rx="10"/><rect x="220" y="100" width="160" height="95" rx="10"/><rect x="445" y="28" width="220" height="84" rx="10"/><rect x="445" y="135" width="220" height="84" rx="10"/><rect x="445" y="242" width="220" height="84" rx="10"/><rect x="730" y="125" width="165" height="100" rx="10"/><rect x="945" y="125" width="130" height="100" rx="10"/><rect x="445" y="375" width="220" height="78" rx="10"/></g><g fill="#e8f2f4" font-size="16" text-anchor="middle"><text x="100" y="85">鏡頭 A</text><text x="100" y="109" fill="#9cbcc4" font-size="13">人物影片／時間戳</text><text x="100" y="190">鏡頭 B</text><text x="100" y="214" fill="#9cbcc4" font-size="13">不同位置與色調</text><text x="300" y="137">偵測與追蹤</text><text x="300" y="162" fill="#9cbcc4" font-size="13">人物影格／軌跡</text><text x="555" y="58" fill="#5ce0bf">外觀分支</text><text x="555" y="84" fill="#c3d6da" font-size="13">RGB 裁切 → 外觀向量</text><text x="555" y="165" fill="#9bbfff">骨架步態分支</text><text x="555" y="191" fill="#c3d6da" font-size="13">關節序列 → 動態向量</text><text x="555" y="272" fill="#ffc37d">輪廓步態分支</text><text x="555" y="298" fill="#c3d6da" font-size="13">分割剪影序列 → 動態向量</text><text x="812" y="160">比對／融合</text><text x="812" y="185" fill="#9cbcc4" font-size="13">特徵、分數與品質</text><text x="1010" y="159">候選排序</text><text x="1010" y="185" fill="#9cbcc4" font-size="13">已知／待確認</text><text x="555" y="405">時間、位置、鏡頭拓樸</text><text x="555" y="430" fill="#c3d6da" font-size="13">存在足夠資料時才使用</text></g><g fill="none" stroke="#70dbbd" stroke-width="3" marker-end="url(#arrow-map)"><path d="M175 92H195V133H220"/><path d="M175 198H195V160H220"/><path d="M380 145H405V70H445"/><path d="M405 145V177H445"/><path d="M405 177V284H445"/><path d="M665 70H700V145H730"/><path d="M665 177H730"/><path d="M665 284H700V205H730"/><path d="M895 175H945"/><path d="M665 414H810V235"/></g><text x="30" y="490" fill="#a9c1c8" font-size="14">三個分支並非每次都可用；每個節點點選頁首主題可深入閱讀。示意為研究方案，不代表已完成實作。</text></g></svg></div><p class="small">手機可左右滑動此圖。骨架與輪廓步態需要品質足夠的連續片段；單張影格也能提供部分外觀資訊。</p></div>
-<h2>系統從畫面到候選人</h2><p>按四個研究問題展開。不同方法可在不同階段使用；圖是研究地圖，不代表必須同時執行所有分支。</p><div class="pipeline"><span>攝影機畫面<br><small>RGB／影片</small></span><i>→</i><span>偵測與追蹤<br><small>人物、軌跡</small></span><i>→</i><span>提取身分線索<br><small>外觀、結構、步態</small></span><i>→</i><span>配對與融合<br><small>相似度、品質</small></span><i>→</i><span>候選／未知<br><small>拒判、待確認</small></span></div>
-<div class="callout">現階段以你的 YOLOv7、FastReID BagTricks R50、CLIP-ReID 為既有起點；單攝影機多角度可先測視角，真正跨攝影機需要多鏡頭資料另行驗證。</div><h2>選一個問題深入探索</h2><div class="map"><a href="features.html"><span class="tag">01 / FEATURES</span><b>還能從哪些特徵認人？ →</b><small>外觀、骨架、比例、輪廓與步態；比較輸入、線索和限制。</small></a><a href="fusion.html"><span class="tag">02 / FUSION</span><b>特徵怎麼結合？ →</b><small>從具體向量看串接、正規化、分數融合與動態權重。</small></a><a href="cameras.html"><span class="tag">03 / CAMERA SHIFT</span><b>鏡頭差異怎麼處理？ →</b><small>角度、色調、解析度與跨域，對照各層處理方法。</small></a><a href="datasets.html"><span class="tag">04 / DATASETS</span><b>哪些資料可用來研究？ →</b><small>同制服、多視角、真實場景與步態資料的差別。</small></a></div><h2>先釐清三件事</h2><div class="grid3"><div class="card"><h3>同制服的難題</h3><p>不同人穿得很像，模型可能靠服裝得到錯誤的高相似度。</p></div><div class="card"><h3>跨鏡頭的難題</h3><p>同一人在不同視角、光線和畫質下，影像反而可能看起來差很多。</p></div><div class="card"><h3>未知人員</h3><p>候選排序一定有第一名；實務系統仍需校準門檻，容許未知或待確認。</p></div></div><h2>閱讀方式</h2><p>每章以圖解建立直覺，再往下看代表研究、輸入／輸出、限制和來源。圖中人物與數值是示意，不代表模型結果；論文直接驗證的條件與本專案構想會分開標註。</p><footer>跨攝影機同制服人員辨識 · 文獻與技術探索　｜　圖中例子均為示意，參考來源可由各章連結查看。離線閱讀時外部連結需網路。</footer></main></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>同制服跨攝影機辨識｜技術探索地圖</title>
+<meta name="description" content="高度相似制服環境下的跨攝影機人員再辨識：身分線索、方法、融合、跨攝影機差異、開放集與資料集。可離線瀏覽。">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="shell">
+
+<nav class="rail" aria-label="章節">
+  <a class="brand" href="#/home">同制服跨攝影機辨識
+    <small>技術探索地圖 · 第一階段文獻研究</small></a>
+  <ol class="toc" id="toc">
+    <li><a href="#/home"><span class="n">0</span>總覽</a></li>
+    <li><a href="#/problem"><span class="n">1</span>問題定義</a></li>
+    <li><a href="#/cues"><span class="n">2</span>身分線索</a></li>
+    <li><a href="#/methods"><span class="n">3</span>方法地圖</a></li>
+    <li><a href="#/fusion"><span class="n">4</span>特徵融合</a></li>
+    <li><a href="#/camera"><span class="n">5</span>跨攝影機</a></li>
+    <li><a href="#/openset"><span class="n">6</span>未知人員</a></li>
+    <li><a href="#/datasets"><span class="n">7</span>資料集</a></li>
+    <li><a href="#/roadmap"><span class="n">8</span>缺口與實驗</a></li>
+    <li><a href="#/refs"><span class="n">9</span>參考文獻</a></li>
+  </ol>
+  <div class="legend-box">
+    <h4>證據等級</h4>
+    <ul>
+      <li><span class="ev proven"><i></i>文獻證實</span></li>
+      <li><span class="ev inferred"><i></i>合理推論</span></li>
+      <li><span class="ev open"><i></i>待驗證</span></li>
+    </ul>
+    <h4>身分線索色</h4>
+    <ul>
+      <li><span class="sw-dot" style="--c:var(--c-app)"></span>外觀 / CLIP</li>
+      <li><span class="sw-dot" style="--c:var(--c-skel)"></span>骨架</li>
+      <li><span class="sw-dot" style="--c:var(--c-sil)"></span>輪廓</li>
+      <li><span class="sw-dot" style="--c:var(--c-gait)"></span>步態 / 動態</li>
+      <li><span class="sw-dot" style="--c:var(--c-face)"></span>臉 / 頭部</li>
+      <li><span class="sw-dot" style="--c:var(--c-3d)"></span>體型 / 3D</li>
+    </ul>
+  </div>
+  <p class="rail-foot">圖中人物與數值皆為教學示意，由程式產生；論文數字以原文為準。可離線使用。</p>
+</nav>
+
+<main id="main">
+
+<!-- ======================= 0 總覽 ======================= -->
+<section class="chapter" id="ch-home" data-title="總覽">
+  <div class="hero">
+    <h1>當每個人都穿著同一套制服，<br class="br-wide">還能靠什麼認出誰是誰？</h1>
+    <p class="thesis">五位穿同款迷彩服的人。在攝影機眼中他們幾乎一樣；換一個「鏡頭」看，身形比例與走路方式就分開了。這就是同制服跨攝影機辨識要解的問題。</p>
+  </div>
+
+  <figure class="plate" aria-label="同制服人員與不同身分線索">
+    <div class="plate-head">
+      <div class="seg" id="lens" role="group" aria-label="切換觀察方式">
+        <button data-lens="rgb" aria-pressed="true">攝影機畫面</button>
+        <button data-lens="sil"><span class="sw" style="background:var(--c-sil)"></span>輪廓</button>
+        <button data-lens="skel"><span class="sw" style="background:var(--c-skel)"></span>骨架</button>
+        <button data-lens="anthro"><span class="sw" style="background:var(--c-3d)"></span>人體比例</button>
+        <button data-lens="gait"><span class="sw" style="background:var(--c-gait)"></span>步態軌跡</button>
+      </div>
+      <button class="btn ghost" id="lineup-play" aria-pressed="true">暫停</button>
+    </div>
+    <div class="plate-body lineup-wrap">
+      <svg class="lineup-svg" id="lineup" viewBox="0 0 1000 410" role="img" aria-label="五位穿同款制服、正在行走的人員"></svg>
+      <p class="lens-caption" id="lens-caption"></p>
+    </div>
+    <div class="plate-note">人物由程序化步行模型產生：五人的身高、腿長比例、肩寬、步幅、擺臂與步頻各不相同。<b>這是示意，不是實測資料。</b></div>
+  </figure>
+
+  <h2>三句話的研究結論</h2>
+  <ul class="findings">
+    <li><span class="ev proven"><i></i>文獻證實</span><p>「同制服」不是「換衣服」。換衣 ReID 問的是同一人換衣後還認不認得；同制服問的是不同人穿一樣的衣服時，怎麼證明他們不是同一人。LTCC、PRCC 都不測這件事，FGPR 才是直接證據。</p></li>
+    <li><span class="ev inferred"><i></i>合理推論</span><p>衣服應被視為「不可靠線索」而非丟掉：外觀仍保留鞋、髮型、配件。關鍵是讓系統依每段軌跡的可見條件，動態決定要相信骨架、輪廓、步態或外觀。</p></li>
+    <li><span class="ev open"><i></i>待驗證</span><p>「外觀 + 骨架 + 輪廓 + 品質門控」在真實軍營監視器上是否勝過單一模態，目前沒有論文直接證明——這是第二階段實驗要回答的問題。</p></li>
+  </ul>
+
+  <h2>閱讀路線</h2>
+  <nav class="chmap" aria-label="章節地圖">
+    <a href="#/problem"><span class="n">1</span><b>問題定義</b><span class="d">同制服與換衣的差別；為什麼外觀特徵空間會塌縮</span></a>
+    <a href="#/cues"><span class="n">2</span><b>身分線索</b><span class="d">衣服之外還剩什麼：骨架、輪廓、步態、比例、臉</span></a>
+    <a href="#/methods"><span class="n">3</span><b>方法地圖</b><span class="d">14 個代表方法的輸入、運算流程與真正學到的線索</span></a>
+    <a href="#/fusion"><span class="n">4</span><b>特徵融合</b><span class="d">為什麼不能直接相加；品質門控實驗台</span></a>
+    <a href="#/camera"><span class="n">5</span><b>跨攝影機</b><span class="d">視角、光照、解析度、遮擋各自打壞哪些線索</span></a>
+    <a href="#/openset"><span class="n">6</span><b>未知人員</b><span class="d">Top-1 不等於「就是他」：閾值與拒判</span></a>
+    <a href="#/datasets"><span class="n">7</span><b>資料集</b><span class="d">13 個資料集與軍營情境的相似度</span></a>
+    <a href="#/roadmap"><span class="n">8</span><b>缺口與實驗</b><span class="d">證據板、研究空缺與第二階段實驗設計</span></a>
+  </nav>
+</section>
+
+<!-- ======================= 1 問題定義 ======================= -->
+<section class="chapter" id="ch-problem" data-title="問題定義">
+  <header class="ch-head">
+    <p class="ch-num">第 1 章</p>
+    <h1>同制服 ≠ 換衣服</h1>
+    <p class="thesis">兩個問題都說「衣服不可靠」，但方向相反。選錯問題，就會選錯資料集與方法。</p>
+  </header>
+
+  <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title"><span class="fig">圖 1.1</span>身分 × 服裝矩陣：每個資料集到底測了哪些格子</div>
+      <div class="chips" id="grid-ds" role="group" aria-label="選擇資料集"></div>
+    </div>
+    <div class="plate-body cols cols-7-5">
+      <svg id="id-grid" viewBox="0 0 560 384" role="img" aria-label="身分與服裝的矩陣圖"></svg>
+      <div id="grid-explain" class="detail"></div>
+    </div>
+    <div class="plate-note">列 = 不同的人，欄 = 不同的服裝。<b>換衣</b>是在同一列裡跨欄配對；<b>同制服</b>是在同一欄裡分辨不同列。</div>
+  </figure>
+
+  <h2>為什麼傳統 ReID 會失效：特徵空間塌縮</h2>
+  <p>一般資料集裡「紅衣＝ID 01、黑衣＝ID 02」，模型最省力的做法就是學衣服。拉動制服相似度，看外觀空間中不同人的群集如何擠在一起；切到步態空間，群集仍分得開，但每群更散（步態雜訊較大）。</p>
+  <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title"><span class="fig">圖 1.2</span>五個人、每人 10 段軌跡在特徵空間中的位置</div>
+      <div class="seg" id="space-sel" role="group" aria-label="特徵空間">
+        <button data-space="app" aria-pressed="true"><span class="sw" style="background:var(--c-app)"></span>外觀空間</button>
+        <button data-space="gait"><span class="sw" style="background:var(--c-gait)"></span>步態空間</button>
+        <button data-space="fused"><span class="sw" style="background:var(--ink)"></span>融合空間</button>
+      </div>
+    </div>
+    <div class="plate-body cols cols-7-5">
+      <svg id="space" viewBox="0 0 520 380" role="img" aria-label="特徵空間散佈圖"></svg>
+      <div>
+        <div class="slider"><label for="uni">制服相似度</label><output id="uni-out" class="num">0.0</output>
+          <input id="uni" type="range" min="0" max="1" step="0.05" value="0"></div>
+        <div class="cols cols-2" style="gap:10px;margin-top:6px">
+          <div><div class="stat num" id="r1">—</div><div class="stat-l">最近鄰 Rank-1（模擬）</div></div>
+          <div><div class="stat num" id="sep">—</div><div class="stat-l">群間 / 群內距離比</div></div>
+        </div>
+        <hr class="hr">
+        <p class="small muted" id="space-note"></p>
+      </div>
+    </div>
+    <div class="plate-note">點的位置由固定亂數種子產生，用來示範「判別維度消失」的幾何意義；Rank-1 是在這 50 個點上做留一法最近鄰計算出來的，<b>不是任何論文的結果</b>。</div>
+  </figure>
+
+  <h2>直接測到「不同人、同制服」的研究很少</h2>
+  <div class="tbl-wrap"><table class="tbl" id="direct-tbl"></table></div>
+</section>
+
+<!-- ======================= 2 身分線索 ======================= -->
+<section class="chapter" id="ch-cues" data-title="身分線索">
+  <header class="ch-head">
+    <p class="ch-num">第 2 章</p>
+    <h1>衣服之外，還剩哪些身分線索</h1>
+    <p class="thesis">步態不是一種影像格式，而是一種身分線索；骨架、輪廓、RGB、深度只是它的不同表示法。每種線索各有必要條件與失效情境。</p>
+  </header>
+
+  <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title"><span class="fig">圖 2.1</span>同一個人，七種看法</div>
+      <div class="chips" id="cue-chips" role="group" aria-label="選擇身分線索"></div>
+    </div>
+    <div class="plate-body cols cols-7-5">
+      <svg id="cue-fig" viewBox="0 0 560 420" role="img" aria-label="人體與所選身分線索"></svg>
+      <div id="cue-detail" class="detail"></div>
+    </div>
+  </figure>
+
+  <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title"><span class="fig">圖 2.2</span>兩個同制服的人，八幀步態對照</div>
+      <div class="seg" id="strip-mode" role="group" aria-label="表示法">
+        <button data-m="rgb" aria-pressed="true">RGB</button>
+        <button data-m="sil">輪廓</button>
+        <button data-m="skel">骨架</button>
+      </div>
+    </div>
+    <div class="plate-body">
+      <svg id="strip" viewBox="0 0 1000 420" role="img" aria-label="兩人步態序列"></svg>
+    </div>
+    <div class="plate-note">上排與下排是不同的人。RGB 下兩排幾乎一樣；切到骨架就看得出腿長比例、步幅與膝屈曲時機的差異——這就是骨架步態模型（GPGait、SkeletonGait）要學的東西。</div>
+  </figure>
+
+  <h2>線索特性總表</h2>
+  <p>點一列，上方人像會切換到該線索。色階越深代表該特性對同制服情境越<b>有利</b>（例如「衣服依賴」越低越深）。</p>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig">圖 2.3</span>11 種線索 × 7 種特性（工程判斷，非共同基準排名）</div></div>
+    <div class="plate-body tbl-wrap"><svg id="cue-heat" viewBox="0 0 860 420" role="img" aria-label="身分線索特性熱圖"></svg></div>
+    <div class="plate-note">等級依表示法的結構與現有文獻整理（GPGait、SkeletonGait、MMGaitFormer、3DInvarReID），<span class="ev inferred"><i></i>合理推論</span>，不是同一基準下的統計。</div>
+  </figure>
+</section>
+
+<!-- ======================= 3 方法地圖 ======================= -->
+<section class="chapter" id="ch-methods" data-title="方法地圖">
+  <header class="ch-head">
+    <p class="ch-num">第 3 章</p>
+    <h1>代表方法：輸入什麼、怎麼算、學到什麼</h1>
+    <p class="thesis">比較方法時，與其看分數，不如看它「依賴哪種身分線索」與「需要什麼輸入」。這兩件事決定了它在同制服監視器上會不會失效。</p>
+  </header>
+
+  <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title"><span class="fig">圖 3.1</span>方法定位：衣服依賴 × 輸入需求</div>
+      <div class="chips" id="fam-chips" role="group" aria-label="方法族群"></div>
+    </div>
+    <div class="plate-body"><svg id="method-map" viewBox="0 0 960 490" role="img" aria-label="方法定位圖"></svg></div>
+    <div class="plate-note">位置為依論文方法設計的定性判斷。<b>右側中段的綠底區</b>（衣服依賴低、一般 RGB 影片即可取得）是同制服情境最值得先試的區域。點一個方法看它的運算流程。</div>
+  </figure>
+
+  <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title"><span class="fig">圖 3.2</span>運算流程</div>
+      <label class="small">方法 <select id="method-sel"></select></label>
+    </div>
+    <div class="plate-body">
+      <div class="pipe" id="pipe"></div>
+      <div class="small muted" style="margin:4px 0 14px">實線框 = 推論時會執行；虛線框 = 只在訓練時使用。框上色條 = 方法族群色，標出模型本體與輸出。</div>
+      <div id="method-detail" class="detail"></div>
+    </div>
+  </figure>
+
+  <h2>代表數字：只能在同一資料集、同一協定內解讀</h2>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig">圖 3.3</span>三組數字不能互相排名</div></div>
+    <div class="plate-body"><svg id="nums" viewBox="0 0 900 170" role="img" aria-label="三組代表數字"></svg></div>
+    <div class="plate-note">資料集、人數、攝影機幾何、協定、模態都不同，因此分成三個獨立面板、各自的軸。Industrial-Gait 為 2026 文獻，數字取自前次報告，<b>待回原文核對</b>。</div>
+  </figure>
+</section>
+
+<!-- ======================= 4 特徵融合 ======================= -->
+<section class="chapter" id="ch-fusion" data-title="特徵融合">
+  <header class="ch-head">
+    <p class="ch-num">第 4 章</p>
+    <h1>融合不是相加：系統要知道此刻該相信誰</h1>
+    <p class="thesis">骨架 256 維、輪廓 512 維、CLIP 768 維——維度、尺度、語意幾何都不同。融合需要顯式對齊，以及在某個模態壞掉時降低它的權重。</p>
+  </header>
+
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig">圖 4.1</span>從三個專家到一個身分嵌入</div></div>
+    <div class="plate-body"><svg id="align" viewBox="0 0 980 300" role="img" aria-label="特徵對齊流程"></svg></div>
+    <div class="plate-note">「同維度」不代表「同語意空間」：投影後仍需對齊損失（AIO 的共享編碼器、MMGaitFormer 的注意力對齊、HAMoBE 的專家門控都在處理這件事）。</div>
+  </figure>
+
+  <h2>融合實驗台</h2>
+  <p>情境：query 是某人在攝影機 A 的一段軌跡。Gallery 有兩位候選人——<b>本人</b>（攝影機 B）與<b>同制服的另一人</b>。選一個拍攝情境或自己調整各模態品質，看三種融合策略誰能把本人排在前面。</p>
+  <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title"><span class="fig">圖 4.2</span>三種策略並排比較</div>
+      <div class="seg" id="scene" role="group" aria-label="拍攝情境">
+        <button data-s="front" aria-pressed="true">正面近距</button>
+        <button data-s="back">背面</button>
+        <button data-s="far">遠距低解析</button>
+        <button data-s="occ">下半身遮擋</button>
+      </div>
+    </div>
+    <div class="plate-body cols cols-7-5">
+      <svg id="fusion-svg" viewBox="0 0 600 420" role="img" aria-label="融合策略比較"></svg>
+      <div>
+        <div id="q-sliders"></div>
+        <hr class="hr">
+        <div id="fusion-weights"></div>
+      </div>
+    </div>
+    <div class="plate-note">相似度由簡單規則產生：品質下降時，該模態的分數向 0.5 退化，並加入一個偏向冒充者的固定誤差（模擬「壞掉的模態會誤導」）。<b>這是用來理解機制的玩具模型，不代表任何模型的實際行為。</b></div>
+  </figure>
+
+  <h2>融合策略一覽</h2>
+  <div class="tbl-wrap"><table class="tbl" id="fusion-tbl"></table></div>
+</section>
+
+<!-- ======================= 5 跨攝影機 ======================= -->
+<section class="chapter" id="ch-camera" data-title="跨攝影機">
+  <header class="ch-head">
+    <p class="ch-num">第 5 章</p>
+    <h1>同一個人，換一台攝影機就像換了一個人</h1>
+    <p class="thesis">視角、光照、距離、遮擋各自打壞不同的身分線索。理解「哪個因素傷害哪個線索」，才知道融合時該降低誰的權重。</p>
+  </header>
+
+  <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title"><span class="fig">圖 5.1</span>攝影機條件模擬器</div>
+      <div class="chips" id="cam-factors" role="group" aria-label="攝影機條件"></div>
+    </div>
+    <div class="plate-body cols cols-7-5">
+      <div>
+        <div class="cols cols-2" style="gap:12px">
+          <figure style="margin:0"><canvas id="cam-a" width="320" height="240" style="width:100%;border-radius:6px;background:#cfd5ca"></canvas><figcaption class="small muted">攝影機 A（參考）</figcaption></figure>
+          <figure style="margin:0"><canvas id="cam-b" width="320" height="240" style="width:100%;border-radius:6px;background:#cfd5ca;image-rendering:pixelated"></canvas><figcaption class="small muted">攝影機 B（套用條件）</figcaption></figure>
+        </div>
+        <div class="slider" style="margin-top:12px"><label for="yaw">攝影機 B 方位角</label><output id="yaw-out" class="num">0°</output>
+          <input id="yaw" type="range" min="0" max="180" step="5" value="0"></div>
+      </div>
+      <div>
+        <h3>各線索在攝影機 B 的可用程度</h3>
+        <svg id="cue-health" viewBox="0 0 400 300" role="img" aria-label="各線索可用程度"></svg>
+      </div>
+    </div>
+    <div class="plate-note">右側長條依第 2 章線索特性表推算（每個條件扣減相關特性分數），<span class="ev inferred"><i></i>合理推論</span>。實際影響程度需用分層實驗（E3、E5）量測。</div>
+  </figure>
+
+  <h2>部署前必須跑的四種評估</h2>
+  <p>只在單一資料集做同域、封閉集測試，對部署是不夠的（SNR、RaMoE、GPGait、OpenGait 的共同結論）。A 只證明程式正確；B、C、D 才開始接近真實泛化。</p>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig">圖 5.2</span>評估協定：訓練資料 → 測試資料</div></div>
+    <div class="plate-body"><svg id="protocols" viewBox="0 0 960 300" role="img" aria-label="四種評估協定"></svg></div>
+  </figure>
+
+  <h2>合成資料能做什麼、不能做什麼</h2>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig">圖 5.3</span>合成制服資料（FG-PersonX 類）的用途評估</div></div>
+    <div class="plate-body"><svg id="synth" viewBox="0 0 900 290" role="img" aria-label="合成資料用途"></svg></div>
+    <div class="plate-note">合成資料無法涵蓋監視器壓縮、動態模糊、感測器雜訊、追蹤 ID 切換與姿態估計誤差。可以宣稱「預訓練有幫助」，不能宣稱「可以部署」。</div>
+  </figure>
+</section>
+
+<!-- ======================= 6 未知人員 ======================= -->
+<section class="chapter" id="ch-openset" data-title="未知人員">
+  <header class="ch-head">
+    <p class="ch-num">第 6 章</p>
+    <h1>Top-1 永遠會給答案，但答案可能是錯的</h1>
+    <p class="thesis">封閉集 ReID 假設 query 一定在 gallery 裡。營區會有訪客、新進人員——系統必須能說「不認識」。同制服會讓這件事更難。</p>
+  </header>
+
+  <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title"><span class="fig">圖 6.1</span>相似度分布與接受閾值</div>
+      <div class="seg" id="os-feat" role="group" aria-label="特徵">
+        <button data-f="app" aria-pressed="true">只用外觀</button>
+        <button data-f="fused">外觀 + 步態融合（示意）</button>
+      </div>
+    </div>
+    <div class="plate-body cols cols-7-5">
+      <svg id="os-svg" viewBox="0 0 600 340" role="img" aria-label="相似度分布"></svg>
+      <div>
+        <div class="slider"><label for="tau">接受閾值 τ</label><output id="tau-out" class="num">0.65</output>
+          <input id="tau" type="range" min="0.2" max="0.95" step="0.01" value="0.65"></div>
+        <div class="slider"><label for="os-uni">制服相似度</label><output id="os-uni-out" class="num">0.8</output>
+          <input id="os-uni" type="range" min="0" max="1" step="0.05" value="0.8"></div>
+        <div class="cols cols-2" style="gap:12px;margin-top:8px">
+          <div><div class="stat num" id="tar">—</div><div class="stat-l">已知人員被正確接受</div></div>
+          <div><div class="stat num" id="far">—</div><div class="stat-l">未知人員被誤認為某人</div></div>
+        </div>
+        <p class="small muted" id="os-note" style="margin-top:12px"></p>
+      </div>
+    </div>
+    <div class="plate-note">三條曲線為常態分布示意。「未知人員」曲線是陌生人與 gallery 中<b>最像的那個人</b>的分數——所以它比一般冒充者更靠右，這正是開放集比封閉集難的原因。</div>
+  </figure>
+
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig">圖 6.2</span>建議的決策流程：先看品質，再看分數</div></div>
+    <div class="plate-body"><svg id="os-flow" viewBox="0 0 960 250" role="img" aria-label="開放集決策流程"></svg></div>
+    <div class="plate-note">「未知者被錯認成已知人」與「已知人排第二」是完全不同等級的系統風險。開放世界 ReID（Li et al., ECCV 2018）直接定義了這個問題。</div>
+  </figure>
+</section>
+
+<!-- ======================= 7 資料集 ======================= -->
+<section class="chapter" id="ch-datasets" data-title="資料集">
+  <header class="ch-head">
+    <p class="ch-num">第 7 章</p>
+    <h1>哪些資料集真的像軍營？</h1>
+    <p class="thesis">「換衣資料集」很多，「不同人同制服」的很少。右上角是同時接近制服情境、又接近真實監視器的資料——也大多是 2026 年的新資料，需要先核對取得方式。</p>
+  </header>
+
+  <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title"><span class="fig">圖 7.1</span>與軍營同制服的相似度 × 監視器真實度（圓大小 = 人數）</div>
+      <div class="chips" id="ds-filter" role="group" aria-label="篩選模態"></div>
+    </div>
+    <div class="plate-body">
+      <svg id="ds-map" viewBox="0 0 900 470" role="img" aria-label="資料集定位圖"></svg>
+      <div id="ds-detail" class="detail wide" style="margin-top:14px"></div>
+    </div>
+    <div class="plate-note">虛線圓 = 2026 文獻，數字取自前次報告，<b>待核對</b>。相似度與真實度為整理者評分。</div>
+  </figure>
+
+  <h2>資料集 × 技術可行性</h2>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig">圖 7.2</span>哪些資料集能拿來測哪種技術</div></div>
+    <div class="plate-body tbl-wrap"><table class="tbl mx" id="ds-matrix"></table></div>
+    <div class="plate-note">實心 = 原生提供／很適合；空心 = 可從影片衍生（例如自己跑姿態估計）；斜線 = 可做但價值有限；空白 = 不適合。空心格是<b>可行性判斷</b>，不是論文已做過的實驗。</div>
+  </figure>
+
+  <h2>完整清單</h2>
+  <div class="tbl-wrap"><table class="tbl" id="ds-table"></table></div>
+</section>
+
+<!-- ======================= 8 缺口與實驗 ======================= -->
+<section class="chapter" id="ch-roadmap" data-title="缺口與實驗">
+  <header class="ch-head">
+    <p class="ch-num">第 8 章</p>
+    <h1>已知、推論、未知：下一階段要實驗什麼</h1>
+    <p class="thesis">研究問題不是「找一個對衣服不敏感的特徵」，而是「在每台攝影機、每段軌跡條件都不同時，判斷哪些線索此刻可信，並能融合、退化或拒判」。</p>
+  </header>
+
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig">圖 8.1</span>證據板</div></div>
+    <div class="plate-body cols cols-3" id="evidence"></div>
+  </figure>
+
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig">圖 8.2</span>方法 × 資料集：哪些組合還沒人做過</div></div>
+    <div class="plate-body tbl-wrap"><table class="tbl mx" id="gap-matrix"></table></div>
+    <div class="plate-note">標「研究空缺」的格子，比在 Market-1501 上再跑一個骨幹更貼近你的問題。這是由資料集與方法的缺口推導出的機會，<span class="ev open"><i></i>待驗證</span>。</div>
+  </figure>
+
+  <h2>逐層驗證，而不是一次做五專家 Transformer</h2>
+  <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title"><span class="fig">圖 8.3</span>第二階段實驗路線</div>
+    </div>
+    <div class="plate-body"><svg id="phases" viewBox="0 0 980 200" role="img" aria-label="實驗階段"></svg>
+      <div id="phase-detail" class="detail" style="margin-top:10px"></div></div>
+  </figure>
+
+  <h2>實驗矩陣</h2>
+  <div class="tbl-wrap"><table class="tbl" id="exp-tbl"></table></div>
+</section>
+
+<!-- ======================= 9 參考文獻 ======================= -->
+<section class="chapter" id="ch-refs" data-title="參考文獻">
+  <header class="ch-head">
+    <p class="ch-num">第 9 章</p>
+    <h1>參考文獻</h1>
+    <p class="thesis">連結需要網路。標「待核對」的 2026 文獻尚未回到原文逐一確認數字與出處。</p>
+  </header>
+  <ul class="refs" id="refs"></ul>
+</section>
+
+<div class="pager" id="pager"></div>
+</main>
+</div>
+
+<div class="tip" id="tip" role="tooltip"></div>
+
+<!-- 全部為本地腳本（不使用 ES module，確保雙擊 index.html 用 file:// 也能執行） -->
+<script src="assets/js/data.js"></script>
+<script src="assets/js/person.js"></script>
+<script src="assets/js/util.js"></script>
+<script src="assets/js/ch-core.js"></script>
+<script src="assets/js/ch-methods.js"></script>
+<script src="assets/js/ch-deploy.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
