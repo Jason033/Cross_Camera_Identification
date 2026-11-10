@@ -1,7 +1,7 @@
 /* app.js — 以網址 # 切換章節（file:// 可用），章節第一次進入時才初始化 */
 (function () {
   'use strict';
-  var ORDER = ['home', 'problem', 'cues', 'methods', 'fusion', 'camera', 'openset', 'datasets', 'roadmap', 'refs'];
+  var ORDER = ['home', 'problem', 'cues', 'methods', 'fusion', 'camera', 'openset', 'datasets', 'system', 'validation', 'qc', 'roadmap', 'refs'];
   var inited = {}, current = null;
 
   function show(id) {

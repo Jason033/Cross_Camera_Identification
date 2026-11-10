@@ -337,13 +337,13 @@
       el('text', { x: lx + 16, y: B + 68, 'font-size': 13, fill: 'var(--ink-2)', text: t }, svg); lx += 72;
     });
     el('circle', { cx: lx + 10, cy: B + 64, r: 7, fill: 'none', stroke: 'var(--ink-2)', 'stroke-dasharray': '3 3' }, svg);
-    el('text', { x: lx + 22, y: B + 68, 'font-size': 13, fill: 'var(--ink-2)', text: '2026 待核對' }, svg);
+    el('text', { x: lx + 22, y: B + 68, 'font-size': 13, fill: 'var(--ink-2)', text: '部分數字待核對' }, svg);
     el('text', { x: R, y: B + 68, 'text-anchor': 'end', 'font-size': 12.5, fill: 'var(--ink-3)', text: '點圓圈看詳細資料' }, svg);
   }
   function drawDsDetail() {
     var d = D.DATASETS.filter(function (x) { return x.id === dsSel; })[0];
     $('#ds-detail').innerHTML = '<h3>' + d.name + ' <span class="small muted">' + d.year + ' · ' + d.type + '</span></h3>' +
-      (d.verify ? '<p class="small" style="color:var(--warn);margin:0">2026 文獻：數字取自前次報告，待回原文核對</p>' : '') +
+      (d.verify ? '<p class="small" style="color:var(--warn);margin:0">已確認存在（' + (d.src || '') + '）；部分數字取自前次報告，待回原文核對</p>' : (d.src ? '<p class="small muted" style="margin:0">' + d.src + '</p>' : '')) +
       '<dl><dt>人數</dt><dd class="num">' + d.ids.toLocaleString() + '</dd><dt>攝影機/視角</dt><dd>' + d.cams + '</dd><dt>規模</dt><dd>' + d.size + '</dd>' +
       '<dt>服裝設定</dt><dd>' + d.uniform + '</dd><dt>模態</dt><dd>' + d.mod + '</dd><dt>取得方式</dt><dd>' + d.access + '</dd><dt>主要限制</dt><dd>' + d.limit + '</dd>' +
       '<dt>軍營相似度</dt><dd>' + '★'.repeat(d.sim) + '<span class="muted">' + '★'.repeat(5 - d.sim) + '</span></dd></dl>';
@@ -358,7 +358,7 @@
   function drawDsMatrix() {
     var h = '<thead><tr><th>資料集</th>' + D.TECH_COLS.map(function (c) { return '<th class="cell">' + c.n + '</th>'; }).join('') + '</tr></thead><tbody>';
     D.DATASETS.forEach(function (d) {
-      h += '<tr><td><b>' + d.name + '</b>' + (d.verify ? ' <span class="small" style="color:var(--warn)">待核對</span>' : '') + '</td>' + D.TECH_COLS.map(function (c) { return '<td class="cell">' + glyph(d.tech[c.k]) + '</td>'; }).join('') + '</tr>';
+      h += '<tr><td><b>' + d.name + '</b>' + (d.verify ? ' <span class="small" style="color:var(--warn)">部分待核對</span>' : '') + '</td>' + D.TECH_COLS.map(function (c) { return '<td class="cell">' + glyph(d.tech[c.k]) + '</td>'; }).join('') + '</tr>';
     });
     $('#ds-matrix').innerHTML = h + '</tbody>';
   }
@@ -371,7 +371,7 @@
         var v = d[c[0]];
         if (c[0] === 'ids') v = v.toLocaleString();
         if (c[0] === 'sim') v = '★'.repeat(d.sim);
-        if (c[0] === 'name') v = '<b>' + v + '</b>' + (d.verify ? ' <span class="small" style="color:var(--warn)">待核對</span>' : '');
+        if (c[0] === 'name') v = '<b>' + v + '</b>' + (d.verify ? ' <span class="small" style="color:var(--warn)">部分待核對</span>' : '');
         return '<td class="' + (c[2] || '') + '">' + v + '</td>';
       }).join('') + '</tr>';
     });
@@ -387,7 +387,7 @@
     { id: 'D', n: '品質感知融合', d: '先做分數層融合證明互補性，再升級到投影 + 學習式門控。MMGaitFormer 提供交叉注意力方向，HAMoBE 提供雙輸入門控方向。對應 E4。' },
     { id: 'E', n: '跨域 + 未知人員', d: '留一攝影機、跨資料集、遮擋與解析度分層、模態缺失、未知身分拒判。對應 E5–E8；最後才看工程成本 E9。' }
   ];
-  var SHORT = { cal: 'CAL', ltcc: 'LTCC', fgpr: 'FGPR', mmgaitformer: 'MMGaitFormer', skeletongait: 'SkeletonGait++', hamobe: 'HAMoBE', ramoe: 'RaMoE', opengait: 'OpenGait', gpgait: 'GPGait', fgpersonx: 'FG-PersonX', openworld: 'Open-World ReID' };
+  var SHORT = { adaface: 'AdaFace', farsight: 'BRIAR 融合', gunel: 'Günel 2019', mevid: 'MEVID', clustercontrast: 'Cluster Contrast', cal: 'CAL', ltcc: 'LTCC', fgpr: 'FGPR', mmgaitformer: 'MMGaitFormer', skeletongait: 'SkeletonGait++', hamobe: 'HAMoBE', ramoe: 'RaMoE', opengait: 'OpenGait', gpgait: 'GPGait', fgpersonx: 'FG-PersonX', openworld: 'Open-World ReID' };
   CH.roadmap = {
     init: function () {
       var cols = { proven: ['文獻證實', '原論文實驗直接支持'], inferred: ['合理推論', '由多篇文獻推導的工程判斷'], open: ['待驗證', '沒有直接證據，需要自己實驗'] };
@@ -400,9 +400,6 @@
       var h = '<thead><tr><th>方法</th>' + D.GAP.cols.map(function (c) { return '<th class="cell">' + c + '</th>'; }).join('') + '</tr></thead><tbody>';
       D.GAP.rows.forEach(function (r) { h += '<tr><td><b>' + r.m + '</b></td>' + r.v.map(function (v) { return '<td class="cell">' + (v === 2 ? '<span title="原論文已測">' + glyph(2) + '</span>' : glyph(v)) + '</td>'; }).join('') + '</tr>'; });
       $('#gap-matrix').innerHTML = h + '</tbody><caption class="small muted" style="caption-side:bottom;text-align:left;padding-top:8px">實心 = 原論文已測　空心 = 可研究　— = 不適用</caption>';
-      drawPhases('A');
-      $('#exp-tbl').innerHTML = '<thead><tr><th>編號</th><th>問題</th><th>基準</th><th>修改</th><th>必看指標</th></tr></thead><tbody>' +
-        D.EXPERIMENTS.map(function (e) { return '<tr><td class="num"><b>' + e.id + '</b></td><td>' + e.q + '</td><td>' + e.base + '</td><td>' + e.mod + '</td><td>' + e.m + '</td></tr>'; }).join('') + '</tbody>';
     }
   };
   function drawPhases(sel) {

@@ -244,7 +244,7 @@ window.DATA = (function () {
 
   // 資料集：sim = 與軍營同制服相似度 1–5；real = CCTV 真實度 1–4；verify = 是否為待核對
   var DATASETS = [
-    { id: 'fgpr', name: 'FGPR', year: 2020, type: '真實', ids: 358, cams: '5 視角', size: '716 段影片 / 134,696 張', uniform: '同組人穿相同制服', mod: 'RGB', real: 2, sim: 5, access: '學術用途', limit: '規模小、拍攝較受控', tech: { rgb: 2, skel: 1, sil: 1, gait: 2, face: 0, d3: 1, uni: 2, dg: 1 } },
+    { id: 'fgpr', name: 'FGPR', year: 2020, type: '真實', ids: 358, cams: '5 視角', size: '716 段影片 / 134,696 張', uniform: '藍、白、綠三組，同組人穿相同衣服', mod: 'RGB', real: 2, sim: 5, access: '百度網盤下載；綠組需簽協議', limit: '規模小、拍攝較受控', tech: { rgb: 2, skel: 1, sil: 1, gait: 2, face: 0, d3: 1, uni: 2, dg: 1 } },
     { id: 'prcc', name: 'PRCC', year: 2020, type: '真實', ids: 221, cams: '3', size: '33,698 張', uniform: '同一人 A/B 同衣、C 換衣', mod: 'RGB', real: 1, sim: 2, access: '學術用途', limit: '不測不同人同制服', tech: { rgb: 2, skel: 1, sil: 1, gait: 0, face: 0, d3: 1, uni: -1, dg: 1 } },
     { id: 'ltcc', name: 'LTCC', year: 2020, type: '真實', ids: 152, cams: '12', size: '17,119 張', uniform: '換衣；明確假設不同人不穿相同服裝', mod: 'RGB + 衣服標籤', real: 2, sim: 2, access: '需簽協議', limit: '協定排除了同衣不同人', tech: { rgb: 2, skel: 1, sil: 1, gait: 0, face: 0, d3: 1, uni: -1, dg: 1 } },
     { id: 'ccvid', name: 'CCVID', year: 2022, type: '真實', ids: 226, cams: '多場景', size: '2,856 段 / 347,833 框', uniform: '每人 2–5 套衣服', mod: 'RGB 影片', real: 2, sim: 3, access: '官方 repo', limit: '核心是同人換衣', tech: { rgb: 2, skel: 1, sil: 1, gait: 2, face: 0, d3: 1, uni: 0, dg: 1 } },
@@ -253,10 +253,12 @@ window.DATA = (function () {
     { id: 'deepchange', name: 'DeepChange', year: 2023, type: '真實', ids: 1121, cams: '17 戶外', size: '178,407 框 / 12 個月', uniform: '真實長期換衣', mod: 'RGB', real: 4, sim: 4, access: '非商用協議', limit: '非制服基準', tech: { rgb: 2, skel: 1, sil: 1, gait: 1, face: 1, d3: 1, uni: 0, dg: 2 } },
     { id: 'ccpg', name: 'CCPG', year: 2023, type: '真實', ids: 200, cams: '10 視角', size: '16,566 段', uniform: '多種穿著狀態', mod: 'RGB + 輪廓', real: 2, sim: 3, access: '官方', limit: '非完全相同制服', tech: { rgb: 2, skel: 1, sil: 2, gait: 2, face: 0, d3: 1, uni: 0, dg: 1 } },
     { id: 'ccgr', name: 'CCGR', year: 2024, type: '真實', ids: 970, cams: '33 視角', size: '約 160 萬段', uniform: '53 種共變因子（含衣服）', mod: 'RGB / 輪廓 / 解析圖 / 姿態', real: 2, sim: 4, access: '非商用；RGB 另簽', limit: '規模大但拍攝受控', tech: { rgb: 2, skel: 2, sil: 2, gait: 2, face: -1, d3: 1, uni: 0, dg: 2 } },
-    { id: 'industrial', name: 'Industrial-Gait', year: 2026, type: '真實', ids: 150, cams: '2 個相對俯視', size: '1,500 段', uniform: '標準工作服 + 安全帽', mod: 'RGB；公開輪廓 / 關節點', real: 4, sim: 5, access: '衍生資料非商用；RGB 需申請', limit: '單一場域、150 人', verify: true, tech: { rgb: 1, skel: 2, sil: 2, gait: 2, face: 0, d3: 1, uni: 2, dg: 2 } },
-    { id: 'constrid', name: 'ConstrID', year: 2026, type: '混合', ids: 138, cams: '真實跨攝影機 + 合成視角', size: '5,137 張', uniform: '安全帽、反光背心、相似穿著', mod: 'RGB', real: 4, sim: 5, access: '申請、學術用途', limit: '112 真實 + 26 合成 ID，規模小', verify: true, tech: { rgb: 2, skel: 1, sil: 1, gait: 0, face: 0, d3: 1, uni: 2, dg: 2 } },
-    { id: 'fgpersonx', name: 'FG-PersonX', year: 2026, type: '合成', ids: 1000, cams: '可控', size: '> 49K 張', uniform: '五種制服群組', mod: '合成 RGB', real: 0, sim: 4, access: '論文宣稱公開', limit: '合成到真實的落差', verify: true, tech: { rgb: 2, skel: 1, sil: 1, gait: 1, face: 1, d3: 1, uni: 2, dg: 2 } },
-    { id: 'mmgait', name: 'MMGait', year: 2026, type: '真實', ids: 725, cams: '10 視角', size: '大型多模態', uniform: '正常 / 背包 / 換衣', mod: '12 種模態', real: 2, sim: 3, access: '需簽協議', limit: '感測器遠超一般監視器', verify: true, tech: { rgb: 2, skel: 2, sil: 2, gait: 2, face: -1, d3: 1, uni: 0, dg: 2 } }
+    { id: 'mevid', name: 'MEVID', year: 2023, type: '真實', ids: 158, cams: '33 視角 / 17 地點', size: '8,092 段 tracklet', uniform: '73 天內 9 個日期，598 套服裝', mod: 'RGB 影片', real: 4, sim: 4, access: '公開', limit: '非制服；但最接近多日跨攝影機', tech: { rgb: 2, skel: 1, sil: 1, gait: 2, face: 1, d3: 1, uni: 0, dg: 2 } },
+    { id: 'briar', name: 'BRIAR', year: 2023, type: '真實', ids: 1000, cams: '遠距與無人機視角', size: '35 萬張 + 1,300 小時影片', uniform: '換衣；距離至 1,000 m', mod: 'RGB（臉、全身）', real: 3, sim: 4, access: '向主辦單位申請', limit: '遠距平視／空拍為主，不是近距高架', tech: { rgb: 2, skel: 1, sil: 1, gait: 2, face: 2, d3: 1, uni: 0, dg: 2 } },
+    { id: 'industrial', name: 'Industrial-Gait', year: 2026, type: '真實', ids: 150, cams: '2 個相對俯視', size: '1,500 段', uniform: '標準工作服 + 安全帽', mod: 'RGB；公開輪廓 / 關節點', real: 4, sim: 5, access: '去識別化輪廓與關鍵點公開（非商用）；RGB 需申請', limit: '單一場域、150 人；兩個相對的略高視角', src: 'J. Imaging 2026', tech: { rgb: 1, skel: 2, sil: 2, gait: 2, face: 0, d3: 1, uni: 2, dg: 2 } },
+    { id: 'constrid', name: 'ConstrID', year: 2026, type: '混合', ids: 138, cams: '真實跨攝影機 + 合成視角', size: '5,137 張', uniform: '安全帽、反光背心、相似穿著', mod: 'RGB', real: 4, sim: 5, access: '申請、學術用途', limit: '規模小；人數與張數待核對原文', verify: true, src: 'Ain Shams Eng. J. 2026', tech: { rgb: 2, skel: 1, sil: 1, gait: 0, face: 0, d3: 1, uni: 2, dg: 2 } },
+    { id: 'fgpersonx', name: 'FG-PersonX', year: 2026, type: '合成', ids: 1000, cams: '可控', size: '張數待核對', uniform: '五個制服群體', mod: '合成 RGB', real: 0, sim: 4, access: '論文宣稱公開', limit: '合成到真實的落差；論文測了 20 多個模型', verify: true, src: 'CVPRW 2026', tech: { rgb: 2, skel: 1, sil: 1, gait: 1, face: 1, d3: 1, uni: 2, dg: 2 } },
+    { id: 'mmgait', name: 'MMGait', year: 2026, type: '真實', ids: 725, cams: '10 視角', size: '334,060 段', uniform: '正常 / 背包 / 穿外套', mod: '5 種感測器、12 種模態', real: 2, sim: 3, access: 'GitHub 公開', limit: '感測器遠超一般監視器', src: 'CVPR 2026', tech: { rgb: 2, skel: 2, sil: 2, gait: 2, face: -1, d3: 1, uni: 0, dg: 2 } }
   ];
   var TECH_COLS = [
     { k: 'rgb', n: 'RGB / CLIP' }, { k: 'skel', n: '骨架' }, { k: 'sil', n: '輪廓' }, { k: 'gait', n: '步態' },
@@ -291,6 +293,13 @@ window.DATA = (function () {
     { lv: 'inferred', ch: 'camera', t: '骨架／輪廓去掉了大量色彩風格，可能減少 RGB 的領域落差——但姿態與分割誤差會形成新的落差。', src: ['gpgait'] },
     { lv: 'open', ch: 'fusion', t: '「CLIP + 骨架 + 輪廓 + 品質門控」一定優於單模態同制服 ReID。', src: [] },
     { lv: 'open', ch: 'datasets', t: '合成制服資料（FG-PersonX）預訓練能提升真實監視器的同制服辨識。', src: ['fgpersonx'] },
+    { lv: 'proven', ch: 'cues', t: '兩端都是監視畫面時，人臉開集辨識很弱：AdaFace 在 IJB-S 監視對監視 Rank-1 僅 35%。', src: ['adaface'] },
+    { lv: 'proven', ch: 'cues', t: '臉看不清時，步態是最強的單一線索；臉、步態、體型融合在 BRIAR 臉受限設定從 30.7% 提升到 65.0%。', src: ['farsight'] },
+    { lv: 'proven', ch: 'cues', t: '單目身高估計誤差約 5–6 cm，只比猜平均好一點，只能當弱先驗。', src: ['gunel'] },
+    { lv: 'proven', ch: 'methods', t: '換衣基準高分不能外推：同一方法在 CCVID 換衣 R1 87.6，在真實多日的 MEVID 只有 20.1。', src: ['mevid', 'hamobe'] },
+    { lv: 'proven', ch: 'methods', t: '無標註學習與有標註仍差約 27–30 mAP（MSMT17）。', src: ['clustercontrast'] },
+    { lv: 'inferred', ch: 'fusion', t: '每日數十到數百人的規模，用帶約束的凝聚分群即可，不需大型圖分群模型。', src: [] },
+    { lv: 'open', ch: 'fusion', t: 'cannot-link 約束對同制服分群的實際增益——沒有公開數字。', src: [] },
     { lv: 'open', ch: 'openset', t: '同制服 + 多模態 + 開放集拒判的組合效果——幾乎沒有直接研究。', src: ['openworld'] }
   ];
 
@@ -299,7 +308,7 @@ window.DATA = (function () {
     clipreid: { a: 'Li, Sun, Li', t: 'CLIP-ReID: Exploiting Vision-Language Model for Image Re-Identification without Concrete Text Labels', v: 'AAAI 2023', u: 'https://ojs.aaai.org/index.php/AAAI/article/view/25225' },
     cal: { a: 'Gu et al.', t: 'Clothes-Changing Person Re-identification with RGB Modality Only（CAL；提出 CCVID）', v: 'CVPR 2022', u: 'https://openaccess.thecvf.com/content/CVPR2022/html/Gu_Clothes-Changing_Person_Re-Identification_With_RGB_Modality_Only_CVPR_2022_paper.html' },
     fsam: { a: 'Hong et al.', t: 'Fine-Grained Shape-Appearance Mutual Learning for Cloth-Changing Person Re-Identification', v: 'CVPR 2021', u: 'https://openaccess.thecvf.com/content/CVPR2021/html/Hong_Fine-Grained_Shape-Appearance_Mutual_Learning_for_Cloth-Changing_Person_Re-Identification_CVPR_2021_paper.html' },
-    fgpr: { a: 'Yin, Wu, Zheng', t: 'Fine-Grained Person Re-identification', v: 'IJCV 2020', u: 'https://isee-ai.cn/~yinjiahang/FGPR_files/fgreid.pdf' },
+    fgpr: { a: 'Yin, Wu, Zheng', t: 'Fine-Grained Person Re-identification（FGPR）', v: 'IJCV 2020', u: 'https://www.isee-ai.cn/~yinjiahang/FGPR.html' },
     gpgait: { a: 'Fu et al.', t: 'GPGait: Generalized Pose-based Gait Recognition', v: 'ICCV 2023', u: 'https://openaccess.thecvf.com/content/ICCV2023/html/Fu_GPGait_Generalized_Pose-based_Gait_Recognition_ICCV_2023_paper.html' },
     skeletongait: { a: 'Fan et al.', t: 'SkeletonGait: Gait Recognition Using Skeleton Maps（含 SkeletonGait++）', v: 'AAAI 2024', u: 'https://ojs.aaai.org/index.php/AAAI/article/view/27933' },
     opengait: { a: 'Fan et al.', t: 'OpenGait: Revisiting Gait Recognition Towards Better Practicality（GaitBase）', v: 'CVPR 2023', u: 'https://openaccess.thecvf.com/content/CVPR2023/html/Fan_OpenGait_Revisiting_Gait_Recognition_Towards_Better_Practicality_CVPR_2023_paper.html' },
@@ -320,10 +329,29 @@ window.DATA = (function () {
     gaitpart: { a: 'Fan et al.', t: 'GaitPart: Temporal Part-based Model for Gait Recognition', v: 'CVPR 2020', u: 'https://openaccess.thecvf.com/CVPR2020' },
     gaitset: { a: 'Chao et al.', t: 'GaitSet: Regarding Gait as a Set for Cross-View Gait Recognition', v: 'AAAI 2019', u: 'https://ojs.aaai.org/index.php/AAAI/article/view/4821' },
     drillis: { a: 'Drillis, Contini, Bluestein', t: 'Body Segment Parameters（本站人體模型的節段比例來源）', v: 'Artificial Limbs 1964', u: '' },
-    industrial: { a: '（2026）', t: 'Industrial-Gait：工業場域標準工作服 + 安全帽步態資料集', v: '2026 · 待核對', u: '' },
-    constrid: { a: '（2026）', t: 'ConstrID：營建工地安全帽／反光背心工人 ReID 資料集', v: '2026 · 待核對', u: '' },
-    fgpersonx: { a: '（2026）', t: 'FG-PersonX：五種制服群組的合成細粒度 ReID 資料集', v: '2026 · 待核對', u: '' },
-    mmgait: { a: '（2026）', t: 'MMGait：12 種模態的多模態步態基準', v: '2026 · 待核對', u: '' }
+    industrial: { a: 'Bai et al.', t: 'RGB Gait Recognition Using Large Vision Models for Industrial Access Control（Industrial-Gait）', v: 'J. Imaging 2026', u: 'https://doi.org/10.3390/jimaging12090458' },
+    constrid: { a: '—', t: 'ConstrID: a hybrid benchmark of real and synthetic images for construction worker re-identification', v: 'Ain Shams Eng. J. 2026', u: 'https://www.sciencedirect.com/science/article/pii/S2090447926003308' },
+    fgpersonx: { a: 'Zhang, He et al.', t: 'FG-PersonX: A Scalable Synthetic Dataset for Fine-Grained Person Re-Identification', v: 'CVPRW 2026', u: 'https://openaccess.thecvf.com/content/CVPR2026W/DataCV/papers/Zhang_FG-PersonX_A_Scalable_Synthetic_Dataset_for_Fine-Grained_Person_Re-Identification_CVPRW_2026_paper.pdf' },
+    mmgait: { a: 'Wang et al.', t: 'MMGait: Towards Multi-Modal Gait Recognition', v: 'CVPR 2026', u: 'https://openaccess.thecvf.com/content/CVPR2026/html/Wang_MMGait_Towards_Multi-Modal_Gait_Recognition_CVPR_2026_paper.html' },
+    mevid: { a: 'Davila et al.', t: 'MEVID: Multi-view Extended Videos with Identities for Video Person Re-Identification', v: 'WACV 2023', u: 'https://arxiv.org/abs/2211.04656' },
+    briar: { a: 'Cornett et al.', t: 'Expanding Accurate Person Recognition to New Altitudes and Ranges: The BRIAR Dataset', v: 'WACVW 2023', u: 'https://openaccess.thecvf.com/content/WACV2023W/LRR/html/Cornett_Expanding_Accurate_Person_Recognition_to_New_Altitudes_and_Ranges_The_WACVW_2023_paper.html' },
+    farsight: { a: 'Liu et al.', t: 'Person Recognition at Altitude and Range: Fusion of Face, Body Shape and Gait', v: 'arXiv 2025', u: 'https://arxiv.org/abs/2505.04616' },
+    sapiensid: { a: 'Kim et al.', t: 'SapiensID: Foundation for Human Recognition', v: 'CVPR 2025', u: 'https://arxiv.org/abs/2504.04708' },
+    adaface: { a: 'Kim, Jain, Liu', t: 'AdaFace: Quality Adaptive Margin for Face Recognition', v: 'CVPR 2022', u: 'https://arxiv.org/abs/2204.00964' },
+    persvit: { a: 'Hu et al.', t: 'PersonViT: Large-scale Self-supervised Vision Transformer for Person Re-Identification', v: 'arXiv 2024', u: 'https://arxiv.org/abs/2408.05398' },
+    solider: { a: 'Chen et al.', t: 'Beyond Appearance: A Semantic Controllable Self-Supervised Learning Framework for Human-Centric Visual Tasks（SOLIDER）', v: 'CVPR 2023', u: 'https://arxiv.org/abs/2303.17602' },
+    streid: { a: 'Wang et al.', t: 'Spatial-Temporal Person Re-identification（st-ReID）', v: 'AAAI 2019', u: 'https://arxiv.org/abs/1812.03282' },
+    deepgaitv2: { a: 'Fan et al.', t: 'Exploring Deep Models for Practical Gait Recognition（DeepGaitV2）', v: 'arXiv 2023', u: 'https://arxiv.org/abs/2303.03301' },
+    biggait: { a: 'Ye et al.', t: 'BigGait: Learning Gait Representation You Want by Large Vision Models', v: 'CVPR 2024', u: 'https://arxiv.org/abs/2402.19122' },
+    clustercontrast: { a: 'Dai et al.', t: 'Cluster Contrast for Unsupervised Person Re-Identification', v: 'arXiv 2021', u: 'https://arxiv.org/abs/2103.11568' },
+    ipd: { a: '—', t: 'Inter-pupillary distance and face recognition accuracy（arXiv 2503.20108）', v: 'arXiv 2025', u: 'https://arxiv.org/html/2503.20108v1' },
+    facepose: { a: '—', t: 'Pose Impact Estimation on Face Recognition using 3D-Aware Synthetic Data', v: 'arXiv 2023', u: 'https://arxiv.org/abs/2303.00491' },
+    dronegait: { a: '—', t: 'CVVNet / DroneGait：高俯角步態辨識', v: 'arXiv 2025', u: 'https://arxiv.org/abs/2505.01837' },
+    gunel: { a: 'Günel et al.', t: 'What Face and Body Shapes Can Tell Us About Height', v: 'ICCVW 2019', u: 'https://openaccess.thecvf.com/content_ICCVW_2019/papers/WIDER/Gunel_What_Face_and_Body_Shapes_Can_Tell_Us_About_Height_ICCVW_2019_paper.pdf' },
+    mltrl: { a: 'Lavin et al.', t: 'Technology readiness levels for machine learning systems（MLTRL）', v: 'Nature Commun. 2022', u: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC9585100' },
+    gao: { a: 'GAO', t: 'Technology Readiness Assessment Guide（GAO-20-48G）', v: 'GAO 2020', u: 'https://www.gao.gov/products/GAO-20-48G' },
+    moea: { a: '經濟部', t: 'A+ 企業創新研發淬鍊計畫申請須知（查核點規則）', v: '經濟部 2022', u: 'https://service.moea.gov.tw/EE514/wSite/public/Attachment/00106/f1713332671782.pdf' },
+    nist1n: { a: 'NIST', t: 'Face Recognition Technology Evaluation 1:N（FNIR/FPIR）', v: 'NIST', u: 'https://pages.nist.gov/frvt/html/frvt1N.html' }
   };
 
   // 實驗矩陣（對應研究第二階段）

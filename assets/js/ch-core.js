@@ -154,11 +154,12 @@
       var rows = [
         ['FGPR', '是：同組相同制服', '半受控多攝影機', 'proven', '直接證據'],
         ['FG-PersonX', '是：制服群組（合成）', '否', 'inferred', '概念直接、部署證據間接'],
-        ['Industrial-Gait', '工人標準工作服 + 安全帽', '是：工業閘口', 'inferred', '高度相似的實務場景（待核對）'],
-        ['ConstrID', '安全帽、反光背心、相似穿著', '是：營建工地監視器', 'inferred', '高度相關（待核對）'],
+        ['Industrial-Gait', '工人標準工作服 + 安全帽', '是：工業閘口', 'inferred', '高度相似的實務場景（J. Imaging 2026）'],
+        ['ConstrID', '安全帽、反光背心、相似穿著', '是：營建工地監視器', 'inferred', '高度相關（2026）'],
         ['LTCC', '否：假設不同人不穿相同服裝', '模擬多攝影機', 'open', '不直接'],
         ['PRCC', '否：同一人 A/B 同衣、C 換衣', '受控', 'open', '不直接'],
         ['CCVID', '否：每人 2–5 套衣服', '影片基準', 'open', '不直接，但時間線索有用'],
+        ['MEVID', '否：73 天內 9 個日期換衣', '是：33 個視角', 'open', '最接近多日跨攝影機'],
         ['DeepChange', '否：真實長期換衣', '是：17 台戶外攝影機、12 個月', 'open', '場域真實度高，但非制服']
       ];
       var LV = { proven: '<span class="ev proven"><i></i>直接</span>', inferred: '<span class="ev inferred"><i></i>間接</span>', open: '<span class="ev open"><i></i>不測</span>' };
