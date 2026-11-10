@@ -46,4 +46,4 @@ assets/js/ch-*.js     各章節的互動圖
 assets/js/app.js      章節切換（用網址 #，file:// 也能用）
 ```
 
-全部為原生 HTML / CSS / JavaScript，沒有建置步驟。舊版網站保留在 git tag `legacy-v1`。
+全部為原生 HTML / CSS / JavaScript，沒有建置步驟。舊版網站仍在 git 歷史中（commit `477b93f`），需要時可從 History 找回。
