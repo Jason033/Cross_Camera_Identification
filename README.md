@@ -1,17 +1,11 @@
-# 跨攝影機人員辨識研究地圖
+# 跨攝影機同制服辨識：技術探索地圖
 
-## 互動式教學網頁
+以一般 RGB 監視器與跨視角、同制服人員辨識為情境，整理身分線索、研究方法、融合、攝影機差異與資料集。圖中的數值與人物為教學示意，請勿作為實驗結果。
 
-開啟 [`index.html`](./index.html) 即可瀏覽同制服跨攝影機辨識的研究地圖。網頁以單一 HTML 檔製作，包含樣式、互動程式與示意圖，不需安裝套件，也能下載到離線電腦直接開啟。論文與資料集連結需要網路。
+## 線上閱讀
 
-### 用手機瀏覽
+GitHub Pages 啟用後，開啟 https://jason033.github.io/Cross_Camera_Identification/ 。頁面適合手機瀏覽。
 
-可直接在 GitHub 點開 `index.html` 閱讀原始碼，但互動網頁建議透過 GitHub Pages 開啟：
+## 離線使用
 
-1. 開啟本 repo 的 **Settings**。
-2. 找到 **Pages**。
-3. 在 **Build and deployment** 選擇 **Deploy from a branch**。
-4. Branch 選 `main`、資料夾選 `/ (root)`，按 **Save**。
-5. 等待部署完成後，Pages 網址會顯示在同一頁；之後手機直接開網址即可。
-
-離線使用時，從 repo 下載 `index.html`，手機或電腦用瀏覽器開啟即可。網頁內圖解為教學示意圖，非論文原圖；融合滑桿數字也是示範值，不是模型準確率。
+從 GitHub 的 Code → Download ZIP 下載完整儲存庫，解壓縮後保留所有 HTML 檔案在同一資料夾，開啟 `index.html`。本網站不使用線上字型、程式庫或圖片；原始論文與資料集連結需要網路。
