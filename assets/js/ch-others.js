@@ -16,6 +16,7 @@
       return '<li class="ps' + f[2] + '"><span class="sb" title="對應我們的：' + STEPN[f[2]] + '">' + NUM[f[2]] + '</span><b>' + f[0] + '</b>' + (f[1] ? '<span>' + f[1] + '</span>' : '') + '</li>';
     }).join('') + '</ol>';
   }
+  function play(k, id) { return '<button type="button" class="fp-btn" data-fp="' + k + ':' + id + '" title="用動畫逐步說明這個流程"><i></i>動畫說明</button>'; }
   function dot(v) { return '<i class="lvd' + (v === 'g' ? ' f' : v === 'm' ? ' h' : '') + '"></i>'; }
 
   CH.others = {
@@ -24,7 +25,7 @@
       if (!pb) return;
       // 架構類型
       pb.innerHTML = P.map(function (p, i) {
-        return '<article class="pat"><header><span class="pat-n num">' + ROM[i] + '</span><b>' + p.n + '</b></header>' +
+        return '<article class="pat"><header><span class="pat-n num">' + ROM[i] + '</span><b>' + p.n + '</b>' + play('pat', p.id) + '</header>' +
           '<p class="small muted" style="margin:0 0 6px">代表：' + p.who + '</p>' + flow(p.flow) +
           '<dl class="pat-dl"><dt>優點</dt><dd>' + p.good + '</dd><dt>弱點</dt><dd>' + p.bad + '</dd><dt>在我們系統</dt><dd><b>' + p.ours + '</b></dd></dl></article>';
       }).join('');
@@ -51,13 +52,27 @@
       $('#oth-lessons').innerHTML = rows(['步驟', '別人的做法', '來自', '我們怎麼做'], L, function (r) {
         return '<tr><td class="cell"><a href="#/methods?s=' + r[0] + '" class="num" title="' + STEPN[r[0]] + '">' + NUM[r[0]] + '</a></td><td><b>' + r[1] + '</b></td><td class="small">' + r[2] + '</td><td>' + r[3] + '</td></tr>';
       });
+      // 動畫說明
+      var sec = $('#ch-others');
+      sec.addEventListener('click', function (e) {
+        var b = e.target.closest('.fp-btn');
+        if (!b || !global.FlowPlay) return;
+        var k = b.getAttribute('data-fp').split(':');
+        if (k[0] === 'pat') {
+          var i = P.map(function (p) { return p.id; }).indexOf(k[1]), p = P[i];
+          FlowPlay.open({ title: '架構' + ROM[i] + '：' + p.n, sub: '代表：' + p.who, flow: p.flow, keyLabel: '在我們的系統', key: p.ours + '。優點：' + p.good + '；弱點：' + p.bad + '。' });
+        } else {
+          var s = O.filter(function (x) { return x.id === k[1]; })[0];
+          FlowPlay.open({ title: s.n, sub: '要解決：' + s.goal, flow: s.flow, keyLabel: '核心概念', key: s.key });
+        }
+      });
       // 各系統卡片
       Object.keys(CATS).forEach(function (c) {
         var box = $('#oth-' + c);
         if (!box) return;
         box.innerHTML = O.filter(function (s) { return s.cat === c; }).map(function (s) {
           return '<article class="osys" id="oth-' + s.id + '">' +
-            '<header><b>' + s.n + '</b>' + (s.pattern ? '<span class="otag">架構' + PR[s.pattern] + '：' + PN[s.pattern] + '</span>' : '<span class="otag">單一方法研究</span>') + EV[s.ev] + '</header>' +
+            '<header><b>' + s.n + '</b>' + (s.pattern ? '<span class="otag">架構' + PR[s.pattern] + '：' + PN[s.pattern] + '</span>' : '<span class="otag">單一方法研究</span>') + EV[s.ev] + play('sys', s.id) + '</header>' +
             '<p class="small muted" style="margin:0">' + s.who + '</p>' +
             '<p class="ogoal"><b>要解決：</b>' + s.goal + '</p>' +
             '<h4>流程（圓圈數字＝對應我們的第幾步；「額外」＝我們的七步沒有）</h4>' + flow(s.flow) +
