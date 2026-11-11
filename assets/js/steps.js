@@ -1,273 +1,347 @@
 /* ============================================================
-   steps.js — 第 2 章「方法總覽」的內容：依系統七步，列出候選方法與我們的選擇。
-   m：對應 R.METHODS2 的方法名稱（成績、算力、授權、出處由那裡帶入）；
-      不在總表裡的元件用 x 自帶欄位 { n, v, res, cost, lic, url }。
-   tag：use 第一版採用｜base 對照基準｜try 之後試用｜ref 參考思路｜skip 暫不採用
-   impl：實作資訊（預設收合）— code 程式碼、w 權重、input 輸入、env 環境、first 第一步、note 注意
-   研究未讀到的資訊一律寫「待確認」，不要補猜。
+   steps.js — 第 2 章「方法總覽」的內容：依系統七步，列出路線、候選方法與我們的選擇。
+
+   每一步：
+     q 要解決什麼；pick 怎麼挑；routes 路線地圖 [{ n, how, pro, con, pick }]
+     groups 方法群組；choice { v1 第一版, cfg [[項目, 起始設定, 理由]], pass [通過條件], later, not }
+     table 第 3 章元件表的一列
+   每張主要卡片（tag = use / base / try）：
+     idea 一句話；how { in 輸入, proc 處理與架構, train 訓練方式, out 輸出, key 與同類的關鍵差異 }
+     us 在我們條件下的分析：{ ang 路邊俯角, cloth 換裝, grp 5 人交錯, cpu 算力, lic 軍用授權 }，
+        每項 [等級, 說明]，等級 g 有利／m 有條件／b 不利／n 不適用
+     impl 實作資訊（預設收合）
+   次要卡片（tag = ref / skip）：idea、fit 一句話。
+   m 對應 R.METHODS2 的方法名稱（成績、算力、授權、出處由那裡帶入）；不在總表的元件用 x 自帶。
+   研究未讀到的資訊一律寫「待確認」；起始設定是建議值，要用自建資料調整。
    ============================================================ */
 window.STEPS = [
-  /* ------------------------------------------------ 1 偵測 */
+  /* ================================================ 1 偵測 */
   { id: 1, n: '攝影機與人物偵測',
-    q: '在每一幀畫面裡找出「人」的框。這是整條流程的入口：漏掉的人，後面全部救不回來。',
-    pick: '授權（正式交付時避開 GPL／AGPL）、CPU 上的速度、遠處小人物的漏檢率。',
+    q: '在每一幀畫面裡找出「人」的框。這是整條流程的入口：漏掉的人，後面全部救不回來；框得不準，後面的身高、剪影都會跟著錯。',
+    pick: '遠處小人物（人高 40–80 像素）的漏檢率、CPU 上每幀耗時、授權（正式交付時避開 GPL／AGPL）。',
+    routes: [
+      { n: '兩階段偵測（Faster R-CNN 類）', how: '先提出候選區域，再逐一分類與修正框。', pro: '小物體與擁擠場景較準', con: '慢，CPU 上不實用', pick: false },
+      { n: '單階段偵測（YOLO 系、YOLOX）', how: '一次前向運算直接在特徵圖上預測框與分數。', pro: '速度與精度平衡，生態成熟', con: '極小目標仍會漏', pick: true },
+      { n: '極輕量行動版（NanoDet 等）', how: '用 ShuffleNet 等輕量骨幹，犧牲精度換速度。', pro: 'CPU 可即時', con: '小人物召回明顯較差', pick: false }
+    ],
     groups: [{ cards: [
-      { m: 'YOLOv7（你現有）', tag: 'base', idea: '單階段卷積偵測器，COCO 預訓練。',
-        fit: '研究階段直接沿用；正式交付時 GPL-3.0 需要處理。',
-        impl: { code: 'github.com/WongKinYiu/yolov7', w: '官方提供 COCO 權重', input: '整張影像（常用 640）', env: '已在現有環境', first: '用辦公室與營區試錄影片跑一遍，統計遠處小人物的漏檢', note: 'GPL-3.0：自用通常不觸發義務；委外交付即屬散布，須公開原始碼或改用其他偵測器' } },
-      { m: 'YOLOX-S', tag: 'use', idea: '不需錨框的單階段偵測器。',
-        fit: '授權乾淨（Apache-2.0），作為正式系統的偵測器首選。',
-        impl: { code: 'github.com/Megvii-BaseDetection/YOLOX', w: '官方提供 COCO 權重', input: '整張影像（640）', env: 'PyTorch；可匯出 ONNX，以 ONNX Runtime／OpenVINO 在 CPU 執行', first: '與 YOLOv7 在同一段影片比較召回率與每幀耗時', note: '9.0M 參數、26.8 GFLOPs' } },
-      { m: 'NanoDet-Plus-m', tag: 'try', idea: '為行動裝置與 CPU 設計的極輕量偵測器。',
-        fit: '營區伺服器若只有 CPU、YOLOX 太慢時的備案。',
-        impl: { code: 'github.com/RangiLyu/nanodet', w: '官方提供 COCO 權重', input: '320–416', env: 'PyTorch；支援 ncnn／ONNX', first: '只在 YOLOX-S 速度不夠時評估', note: 'COCO mAP 27–30，遠處小人物的召回要實測' } },
-      { m: 'YOLO26n', tag: 'skip', idea: 'Ultralytics 最新的輕量偵測器。',
-        fit: 'AGPL-3.0，交付風險高於 GPL；有乾淨的替代品就不必冒險。',
-        impl: { code: 'github.com/ultralytics/ultralytics', w: '官方提供', input: '640', env: 'Ultralytics 套件', first: '—', note: 'AGPL-3.0：網路服務形式提供也可能觸發開源義務' } }
+      { m: 'YOLOX-S', tag: 'use', idea: '不需錨框的單階段偵測器，分類與定位分開預測。',
+        how: { in: '整張畫面，縮放到 640×640', proc: 'CSPDarknet 骨幹 → PAFPN 多尺度特徵融合 → 分類與框回歸分開的「解耦頭」；每個特徵點直接預測一個框（不需錨框）', train: 'COCO 預訓練；訓練時用 SimOTA 動態指派正樣本', out: '人框座標＋信心分數（只保留「人」這一類）', key: '和 YOLOv7 精度同級，但不需錨框、授權是 Apache-2.0；要換成營區自己的框也比較好微調' },
+        us: { ang: ['m', '俯角 20–30° 的全身人形在 COCO 中常見，可直接用；遠處小人物要實測'], cloth: ['g', '偵測「人」與衣服無關'], grp: ['m', '5 人交錯時框會重疊，靠後面的追蹤處理'], cpu: ['m', '26.8 GFLOPs，CPU 上可能是整條流程最慢的一步，需實測；可匯出 ONNX 加速'], lic: ['g', 'Apache-2.0，可交付'] },
+        impl: { code: 'github.com/Megvii-BaseDetection/YOLOX', w: '官方提供 COCO 權重', input: '整張畫面（640）', env: 'PyTorch；可匯出 ONNX，以 ONNX Runtime 或 OpenVINO 在 CPU 執行', first: '和 YOLOv7 在同一段營區影片比較：人高 40–80 像素的召回率、每幀耗時', note: '9.0M 參數；若召回不足，可用營區標註的 1–2 千張框微調' } },
+      { m: 'YOLOv7（你現有）', tag: 'base', idea: '以錨框為基礎的單階段偵測器，現有工具。',
+        how: { in: '整張畫面（640）', proc: 'E-ELAN 骨幹＋重參數化卷積 → 多尺度偵測頭，依預設錨框預測偏移', train: 'COCO 預訓練', out: '人框＋分數', key: '精度與 YOLOX 同級；團隊已熟悉，但授權是 GPL-3.0' },
+        us: { ang: ['m', '同 YOLOX'], cloth: ['g', '與衣服無關'], grp: ['m', '同 YOLOX'], cpu: ['m', '與 YOLOX 相近，需實測'], lic: ['b', 'GPL-3.0：委外交付需公開原始碼'] },
+        impl: { code: 'github.com/WongKinYiu/yolov7', w: '官方提供 COCO 權重', input: '640', env: '已在現有環境', first: '當作 YOLOX 的對照', note: '研究期繼續用沒問題；正式交付前換掉' } },
+      { m: 'NanoDet-Plus-m', tag: 'try', idea: '為 CPU 與行動裝置設計的極輕量偵測器。',
+        how: { in: '320–416 縮放畫面', proc: 'ShuffleNetV2 骨幹 → 輕量 PAN → GFL 偵測頭；訓練時用輔助模組指導正樣本指派', train: 'COCO', out: '人框＋分數', key: '只有 1.17M 參數，速度是 YOLOX 的數倍，但精度低一截' },
+        us: { ang: ['b', '輸入解析度低，遠處小人物容易漏'], cloth: ['g', '與衣服無關'], grp: ['b', '擁擠時框更不穩'], cpu: ['g', 'i7 CPU 5–8 ms'], lic: ['g', 'Apache-2.0'] },
+        impl: { code: 'github.com/RangiLyu/nanodet', w: '官方提供', input: '320–416', env: 'PyTorch／ncnn／ONNX', first: '只在 YOLOX-S 速度不夠時評估', note: 'COCO mAP 27–30' } },
+      { m: 'YOLO26n', tag: 'skip', idea: 'Ultralytics 最新的輕量偵測器。', fit: 'AGPL-3.0，連網路服務形式提供都可能觸發開源義務；有乾淨的替代品就不必冒險。' }
     ] }],
-    choice: { v1: '研究期沿用 YOLOv7；同時以 YOLOX-S 建立授權乾淨的版本。抽幀 2–5 fps、沒人的時段跳過。', later: '伺服器只有 CPU 且太慢時改 NanoDet。', not: 'Ultralytics 系列（AGPL）。' },
-    table: { use: 'YOLOX-S（研究期沿用 YOLOv7）', lic: 'Apache-2.0', have: '部分已有', cost: '主要算力瓶頸之一' }
+    choice: { v1: 'YOLOX-S（研究期可並用 YOLOv7 作對照）。',
+      cfg: [['輸入', '1080p 畫面縮放到 640×640', 'YOLOX 預設；遠處人物不足時再試 960'], ['抽幀', '偵測與追蹤用 5 fps', '人走路每 0.2 秒移動約 30 cm，追蹤仍穩；省下 80% 偵測算力'], ['信心門檻', '0.1 以上都輸出', '低分框交給 ByteTrack 第二輪匹配（被遮擋的人分數會偏低）'], ['最小人高', '人框高 < 40 像素不送後續步驟', '太小的人形任何線索都抽不出來，只會增加錯誤'], ['空場跳過', '連續 10 秒沒人時降到 1 fps', '營區多數時段畫面裡沒人']],
+      pass: ['人工標註 300 幀營區畫面：人框高 ≥ 64 像素的召回率 ≥ 95%（建議值）', 'CPU 每幀耗時實測後，回填第 3 章算力試算'],
+      later: '伺服器只有 CPU 且太慢時改 NanoDet；召回不足時用營區標註微調。', not: 'Ultralytics 系列（AGPL）。' },
+    table: { use: 'YOLOX-S（研究期並用 YOLOv7）', lic: 'Apache-2.0', have: '部分已有', cost: '主要算力瓶頸之一' }
   },
 
-  /* ------------------------------------------------ 2 追蹤 */
+  /* ================================================ 2 追蹤 */
   { id: 2, n: '單相機追蹤成片段',
-    q: '把同一台攝影機裡同一個人連續的框串成一段「片段」。後面的所有比對都以片段為單位，所以片段若混到兩個人，錯誤會一路傳下去。',
-    pick: '同制服的人交錯時會不會換錯人（ID 交換）、CPU 負擔、授權。',
+    q: '把同一台攝影機裡同一個人連續的框串成一段「片段」。後面的所有比對都以片段為單位，所以片段若混到兩個人，錯誤會一路傳下去——這是同制服情境最容易被忽略的源頭錯誤。',
+    pick: '同制服的人交錯時會不會換錯人（ID 交換）、被遮擋後會不會斷成好幾段、CPU 負擔、授權。',
+    routes: [
+      { n: '純運動追蹤（SORT、ByteTrack、OC-SORT）', how: '只用框的位置與運動預測（卡爾曼濾波）做匹配。', pro: '不受外觀影響、幾乎不耗算力', con: '兩人交錯後改變方向時可能換錯', pick: true },
+      { n: '運動＋外觀（DeepSORT、BoT-SORT）', how: '匹配時再加上外觀 ReID 特徵的距離。', pro: '一般場景下 ID 交換較少', con: '同制服時外觀幾乎一樣，幫助有限，還多一個模型', pick: false },
+      { n: '偵測與追蹤一起學（JDE、FairMOT）', how: '同一個網路同時輸出框與追蹤用特徵。', pro: '一次運算', con: '需要追蹤標註重新訓練；同樣依賴外觀', pick: false }
+    ],
     groups: [{ cards: [
-      { m: 'ByteTrack', tag: 'use', idea: '只用位置與運動（卡爾曼濾波），把高分與低分偵測框分兩輪匹配，被遮擋時不容易斷。',
-        fit: '不靠外觀，所以不受同制服影響；CPU 負擔可忽略；MIT 授權。',
-        impl: { code: 'github.com/ifzhang/ByteTrack（用原倉庫，不用 BoxMOT）', w: '追蹤本身不需權重；倉庫附偵測器權重', input: '每幀偵測框與分數', env: 'Python；有 ONNX／TensorRT／ncnn 部署範例', first: '在 5 人以內交錯行走的影片上，人工數 ID 交換次數', note: 'MOT17：HOTA 63.1、IDF1 77.3；兩人交錯後走向改變時仍可能換錯' } },
-      { m: 'OC-SORT', tag: 'try', idea: '用觀測修正卡爾曼預測，轉彎、停走等非線性運動較穩。',
-        fit: 'ByteTrack 在轉彎、停下又走時常斷，再換它比較。',
-        impl: { code: 'github.com/noahcao/OC_SORT', w: '不需權重', input: '偵測框', env: 'Python', first: '與 ByteTrack 在同一批影片比 ID 交換與斷段次數', note: '授權本次未確認（待確認）' } },
-      { m: 'BoT-SORT', tag: 'skip', idea: '在追蹤中加入外觀 ReID 與相機運動補償。',
-        fit: '營區攝影機固定，相機運動補償無益；同制服下外觀幫助有限，反而增加算力。',
-        impl: { code: 'github.com/NirAharon/BoT-SORT', w: '需 ReID 權重', input: '偵測框＋影像', env: 'Python', first: '—', note: '授權待確認' } },
+      { m: 'ByteTrack', tag: 'use', idea: '只用位置與運動，把高分與低分偵測框分兩輪匹配，被遮擋時不容易斷。',
+        how: { in: '每幀的偵測框與信心分數', proc: '① 卡爾曼濾波預測每條軌跡下一幀的位置 → ② 高分框（≥ 0.5）與軌跡依框重疊度（IoU）做匈牙利匹配 → ③ 剩下的軌跡再和低分框（0.1–0.5）匹配，撿回被遮擋、分數偏低的人 → ④ 沒配到的高分框開新軌跡；暫時消失的軌跡保留一段時間等它回來', train: '不需訓練（偵測器另外訓練）', out: '每個框的軌跡 ID → 串成片段', key: '一般追蹤器直接丟掉低分框；ByteTrack 把它們留給第二輪，所以遮擋時不容易斷' },
+        us: { ang: ['g', '固定攝影機、人走路速度穩定，運動模型很準'], cloth: ['g', '完全不看外觀，與服裝無關'], grp: ['m', '5 人交錯時，若交錯後改變方向就可能換錯 → 需搭配片段淨化'], cpu: ['g', '可忽略'], lic: ['g', 'MIT'] },
+        impl: { code: 'github.com/ifzhang/ByteTrack（用原倉庫，不用 BoxMOT）', w: '追蹤本身不需權重', input: '每幀偵測框與分數', env: 'Python；有 ONNX／TensorRT／ncnn 部署範例', first: '在 5 人以內交錯行走的影片上，人工數 ID 交換與斷段次數', note: 'MOT17：HOTA 63.1、IDF1 77.3' } },
       { x: { n: '片段淨化（自行實作）', v: '工程做法', res: '本專案自建評估', cost: '低', lic: 'ok', url: '' }, tag: 'use',
-        idea: '在片段內檢查位置跳動、外觀突變與身高突變，在疑似換錯人的地方把片段切開。',
-        fit: '同制服的人交錯時，追蹤器最容易換錯人；這是整條流程的源頭錯誤，便宜就能先防。',
-        impl: { code: '自行實作', w: '—', input: '片段內逐幀的框、外觀特徵、估計身高', env: 'Python／NumPy', first: '人工標出交錯片段，量「該切的有沒有切、不該切的有沒有誤切」', note: '屬合理推論的做法，沒有直接對應的論文數字' } }
+        idea: '在片段內偵測「換了一個人」的跡象，在那裡把片段切開。',
+        how: { in: '片段內逐幀的框、身高估計、外觀特徵（第 3 步算的）', proc: '在片段上滑動兩個相鄰時間窗，比較前後窗的平均外觀距離、身高中位數、框的位置連續性；任一項突變超過門檻就切開', train: '不需訓練；門檻用人工標註的交錯片段調', out: '更短、但每段都只有一個人的片段', key: '寧可多切（之後分群會再接回來），也不要讓一段片段混兩個人' },
+        us: { ang: ['g', '與俯角無關'], cloth: ['m', '同一片段內不會換裝，外觀突變就是換人的訊號'], grp: ['g', '專門處理交錯換錯人'], cpu: ['g', '只用已算好的特徵'], lic: ['g', '自行實作'] },
+        impl: { code: '自行實作', w: '—', input: '片段內逐幀特徵與框', env: 'Python／NumPy', first: '人工標出 50 段交錯片段，量「該切的有沒有切」與「不該切的有沒有誤切」', note: '屬合理推論的做法，沒有直接對應的論文數字' } },
+      { m: 'OC-SORT', tag: 'try', idea: '用觀測修正卡爾曼預測，轉彎、停走等非線性運動較穩。',
+        how: { in: '偵測框', proc: '軌跡重新被看到時，用前後觀測補一段虛擬軌跡重新校正卡爾曼濾波；匹配成本加入運動方向一致性', train: '不需訓練', out: '軌跡 ID', key: '比 ByteTrack 更能處理「停下來又走」「突然轉彎」' },
+        us: { ang: ['g', '同 ByteTrack'], cloth: ['g', '不看外觀'], grp: ['m', '方向一致性有助於交錯後不換錯'], cpu: ['g', '單 CPU 超過 700 FPS（不含偵測）'], lic: ['m', '授權本次未確認'] },
+        impl: { code: 'github.com/noahcao/OC_SORT', w: '不需權重', input: '偵測框', env: 'Python', first: 'ByteTrack 斷段太多時，在同一批影片比較', note: '授權待確認' } },
+      { m: 'BoT-SORT', tag: 'skip', idea: '在追蹤中加入外觀 ReID 與相機運動補償。', fit: '營區攝影機固定，相機運動補償無益；同制服時外觀幫助有限，還多一個模型的算力。' }
     ] }],
-    choice: { v1: 'ByteTrack（原倉庫）＋片段淨化；把「ID 交換率」當成系統的第一個量測指標。', later: '斷段太多時試 OC-SORT。', not: 'BoT-SORT（固定相機用不到它的優勢）。' },
+    choice: { v1: 'ByteTrack（原倉庫）＋片段淨化。',
+      cfg: [['高分門檻', '0.5（ByteTrack 預設）', '第一輪只用可信的框'], ['低分門檻', '0.1', '第二輪撿回被遮擋的人'], ['匹配門檻', 'IoU 0.8（預設）', '5 fps 下相鄰幀框位移小，維持預設'], ['軌跡保留', '2 秒（5 fps 下 10 幀）', '短暫遮擋後接回；太長會把不同人接在一起'], ['最短片段', '< 1 秒（5 幀）標為低信心', '太短的片段算不出穩定特徵，先不參與分群'], ['淨化門檻', '用標註的交錯片段調', '目標是寧可多切']],
+      pass: ['在 5 人以內交錯的影片上量出「每 100 次交錯的 ID 交換次數」，作為系統第一個指標', '淨化後，混到兩人的片段比例 < 2%（建議值）'],
+      later: '斷段太多時試 OC-SORT。', not: 'BoT-SORT、DeepSORT（同制服下外觀幫助小，又多算力）。' },
     table: { use: 'ByteTrack＋片段淨化', lic: 'MIT／自行實作', have: '新增', cost: '可忽略' }
   },
 
-  /* ------------------------------------------------ 3 線索 */
+  /* ================================================ 3 線索 */
   { id: 3, n: '身分線索特徵',
-    q: '從每段片段算出代表這個人的「特徵」。本專案的難點：同服裝時要分得開不同人（同制服），換裝後要連得起同一人（換衣）。沒有一種線索兩者都做得好，所以要分線索來看。',
-    pick: '在路邊監視器俯角下還能不能用、換裝後還在不在、授權是否允許軍用、弱伺服器跑不跑得動。',
+    q: '從每段片段算出代表這個人的「特徵」。本專案的難點：同服裝時要分得開不同人（同制服），換裝後要連得起同一人（換衣）。沒有一種線索兩者都做得好，所以分線索各選一個，再交給第 4 步融合。',
+    pick: '在路邊監視器俯角下還能不能用、換裝後還在不在、5 人交錯遮擋時穩不穩、CPU 跑不跑得動、授權是否允許軍用。',
+    routes: [
+      { n: '外觀 ReID', how: '看整個人的長相（含衣服）。', pro: '最成熟、單張就能算、同一套服裝內很有用', con: '換裝後失效；同制服時只剩細節', pick: true },
+      { n: '去衣服化（換衣 ReID）', how: '訓練時刻意讓特徵「猜不出衣服」。', pro: '直接處理換裝', con: '需要同一人多套服裝的訓練資料', pick: true },
+      { n: '步態', how: '看走路的方式：剪影序列、骨架序列或直接用 RGB。', pro: '與衣服顏色無關，換裝後仍有效', con: '要連續走一段；俯角越大越差；需要較高幀率', pick: true },
+      { n: '臉', how: '對齊後的臉部特徵。', pro: '最強的身分資訊，換裝後仍有效', con: '路邊監視器多半拍不清，只能用在近距點位', pick: true },
+      { n: '體型與身高', how: '由幾何或 3D 擬合估身體尺寸。', pro: '跨日、跨服裝穩定', con: '誤差與人和人的差距相當，只能當弱證據', pick: true }
+    ],
     groups: [
-      { key: 'app', n: '3A 外觀 ReID', lead: '看整個人的長相。只在「同一套服裝之內」可靠（例如同一天、沒換裝的路段）；用營區同制服資料微調後，能學到鞋、配件、體型等細節。換裝後失效。', cards: [
+      { key: 'app', n: '3A 外觀 ReID', lead: '只在「同一套服裝之內」可靠（例如同一天、沒換裝的路段）；用營區同制服資料微調後，能學到鞋、配件、體型等細節。換裝後失效，不能用來跨服裝連結。', cards: [
+        { m: 'SOLIDER Swin-S', tag: 'use', idea: '在 400 萬張無標註行人圖上自監督預訓練，並可調整「外觀 vs 人體結構」的比重。',
+          how: { in: '256×128 人形裁切', proc: 'Swin Transformer 骨幹（以視窗為單位的注意力）；額外輸入一個「語意控制值 λ」，λ 小偏重外觀紋理、λ 大偏重人體結構', train: '預訓練：DINO 式自蒸餾＋由人體先驗產生的部位偽標籤（LUPerson，無標註）；下游微調：ID 分類損失＋三元組損失，ReID 建議 λ = 0–0.2', out: '人物嵌入向量', key: '其他骨幹只學「長相」；SOLIDER 能用 λ 調高人體結構的比重——同制服時可以實驗把 λ 調高' },
+          us: { ang: ['m', '預訓練資料多為街景俯拍，路邊俯角可接受；需在營區資料微調'], cloth: ['b', '換裝後失效（所有外觀方法都一樣）'], grp: ['m', '被遮擋的幀特徵會變差 → 片段聚合時依品質降權'], cpu: ['m', 'Swin-S 約 50M 參數，夜間批次處理可接受；太慢就蒸餾到 OSNet'], lic: ['g', 'MIT'] },
+          impl: { code: 'github.com/tinyvision/SOLIDER-REID', w: '官方提供 Swin-T／S／B 預訓練與 ReID 權重', input: '256×128', env: '官方環境 PyTorch 1.7.1；現有 1.11 預期可跑，需實測', first: '在辦公室同制服資料上：零樣本 → 微調，各試 λ = 0.2 與 0.5，和 CLIP-ReID 比跨日 mAP（E2）', note: 'MSMT17 mAP 76.9；Swin-B 版 77.1' } },
         { m: 'CLIP-ReID ViT-B/16', tag: 'base', idea: '兩階段：先為每個人學一組文字 token，再用它監督影像編碼器微調；推論時只用影像。',
-          fit: '你們現有的工具，當所有外觀實驗的對照基準。',
-          impl: { code: 'github.com/Syliz517/CLIP-ReID', w: '官方提供 Market／MSMT17 等權重（以倉庫說明為準）', input: '256×128 人形裁切', env: '官方需求 PyTorch 1.8.0＋CUDA 10.2；與現有 1.11 差距不大，需自行確認', first: '在辦公室同制服資料上零樣本測試，分開報同日與跨日成績（E1）', note: 'MIT；CLIP 預訓練權重授權另查' } },
-        { m: 'BoT（BagTricks）R50', tag: 'base', idea: 'ResNet-50 加一組訓練技巧的經典強基準。',
-          fit: '你們已有，保留為回歸基準：新方法至少要贏它。',
-          impl: { code: 'github.com/michuanhaohao/reid-strong-baseline', w: '已有', input: '256×128', env: '已在現有環境', first: '與 CLIP-ReID 一起跑 E1', note: '—' } },
-        { m: 'PersonViT ViT-S/16', tag: 'use', idea: '遮罩影像建模加對比學習，先在 400 萬張無標註行人圖（LUPerson）上預訓練。',
-          fit: '弱算力下最划算的起點；Apache-2.0。',
-          impl: { code: 'github.com/hustvl/PersonViT', w: '待確認（以倉庫說明為準）', input: '256×128', env: '官方環境未列（待確認）', first: '零樣本與微調兩種，和 CLIP-ReID 比跨日 mAP 與每張推論時間（E2）', note: 'ViT-B/16 版 MSMT17 mAP 80.8，是本次查到最高的現成骨幹' } },
-        { m: 'SOLIDER Swin-S', tag: 'use', idea: '自蒸餾預訓練，加一個「語意控制器」調整外觀與人體語意的比重（ReID 建議 λ 0–0.2）。',
-          fit: '與 PersonViT 並列首選；MIT 授權。',
-          impl: { code: 'github.com/tinyvision/SOLIDER-REID', w: '官方提供', input: '256×128', env: '官方環境 PyTorch 1.7.1；現有 1.11 預期可跑，需實測', first: '與 PersonViT 一起跑 E2', note: 'Swin-B 版 mAP 77.1' } },
-        { m: 'OSNet x1.0', tag: 'try', idea: '多尺度輕量網路，只有 2.2M 參數。',
-          fit: '若 ViT 太慢，當蒸餾的學生模型（教師用 PersonViT 或 CLIP-ReID）。',
-          impl: { code: 'github.com/KaiyangZhou/deep-person-reid（torchreid）', w: 'model zoo 提供', input: '256×128', env: 'PyTorch', first: '只在推論速度不夠時評估', note: 'torchreid 授權本次未查（待確認）；FastReID（Apache-2.0）也有 OSNet 與蒸餾工具' } },
-        { m: 'TF-CLIP', tag: 'try', idea: '以 CLIP 為基礎的影片（片段）層級 ReID，整合多幀資訊。',
-          fit: '你們在 CLIP 生態，想從單張升級到片段層級時最順手。',
-          impl: { code: '待確認', w: '待確認', input: '片段（多幀）', env: '待確認', first: '單張版本穩定後再試', note: '授權未確認' } },
-        { m: 'TransReID', tag: 'ref', idea: 'ViT 加「相機／視角嵌入」，顯式學習攝影機造成的偏差。',
-          fit: '相機嵌入的概念值得借用；骨幹本身已被自監督預訓練超越。',
-          impl: { code: 'github.com/damo-cv/TransReID', w: '官方提供', input: '256×128＋相機 ID', env: 'PyTorch', first: '—', note: 'MIT' } },
-        { m: 'Instruct-ReID', tag: 'skip', idea: '用文字指令調整要比對的屬性。',
-          fit: '資料限非商業研究，不適合當正式骨幹。',
-          impl: { code: '見論文', w: '—', input: '影像＋文字', env: '—', first: '—', note: '資料授權為非商業' } }
+          how: { in: '256×128 人形裁切', proc: 'CLIP 的 ViT-B/16 影像編碼器', train: '階段一：凍結影像與文字編碼器，只學每個 ID 的可學文字 token，做圖文對比；階段二：固定這些文字特徵，用 ID 損失、三元組損失、圖→文交叉熵微調影像編碼器', out: '視覺嵌入向量', key: '借用 CLIP 大規模預訓練的泛化能力；但「文字監督」不等於「衣服不變性」' },
+          us: { ang: ['m', '需微調'], cloth: ['b', '換裝後失效'], grp: ['m', '同 SOLIDER'], cpu: ['m', 'ViT-B 約 86M 參數'], lic: ['g', 'MIT；CLIP 權重授權另查'] },
+          impl: { code: 'github.com/Syliz517/CLIP-ReID', w: '官方提供 Market／MSMT17 等權重（以倉庫說明為準）', input: '256×128', env: '官方需求 PyTorch 1.8.0＋CUDA 10.2', first: '在辦公室同制服資料上零樣本測試，分開報同日與跨日成績（E1）', note: '你們現有的工具，當所有外觀實驗的對照' } },
+        { m: 'PersonViT ViT-S/16', tag: 'try', idea: '遮罩影像建模加對比學習的行人預訓練，ViT-S 版比 Swin-S 輕。',
+          how: { in: '256×128', proc: 'ViT-S/16（約 22M 參數）', train: '預訓練：遮住部分影像塊再重建（MIM）＋判別式對比學習（LUPerson）；下游：ID＋三元組損失', out: '嵌入向量', key: '同為自監督行人預訓練，模型更小；ViT-B 版是本次查到 MSMT17 最高（80.8）' },
+          us: { ang: ['m', '同 SOLIDER'], cloth: ['b', '換裝後失效'], grp: ['m', '同 SOLIDER'], cpu: ['g', '比 Swin-S 小約一半'], lic: ['g', 'Apache-2.0'] },
+          impl: { code: 'github.com/hustvl/PersonViT', w: '待確認（以倉庫說明為準）', input: '256×128', env: '官方環境未列（待確認）', first: 'SOLIDER 太慢時，跑同一組 E2 實驗比較', note: 'ViT-S/16 MSMT17 mAP 74.3' } },
+        { m: 'OSNet x1.0', tag: 'try', idea: '多尺度輕量網路，只有 2.2M 參數，適合當蒸餾的學生。',
+          how: { in: '256×128', proc: '每個殘差區塊內有多條不同感受野的分支，以「統一聚合閘門」依輸入動態加權', train: 'ID＋三元組損失；或以 SOLIDER 為教師做知識蒸餾', out: '512 維嵌入', key: '參數只有 SOLIDER 的 1/20' },
+          us: { ang: ['m', '需微調'], cloth: ['b', '換裝後失效'], grp: ['m', '—'], cpu: ['g', '0.98 GFLOPs，CPU 很快'], lic: ['m', 'torchreid 授權本次未查；FastReID（Apache-2.0）也有 OSNet'] },
+          impl: { code: 'torchreid 或 FastReID（含蒸餾工具 FastDistill）', w: 'model zoo 提供', input: '256×128', env: 'PyTorch', first: '只在推論速度不夠時，以 SOLIDER 為教師蒸餾', note: 'MSMT17 mAP 52.9（未蒸餾）' } },
+        { m: 'TransReID', tag: 'ref', idea: 'ViT 加「相機／視角嵌入」，顯式學習攝影機造成的偏差。', fit: '相機嵌入的概念值得借用；骨幹本身已被自監督預訓練超越。' },
+        { m: 'BoT（BagTricks）R50', tag: 'ref', idea: 'ResNet-50 加一組訓練技巧的經典強基準。', fit: '你們已有，保留為回歸基準：新方法至少要贏它。' },
+        { m: 'Instruct-ReID', tag: 'skip', idea: '用文字指令調整要比對的屬性。', fit: '資料限非商業研究，不適合當正式骨幹。' }
       ], chart: 'ch-msmt' },
-      { key: 'cc', n: '3B 換裝（換衣 ReID）', lead: '讓同一人換了衣服，特徵仍然一樣。本專案同一天內會換裝，這類方法處理的正是「連得起換了裝的同一人」那一半，但需要「同一人穿多套服裝」的訓練資料。', cards: [
+      { key: 'cc', n: '3B 換裝（去衣服化）', lead: '讓同一人換了衣服，特徵仍然一樣。本專案同一天內會換裝，這類方法處理的正是「連得起換了裝的同一人」那一半，但前提是有「同一人穿多套服裝」的訓練資料——要在營區自己收。', cards: [
         { m: 'CAL', tag: 'use', idea: '另訓一個衣服分類器，再逼主模型的特徵讓它猜不出衣服（對抗損失）；只用 RGB。',
-          fit: '授權乾淨、ResNet-50 級可部署，作為換裝實驗（E10）的基準方法。',
-          impl: { code: 'github.com/guxinqian/Simple-CCReID', w: '待確認', input: 'RGB 人形裁切＋衣服標籤（同一人多套服裝）', env: 'PyTorch', first: '用自建資料（含迷彩、運動服、冬季外套）訓練，量換裝連結率', note: 'Apache-2.0；全員同服時對「分開不同人」幫助有限' } },
-        { m: 'CLIP3DReID', tag: 'try', idea: '訓練時用 3D 體型與 CLIP 文字監督，讓特徵偏向體型而非衣服；推論只需 R50。',
-          fit: '最貼近「看體型、不看衣服」；也是 BRIAR 系統的體型模組。',
-          impl: { code: '待確認', w: '待確認', input: '單張 RGB', env: '待確認', first: '找到程式碼後與 CAL 比換裝連結率', note: 'CCVID R1 84.5' } },
-        { m: '3DInvarReID', tag: 'ref', idea: '重建 3D 穿衣人體，拆掉衣服與姿態，只留體型。',
-          fit: '單用不如 CAL，與 CAL 融合有加成；訓練複雜，暫作參考。',
-          impl: { code: '見論文', w: '—', input: 'RGB（訓練需 3D）', env: '—', first: '—', note: '單用 R1 70.2，與 CAL 融合 84.3' } },
-        { m: 'AIM', tag: 'ref', idea: '以因果推論去除衣服的干擾。', fit: '只小幅勝過 CAL，不值得多花成本。',
-          impl: { code: '見論文', w: '—', input: 'RGB', env: '—', first: '—', note: '—' } },
-        { m: 'CCAF', tag: 'skip', idea: '結合人體解析與 CLIP 的換衣方法。', fit: '數字最高但沒有釋出程式碼。',
-          impl: { code: '無', w: '—', input: 'RGB＋人體解析', env: '—', first: '—', note: '—' } }
+          how: { in: 'RGB 人形裁切＋每張圖的衣服標籤（例如「A 的迷彩服」「A 的運動服」）', proc: 'ResNet-50 骨幹 → 嵌入；旁邊掛一個衣服分類器', train: '交替進行：① 訓練衣服分類器從特徵猜出衣服；② 訓練骨幹時加上「衣服對抗損失」，懲罰特徵能分辨同一人的不同衣服——逼特徵只留下與衣服無關的資訊', out: '2048 維「去衣服化」嵌入', key: '不需要額外的輪廓或 3D 模型，推論成本和一般 ReID 一樣' },
+          us: { ang: ['m', '需在營區資料上訓練'], cloth: ['g', '專門處理換裝；但只對訓練時見過的換裝型態有效'], grp: ['m', '—'], cpu: ['g', 'ResNet-50 級'], lic: ['g', 'Apache-2.0'] },
+          impl: { code: 'github.com/guxinqian/Simple-CCReID', w: '待確認', input: 'RGB＋衣服標籤', env: 'PyTorch', first: '用自建資料（同一人迷彩服、鋼盔、冬季外套、運動服）訓練，量換裝連結率（E10）', note: 'PRCC 換衣 R1 55.2；真實跨日（MEVID）只有 3.5——別期待太高' } },
+        { m: 'CLIP3DReID', tag: 'try', idea: '訓練時用 3D 體型與 CLIP 文字描述雙重監督，讓特徵偏向體型而非衣服；推論只需 ResNet-50。',
+          how: { in: '單張 RGB', proc: '教師：CLIP＋3D 人體（SMPL）體型參數；學生：ResNet-50', train: '以文字描述（體型、性別等不隨衣服變的屬性）與 3D 體型雙重引導，把知識蒸餾到學生', out: '偏向體型的嵌入', key: '比 CAL 更明確地「看體型」；也是 BRIAR 系統的體型模組' },
+          us: { ang: ['m', '3D 體型估計在俯角下誤差會變大'], cloth: ['g', '設計目標就是不看衣服'], grp: ['m', '—'], cpu: ['g', '推論只需 R50'], lic: ['m', '程式碼與授權待確認'] },
+          impl: { code: '待確認', w: '待確認', input: '單張 RGB', env: '待確認', first: '找到程式碼後，與 CAL 比換裝連結率', note: 'CCVID R1 84.5' } },
+        { m: '3DInvarReID', tag: 'ref', idea: '重建 3D 穿衣人體，拆掉衣服與姿態，只留體型。', fit: '單用（R1 70.2）不如 CAL，與 CAL 融合可到 84.3；訓練複雜，暫作參考。' },
+        { m: 'AIM', tag: 'ref', idea: '以因果推論去除衣服的干擾。', fit: '只小幅勝過 CAL，不值得多花成本。' },
+        { m: 'CCAF', tag: 'skip', idea: '結合人體解析與 CLIP 的換衣方法。', fit: '數字最高，但沒有釋出程式碼。' }
       ], chart: 'ch-mevid' },
-      { key: 'gait', n: '3C 步態', lead: '看走路的方式，不受衣服顏色影響，換裝後仍有效。限制：要連續走一段（約一個步態週期以上）、俯角越大越差、跑步和走路不同。', cards: [
-        { m: 'DeepGaitV2-P3D', tag: 'use', idea: '輸入黑白剪影序列（64×44），以偽 3D 卷積學步態的時空特徵。',
-          fit: '精度與算力的平衡點，建議的第一個步態模組。',
-          impl: { code: 'github.com/ShiqiYu/OpenGait', w: 'Hugging Face：opengait/OpenGait', input: '64×44 剪影序列（需前端人形分割）', env: 'PyTorch', first: '零樣本跑在路邊俯角影片，量「至少要幾幀才有用」（E5）', note: '僅限學術：正式系統需取得授權或自行重新實作；低角度訓練換到高角度測試時 Rank-1 掉到約 26%，要微調' } },
-        { m: 'GaitBase', tag: 'base', idea: 'OpenGait 的簡單強基線（ResNet9，每幀約 1.18 GFLOPs）。',
-          fit: '步態實驗的對照基準。',
-          impl: { code: 'github.com/ShiqiYu/OpenGait', w: 'Hugging Face', input: '64×44 剪影', env: 'PyTorch', first: '與 DeepGaitV2 一起跑', note: '僅限學術' } },
-        { m: 'SkeletonGait++', tag: 'try', idea: '剪影加上骨架熱圖兩路輸入。',
-          fit: '表中最高，但需要分割與姿態估計兩個上游模型，算力加倍。',
-          impl: { code: 'OpenGait', w: 'Hugging Face', input: '剪影＋骨架圖', env: 'PyTorch', first: '單一剪影模型穩定後再試', note: '僅限學術' } },
-        { m: 'GPGait', tag: 'try', idea: '只用骨架座標，先把姿態轉成統一表示，強在跨資料集泛化。',
-          fit: '剪影品質差（遮擋、背景雜）時的備案；正規化會拿掉身高資訊。',
-          impl: { code: '見論文', w: '待確認', input: '關節點序列（17 點）', env: '待確認', first: '剪影失敗的場景再試', note: '授權待確認' } },
+      { key: 'gait', n: '3C 步態', lead: '看走路的方式，不受衣服顏色影響，換裝後仍有效。限制：要連續走一段（約一個步態週期以上）、俯角越大越差、跑步和走路不同，而且需要比偵測更高的幀率。', cards: [
+        { m: 'DeepGaitV2-P3D', tag: 'use', idea: '輸入黑白剪影序列，用「偽 3D」卷積同時學身形與動作。',
+          how: { in: '同一片段連續 30 幀左右的 64×44 黑白剪影（需先做人形分割）', proc: '較深的殘差網路，卷積拆成「2D 空間＋1D 時間」（偽 3D）以省算力 → 時間最大池化 → 水平切成多條帶各自池化', train: '三元組損失＋ID 分類損失；OpenGait 提供在 Gait3D／GREW 訓練的權重', out: '多條水平帶串接的步態嵌入', key: '比 GaitBase 深、多了時間卷積；在野外資料上精度與算力最平衡' },
+          us: { ang: ['b', '俯角越大剪影越短越扭曲：低角度訓練→高角度測試掉到約 26%，必須用營區俯角資料微調'], cloth: ['m', '換裝後顏色無關，但冬季外套、鋼盔會改變剪影輪廓'], grp: ['m', '5 人交錯時剪影互相黏在一起 → 只用沒被遮擋的幀'], cpu: ['m', '模型 2.9 GFLOPs 不大，但前端人形分割另需算力'], lic: ['b', '僅限學術：正式系統需取得授權或自行重新實作'] },
+          impl: { code: 'github.com/ShiqiYu/OpenGait', w: 'Hugging Face：opengait/OpenGait', input: '64×44 剪影序列', env: 'PyTorch', first: '零樣本跑在路邊俯角影片，量「至少要幾幀才有用」，再用自建資料微調（E5）', note: 'Gait3D R1 74.4；剪影需要分割模型，本次未查到輕量分割的 CPU 數據（待確認）' } },
         { x: { n: 'RTMPose（MMPose）', v: '2023', res: 'RTMPose-m COCO AP 75.8；i7 CPU 90+ FPS', cost: '輕量', lic: 'unk', url: 'https://github.com/open-mmlab/mmpose' }, tag: 'use',
-          idea: '即時姿態估計器，輸出 17 個關節點。', fit: '骨架步態與片段淨化的上游；也能用來估身高比例。',
-          impl: { code: 'github.com/open-mmlab/mmpose', w: 'MMPose 提供（權重授權未載明）', input: '人形裁切', env: 'MMPose／ONNX', first: '在路邊俯角影片上目視檢查關節是否穩定', note: '程式碼 Apache-2.0；權重訓練資料（COCO 等）授權需自行確認' } },
-        { m: 'BigGait（ViT-S）', tag: 'skip', idea: '直接用凍結的 DINOv2 特徵，不需分割與姿態，跨域強。',
-          fit: '需要 GPU，且僅限學術；弱伺服器暫不考慮。',
-          impl: { code: 'OpenGait', w: 'Hugging Face', input: 'RGB', env: '需 GPU', first: '—', note: '30.8M 參數、12.7 GFLOPs' } }
+          idea: '即時的姿態估計器，輸出 17 個關節點。',
+          how: { in: '人形裁切（由第 1 步的框）', proc: 'CSPNeXt 骨幹 → SimCC 頭：把關節座標的 x、y 各當成一維分類問題，比傳統熱圖法省算力', train: 'COCO 關節點標註', out: '17 個關節點座標＋信心值', key: '在 CPU 上就能即時，是骨架步態、片段淨化、身高估計的共同上游' },
+          us: { ang: ['m', '俯角大時下半身關節較不準'], cloth: ['m', '冬季外套會讓肩、髖位置估偏'], grp: ['m', '框內有兩人時關節會錯配'], cpu: ['g', 'i7 CPU 90+ FPS'], lic: ['m', '程式碼 Apache-2.0；權重訓練資料授權需確認'] },
+          impl: { code: 'github.com/open-mmlab/mmpose', w: 'MMPose 提供（權重授權未載明）', input: '人形裁切', env: 'MMPose 或匯出 ONNX', first: '在路邊俯角影片上目視檢查關節是否穩定', note: '—' } },
+        { m: 'GaitBase', tag: 'base', idea: 'OpenGait 的簡單強基線。',
+          how: { in: '64×44 剪影序列', proc: '逐幀 2D 卷積（ResNet9 類）→ 時間最大池化 → 水平切帶池化', train: '三元組＋ID 損失', out: '步態嵌入', key: '每幀約 1.18 GFLOPs，最省的步態模型；當對照' },
+          us: { ang: ['b', '同 DeepGaitV2'], cloth: ['m', '同 DeepGaitV2'], grp: ['m', '同上'], cpu: ['g', '最輕'], lic: ['b', '僅限學術'] },
+          impl: { code: 'OpenGait', w: 'Hugging Face', input: '64×44 剪影', env: 'PyTorch', first: '與 DeepGaitV2 一起跑 E5', note: 'Gait3D R1 64.6' } },
+        { m: 'SkeletonGait++', tag: 'try', idea: '剪影加上骨架熱圖兩路輸入。',
+          how: { in: '剪影序列＋由關節點畫成的骨架熱圖', proc: '兩種輸入融合後送入 DeepGaitV2 類骨幹', train: '三元組＋ID 損失', out: '步態嵌入', key: '骨架補上剪影黏在一起時遺失的四肢資訊' },
+          us: { ang: ['b', '同 DeepGaitV2'], cloth: ['g', '骨架不受外套輪廓影響，比純剪影更耐換裝'], grp: ['m', '骨架可分開黏在一起的剪影'], cpu: ['b', '要同時跑分割與姿態兩個上游'], lic: ['b', '僅限學術'] },
+          impl: { code: 'OpenGait', w: 'Hugging Face', input: '剪影＋骨架圖', env: 'PyTorch', first: 'DeepGaitV2 穩定後再試', note: 'Gait3D R1 77.6（表中最高）' } },
+        { m: 'GPGait', tag: 'try', idea: '只用骨架座標，先把姿態轉成統一表示，強在跨資料集泛化。',
+          how: { in: '關節點序列（17 點）', proc: 'HOT：把骨架平移、縮放、旋轉到統一座標 → HOD：計算關節、骨段、角度描述子 → 部位感知圖卷積', train: '三元組＋ID 損失', out: '步態嵌入', key: '完全不用剪影，換資料集時掉得少；但正規化把身高資訊拿掉了' },
+          us: { ang: ['m', '不受剪影扭曲影響，但關節本身在俯角下較不準'], cloth: ['g', '最不受服裝影響'], grp: ['m', '只要關節分得開就能用'], cpu: ['g', '模型很小（不含姿態估計）'], lic: ['m', '授權待確認'] },
+          impl: { code: '見論文', w: '待確認', input: '關節點序列', env: '待確認', first: '剪影失敗的場景（背景雜、遮擋）再試', note: 'Gait3D R1 22.5、GREW 53.6' } },
+        { m: 'BigGait（ViT-S）', tag: 'skip', idea: '直接用凍結的 DINOv2 特徵，不需分割與姿態，跨域強。', fit: '需要 GPU，且僅限學術；弱伺服器暫不考慮。' }
       ], chart: 'ch-gait' },
-      { key: 'face', n: '3D 臉', lead: '最強的身分資訊，換裝後仍有效；但路邊監視器多半拍不清。只適合營門、走廊等近距點位，當作「身分錨點」。門檻：兩眼間距 ≥ 10 像素、俯角 ≤ 30°（受控實驗）。', cards: [
-        { m: 'AdaFace R100', tag: 'use', idea: '依影像品質調整訓練難度的臉部辨識，擅長低品質臉。',
-          fit: '程式碼 MIT；監視器對監視器仍只有約 35%，只在近距點位使用。',
-          impl: { code: 'github.com/mk-minchul/AdaFace', w: 'R18／R50／R100，見倉庫 Google Drive', input: '依 5 點對齊的 112×112 臉（權重註明 BGR 輸入）', env: 'PyTorch', first: '依距離與俯角分層，量營門點位有多少片段拍得到可用的臉（E4）', note: '訓練資料集（MS1MV2、WebFace 等）各有使用條款' } },
+      { key: 'face', n: '3D 臉', lead: '最強的身分資訊，換裝後仍有效；但路邊監視器多半拍不清。只適合營門、走廊等近距點位，當作「身分錨點」。受控實驗門檻：兩眼間距 ≥ 10 像素、俯角 ≤ 30°。', cards: [
+        { m: 'AdaFace R100', tag: 'use', idea: '依影像品質調整訓練難度的臉部辨識，擅長低品質的臉。',
+          how: { in: '依 5 個臉部特徵點對齊的 112×112 臉（權重註明 BGR 順序）', proc: 'IResNet-100 骨幹 → 512 維特徵', train: '「自適應邊界」損失：用特徵長度估計影像品質，清楚的臉多學難樣本、模糊的臉少學難樣本，避免被無法辨識的臉帶壞', out: '512 維臉部特徵', key: '一般臉部模型在模糊臉上會亂學；AdaFace 專門為低品質臉設計' },
+          us: { ang: ['b', '俯角 > 30° 急降；路邊監視器多半不能用'], cloth: ['g', '與服裝無關；但鋼盔帽簷會遮住上半臉'], grp: ['m', '近距點位排隊時臉會被前面的人擋住'], cpu: ['m', '只算近距點位的臉，量不大；R50 版更省'], lic: ['m', '程式碼 MIT；訓練資料集各有條款'] },
+          impl: { code: 'github.com/mk-minchul/AdaFace', w: 'R18／R50／R100，見倉庫 Google Drive', input: '112×112 對齊臉', env: 'PyTorch', first: '依距離與俯角分層，量營門點位有多少片段拍得到可用的臉（E4）', note: '監視器對監視器 Rank-1 只有約 35%（IJB-S）' } },
         { m: 'MagFace', tag: 'use', idea: '特徵向量的長度就代表臉的品質。',
-          fit: '幾乎零成本的臉部品質估計，用來決定「這張臉信不信」。',
-          impl: { code: '見官方倉庫', w: '官方提供', input: '112×112', env: 'PyTorch', first: '與 AdaFace 搭配，品質低的臉直接不參與', note: 'Apache-2.0' } },
-        { m: 'SCRFD-2.5GF', tag: 'try', idea: '擅長小臉的臉部偵測器。',
-          fit: '偵測效果好，但 InsightFace 權重限非商業研究。',
-          impl: { code: 'github.com/deepinsight/insightface', w: '非商業授權', input: '整張影像', env: 'PyTorch／ONNX', first: '研究期可用，正式系統需換授權乾淨的偵測器或自行訓練', note: '「非商業」是否涵蓋政府內部使用不明確' } },
-        { m: 'MobileFaceNet', tag: 'try', idea: '不到 1M 參數的輕量臉部特徵。',
-          fit: '算力不夠時的備案。', impl: { code: '見論文', w: '待確認', input: '112×112', env: '—', first: '—', note: '—' } },
-        { m: 'CR-FIQA', tag: 'skip', idea: '學習式的臉部品質評估。', fit: 'CC BY-NC 4.0（非商用），用 MagFace 替代。',
-          impl: { code: 'github.com/fdbtrs/CR-FIQA', w: '非商用', input: '對齊臉', env: '—', first: '—', note: '—' } }
+          how: { in: '112×112 對齊臉', proc: 'IResNet 骨幹', train: '「長度感知邊界」損失，讓特徵長度與臉的可辨識度成正比', out: '512 維特徵＋品質分數（特徵長度）', key: '不用另外訓練品質模型，幾乎零成本' },
+          us: { ang: ['g', '正好用來判斷俯角下的臉能不能信'], cloth: ['g', '與服裝無關'], grp: ['g', '被擋住的臉品質分數會低，自動不採用'], cpu: ['g', '與辨識共用一次運算'], lic: ['g', 'Apache-2.0'] },
+          impl: { code: '見官方倉庫', w: '官方提供', input: '112×112', env: 'PyTorch', first: '與 AdaFace 搭配：品質低於門檻的臉不參與比對', note: '—' } },
+        { m: 'SCRFD-2.5GF', tag: 'try', idea: '擅長小臉的臉部偵測器，同時輸出 5 個對齊用特徵點。',
+          how: { in: '整張畫面或人框上半部', proc: '以神經架構搜尋調整過的輕量骨幹與偵測頭', train: 'WIDER FACE', out: '臉框＋5 個特徵點', key: '小臉偵測準，對齊點可直接給 AdaFace' },
+          us: { ang: ['m', '俯角大時偵測到的多是頭頂'], cloth: ['m', '鋼盔帽簷遮臉'], grp: ['m', '—'], cpu: ['g', '2.5 GFLOPs'], lic: ['b', 'InsightFace 權重限非商業研究'] },
+          impl: { code: 'github.com/deepinsight/insightface', w: '非商業授權', input: '畫面', env: 'PyTorch／ONNX', first: '研究期可用，正式系統需換授權乾淨的偵測器或自行訓練', note: '「非商業」是否涵蓋政府內部使用不明確' } },
+        { m: 'MobileFaceNet', tag: 'ref', idea: '不到 1M 參數的輕量臉部特徵。', fit: '近距點位的臉很多、算力不夠時的備案。' },
+        { m: 'CR-FIQA', tag: 'skip', idea: '學習式的臉部品質評估。', fit: 'CC BY-NC 4.0（非商用），用 MagFace 替代。' }
       ] },
-      { key: 'body', n: '3E 體型與身高', lead: '身高與身體比例不隨衣服改變，但單目估計誤差約 4–9 cm，和人與人之間的差距差不多，只能當弱證據（篩候選、剔除不可能）。冬季外套、鋼盔會讓估計偏大。', cards: [
+      { key: 'body', n: '3E 體型與身高', lead: '身高與身體比例不隨衣服改變，但單目估計誤差約 4–9 cm，和人與人之間的差距差不多，只能當弱證據：篩掉不可能的候選，不能單獨決定身分。', cards: [
         { x: { n: '單目身高估計（自行實作）', v: '幾何方法', res: '單目誤差約 4–9 cm（文獻）', cost: '極低', lic: 'ok', url: '' }, tag: 'use',
-          idea: '由腳點與頭頂在畫面上的位置，配合攝影機架高與俯角算出身高；可用行人本身自動標定攝影機。',
-          fit: '成本極低、跨日穩定，作為弱先驗。',
-          impl: { code: '自行實作（OpenCV）', w: '—', input: '腳點、頭頂點、攝影機參數或自動標定', env: 'Python／OpenCV', first: '請已知身高的人員走過各攝影機，量誤差', note: '戴鋼盔時頭頂偏高；接近垂直的俯角幾乎不能用' } },
-        { m: 'BPBreID', tag: 'skip', idea: '分部位比對，只比雙方都看得到的部位（處理遮擋）。',
-          fit: 'Hippocratic 授權含軍事限制模組；作者也自承不同人可能有相同局部外觀。',
-          impl: { code: 'github.com/VlSomers/bpbreid', w: '—', input: 'RGB（訓練需人體解析）', env: '—', first: '—', note: '授權須法務審查' } },
-        { m: 'KPR', tag: 'skip', idea: '以關鍵點提示處理「一個框裡有多人」的遮擋。',
-          fit: '只有出入口人群遮擋才需要；授權（Hippocratic）與算力雙重風險。',
-          impl: { code: '見論文', w: '—', input: 'RGB＋關鍵點', env: '—', first: '—', note: '授權須法務審查' } }
+          idea: '由腳點與頭頂在畫面上的位置，配合攝影機架高與俯角算出身高。',
+          how: { in: '片段內每幀的腳點與頭頂點（來自框或 RTMPose 關節）＋攝影機架高、俯角', proc: '針孔相機模型：已知攝影機高度與俯角時，畫面上腳點的列位置決定距離，頭頂與腳點的列差決定身高；沒有校正資料時，可用多位行人的頭腳點反推消失線與焦距', train: '不需訓練', out: '片段的身高中位數與不確定度', key: '成本極低、跨日穩定；但只有弱鑑別力' },
+          us: { ang: ['m', '俯角 ≤ 35° 時可用；接近垂直的俯角幾乎不能用'], cloth: ['m', '鋼盔讓頭頂偏高約 2–3 cm；可依偵測到的頭部配件修正'], grp: ['m', '腳被擋住時不估'], cpu: ['g', '幾乎零成本'], lic: ['g', '自行實作'] },
+          impl: { code: '自行實作（OpenCV）', w: '—', input: '頭腳點＋攝影機參數或自動標定', env: 'Python／OpenCV', first: '請已知身高的人員走過各攝影機，量誤差', note: '只在全身可見、腳點清楚的幀估計，取中位數' } },
+        { m: 'BPBreID', tag: 'skip', idea: '分部位比對，只比雙方都看得到的部位。', fit: 'Hippocratic 授權含軍事限制模組；作者也自承不同人可能有相同局部外觀。' },
+        { m: 'KPR', tag: 'skip', idea: '以關鍵點提示處理「一個框裡有多人」的遮擋。', fit: '只有出入口人群遮擋才需要；授權（Hippocratic）與算力雙重風險。' }
       ] }
     ],
-    choice: { v1: '外觀：PersonViT-S 或 SOLIDER-S（以 CLIP-ReID 對照）；步態：DeepGaitV2-P3D（研究授權）＋ RTMPose；臉：AdaFace＋MagFace，只用在近距點位；身高：弱先驗。換裝以 CAL 為基準實驗（E10）。', later: 'CLIP3DReID（換裝）、SkeletonGait++、OSNet 蒸餾。', not: 'BPBreID／KPR（授權）、BigGait（GPU）、CR-FIQA（非商用）。' },
-    table: { use: '外觀 PersonViT-S／SOLIDER-S；步態 DeepGaitV2；臉 AdaFace＋MagFace；身高', lic: 'Apache／MIT；步態僅學術', have: '外觀有基準，其餘新增', cost: '外觀低；步態需分割' }
+    choice: { v1: '外觀 SOLIDER Swin-S；換裝 CAL；步態 DeepGaitV2-P3D＋RTMPose；臉 AdaFace R100＋MagFace（只用在近距點位）；身高當弱證據。',
+      cfg: [['外觀輸入', '256×128，每段片段取品質最好的 8 幀', '逐幀全算太慢；品質由框大小、遮擋、模糊估'], ['外觀微調', '依第 4 章切分：訓練約 12 人 × 多天；同一批次內放同服裝的不同人當困難負樣本', '逼模型學鞋、配件、體型等細節'], ['SOLIDER λ', '先試 0.2（官方建議），再試 0.5', '同制服時人體結構可能比紋理有用'], ['換裝訓練', '每人至少 3 種服裝（迷彩小帽、運動服、冬季外套）的片段', 'CAL 只對見過的換裝型態有效'], ['步態幀率', '只對品質夠的片段，回到原始影片取連續 30 幀（需 ≥ 15 fps）', '偵測用 5 fps，但步態需要連續動作'], ['步態門檻', '片段 < 1 個步態週期（約 1 秒連續行走）不算步態', '太短的序列步態特徵不穩'], ['臉的門檻', '兩眼間距 ≥ 10 像素且 MagFace 品質 ≥ 門檻才採用', '低品質的臉寧可不用'], ['身高', '只在全身可見的幀估，取中位數；戴鋼盔時扣 2–3 cm', '降低單幀誤差']],
+      pass: ['E1：量出同制服讓外觀掉多少（同日 vs 跨日）', 'E2：SOLIDER 微調後跨日 mAP 高於 CLIP-ReID', 'E4／E5：量出臉與步態在各俯角、距離下的可用比例', 'E10：換裝連結率明顯高於只用外觀'],
+      later: 'PersonViT-S（SOLIDER 太慢時）、OSNet 蒸餾、CLIP3DReID、SkeletonGait++、GPGait。', not: 'BPBreID／KPR（授權）、BigGait（需 GPU）、CR-FIQA（非商用）。' },
+    table: { use: '外觀 SOLIDER-S；換裝 CAL；步態 DeepGaitV2＋RTMPose；臉 AdaFace＋MagFace；身高', lic: 'MIT／Apache；步態僅學術', have: '外觀有基準，其餘新增', cost: '外觀中；步態需分割；臉只算近距點位' }
   },
 
-  /* ------------------------------------------------ 4 融合 */
+  /* ================================================ 4 融合 */
   { id: 4, n: '換成同一種證據（融合）',
-    q: '兩段片段比對時，每條線索各給一個分數，但單位不同（外觀是相似度、步態是距離、身高是公分差）。要把它們合成一個「是不是同一人」的判斷，而且某條線索看不到時不能拖垮結果。',
-    pick: '能不能處理缺線索、需不需要大量「每種線索都齊全」的訓練資料、好不好解釋。',
+    q: '兩段片段比對時，每條線索各給一個分數，但單位不同（外觀是相似度、步態是距離、身高是公分差）。要把它們合成一個「是不是同一人」的判斷，而且某條線索看不到或品質很差時，不能拖垮結果。',
+    pick: '能不能處理缺線索、需不需要大量「每種線索都齊全」的訓練資料、出錯時好不好查原因。',
+    routes: [
+      { n: '特徵層融合', how: '把各線索的特徵接起來，訓練一個模型直接輸出身分。', pro: '資訊最完整', con: '需要大量每種線索都齊全的成對資料；缺一條就少一段', pick: false },
+      { n: '分數層融合', how: '各線索各自比對、各給分數，校準後再合併。', pro: '各模組獨立升級、自然處理缺線索、看得到每項貢獻', con: '少了特徵之間的互動', pick: true },
+      { n: '決策層融合', how: '各線索先各自判斷「是不是同一人」，再投票。', pro: '最簡單', con: '丟掉「很像」與「有點像」的差別', pick: false }
+    ],
     groups: [{ cards: [
-      { x: { n: 'Z-score／Min-Max 正規化後加總', v: 'Jain 等 2005', res: '經典基準', cost: '可忽略', lic: 'ok', url: 'https://doi.org/10.1016/J.PATCOG.2005.01.012' }, tag: 'base',
-        idea: '把各線索分數縮放到同一範圍再加權相加。', fit: '最簡單的基準；對離群值敏感，缺線索時不好處理。',
-        impl: { code: '自行實作', w: '—', input: '各線索分數', env: 'NumPy', first: '當 E6 的基準', note: '—' } },
       { x: { n: '似然比融合（對數相加）', v: 'Nandakumar 等', res: '理論上最佳；量化增益待確認', cost: '可忽略', lic: 'ok', url: 'https://apps.dtic.mil/sti/pdfs/ADA488585.pdf' }, tag: 'use',
-        idea: '每個分數換成「同一人時出現的機率 ÷ 不同人時出現的機率」，取對數後相加；看不到的線索該項為 0。',
-        fit: '可解釋、自然處理缺線索、不需要成對的多模態訓練資料。',
-        impl: { code: '自行實作（scikit-learn 的高斯混合或核密度估計）', w: '—', input: '各線索分數＋同人／不同人標註', env: 'Python／scikit-learn', first: '用自建資料估出各線索的同人與不同人分數分布', note: '要用營區自己的資料估「不同人」分布；同制服、身高分布窄，公開資料的校準不能搬' } },
-      { x: { n: '品質條件化（依品質 q 調整）', v: 'BioSecure DS2 等', res: '品質相依融合基準存在；勝者待確認', cost: '可忽略', lic: 'ok', url: 'https://arxiv.org/abs/2111.08703' }, tag: 'use',
-        idea: '把臉的清晰度、片段長度、遮擋、俯角當條件：p(分數 | 同人, 品質)。',
-        fit: '讓系統在畫面差時自動少信那條線索。',
-        impl: { code: '自行實作', w: '—', input: '分數＋品質變數', env: 'scikit-learn', first: '先用兩三級品質分層估分布', note: '—' } },
-      { x: { n: 'Platt／Isotonic 校準', v: '經典', res: '—', cost: '可忽略', lic: 'ok', url: '' }, tag: 'use',
-        idea: '把分數換成「同一人的機率」，Platt 用 S 型曲線、Isotonic 用單調階梯。', fit: '少量標註就能做；資料少時用 Platt 較穩。',
-        impl: { code: 'scikit-learn（LogisticRegression、IsotonicRegression）', w: '—', input: '分數＋標註', env: 'Python', first: '與似然比做法比較校準誤差（ECE）', note: '—' } },
+        idea: '每個分數換成「同一人時出現的機率 ÷ 不同人時出現的機率」，取對數後相加。',
+        how: { in: '每條線索的比對分數；訓練時另需「同人／不同人」標註的成對分數', proc: '① 對每條線索分別估兩個分布：同一人時的分數分布、不同人時的分數分布（高斯混合或核密度估計）→ ② 比對時查兩個分布的高度比、取對數，得到該線索的「證據」→ ③ 各線索證據相加；看不到的線索該項為 0 → ④ 總證據可換成「同一人的機率」', train: '只需估分布，不需訓練神經網路；每條線索約 1,000 對以上同人／不同人分數', out: '一個總證據值（正數支持同一人，負數支持不同人）', key: '把不同單位的分數變成同一把尺；缺線索自然不影響；每一項貢獻多少一目了然' },
+        us: { ang: ['g', '俯角造成的線索退化會反映在分布上'], cloth: ['g', '換裝時外觀證據自然變弱，其他線索照算'], grp: ['g', '—'], cpu: ['g', '查表等級'], lic: ['g', '自行實作'] },
+        impl: { code: '自行實作（scikit-learn 的 GaussianMixture 或 KernelDensity）', w: '—', input: '各線索分數＋同人／不同人標註', env: 'Python／scikit-learn', first: '用自建資料估出各線索的兩個分布，畫出來檢查是否分得開', note: '要用營區自己的資料估「不同人」分布：同制服、身高分布窄，公開資料的校準不能搬' } },
+      { x: { n: '品質條件化（依品質調整證據）', v: 'BioSecure DS2 等', res: '品質相依融合基準存在；勝者待確認', cost: '可忽略', lic: 'ok', url: 'https://arxiv.org/abs/2111.08703' }, tag: 'use',
+        idea: '同一個分數，在畫面清楚時和模糊時代表的證據強度不同。',
+        how: { in: '分數＋品質變數（臉：MagFace 品質；步態：有效幀數；外觀：框大小與遮擋比例；全部：俯角）', proc: '把品質分成 2–3 級，每一級各估一組同人／不同人分布；比對時依這段片段的品質查對應的那一組', train: '同似然比，只是按品質分層估計', out: '依品質調整過的證據', key: '畫面差時，該線索的兩個分布會靠在一起，證據自然變小——不必手調權重' },
+        us: { ang: ['g', '把俯角當品質變數，直接處理路邊監視器'], cloth: ['g', '—'], grp: ['g', '被遮擋的片段品質低，自動少信'], cpu: ['g', '可忽略'], lic: ['g', '自行實作'] },
+        impl: { code: '自行實作', w: '—', input: '分數＋品質＋標註', env: 'scikit-learn', first: '先只用「好／差」兩級，確認差的那一級分布確實比較重疊', note: '分太多級會讓每級資料太少' } },
       { x: { n: '品質加權片段聚合', v: 'Multicolumn Network 等', res: 'IJB 基準提升 2–6%', cost: '低', lic: 'ok', url: 'https://arxiv.org/abs/1807.09192' }, tag: 'use',
-        idea: '一段片段有很多幀，依每幀品質加權平均成一個特徵，而不是逐幀比對。', fit: '片段層級比對更穩，也省算力。',
-        impl: { code: '自行實作', w: '—', input: '逐幀特徵＋品質分數', env: 'NumPy', first: '比較「平均」與「品質加權平均」的 Rank-1', note: '—' } },
+        idea: '一段片段有很多幀，依每幀品質加權平均成一個特徵，而不是逐幀比對。',
+        how: { in: '片段內逐幀特徵＋每幀品質分數', proc: '片段特徵 = Σ（品質 × 該幀特徵）÷ 長度正規化；只取品質最高的前 k 幀', train: '不需訓練（進階版可學品質權重）', out: '每段片段每條線索一個特徵', key: '模糊、被擋住的幀自動少算，也把兩兩比對的次數從「幀數平方」降到 1' },
+        us: { ang: ['g', '—'], cloth: ['g', '—'], grp: ['g', '交錯時被擋住的幀自動降權'], cpu: ['g', '大幅省下比對算力'], lic: ['g', '自行實作'] },
+        impl: { code: '自行實作', w: '—', input: '逐幀特徵＋品質', env: 'NumPy', first: '比較「平均」與「品質加權平均」的 Rank-1', note: '—' } },
+      { x: { n: 'Z-score／Min-Max 正規化後加總', v: 'Jain 等 2005', res: '經典基準', cost: '可忽略', lic: 'ok', url: 'https://doi.org/10.1016/J.PATCOG.2005.01.012' }, tag: 'base',
+        idea: '把各線索分數縮放到同一範圍再加權相加。',
+        how: { in: '各線索分數', proc: 'Z-score：減平均除標準差；Min-Max：線性縮放到 0–1；再依固定權重相加', train: '只需估平均與標準差', out: '融合分數', key: '最簡單；但分數分布不對稱時會失真，缺線索時要另外處理' },
+        us: { ang: ['m', '固定權重不會隨俯角調整'], cloth: ['b', '換裝時外觀分數仍以原權重計入'], grp: ['m', '—'], cpu: ['g', '可忽略'], lic: ['g', '自行實作'] },
+        impl: { code: '自行實作', w: '—', input: '分數', env: 'NumPy', first: '當 E6 的基準', note: '—' } },
       { x: { n: '小型學習式門控', v: '工程做法', res: '待驗證', cost: '低', lic: 'ok', url: '' }, tag: 'try',
-        idea: '用邏輯迴歸或兩層小網路，從分數與品質直接學權重。', fit: '資料夠多、而且確定勝過似然比時才換（E6）。',
-        impl: { code: 'scikit-learn／PyTorch', w: '—', input: '分數＋品質＋標註', env: '—', first: 'E6：與似然比比跨日 mAP 與 ECE', note: '學不贏似然比就用似然比（較好解釋）' } },
-      { m: 'FarSight／BRIAR 融合', tag: 'ref', idea: '品質估計器預測各線索權重，再用專家混合層加權；臉＋步態＋體型。',
-        fit: '「品質導引融合」的架構藍圖；多個 GPU 模型，整套搬不動。',
-        impl: { code: '釋出情形待確認', w: '—', input: '臉＋全身影片', env: '多 GPU', first: '—', note: '臉受限時 TAR@0.1%FAR 從 30.7% 升到 65.0%' } },
-      { m: 'HAMoBE', tag: 'ref', idea: '凍結 CLIP ViT-L/14，外觀、體型、步態三位專家加雙輸入門控。',
-        fit: '最接近「依情況選線索」的研究；對弱伺服器太重。',
-        impl: { code: '見論文', w: '—', input: 'RGB 影片 16 幀', env: '需 GPU', first: '—', note: 'MEVID 真實跨日換衣 R1 20.1（舊方法 < 6）' } }
+        idea: '用邏輯迴歸或兩層小網路，從分數與品質直接學「同一人的機率」。',
+        how: { in: '各線索分數＋品質變數＋缺線索遮罩', proc: '邏輯迴歸或兩層 MLP', train: '用同人／不同人標註的成對資料，交叉熵損失', out: '同一人的機率', key: '能學到線索之間的互動（例如「臉清楚時外觀幾乎不用看」），但需要較多資料' },
+        us: { ang: ['g', '可學到俯角的影響'], cloth: ['g', '可學到換裝時少信外觀'], grp: ['g', '—'], cpu: ['g', '極小'], lic: ['g', '自行實作'] },
+        impl: { code: 'scikit-learn／PyTorch', w: '—', input: '分數＋品質＋標註', env: '—', first: 'E6：與似然比比跨日 mAP 與校準誤差', note: '學不贏似然比就用似然比（較好解釋）' } },
+      { m: 'FarSight／BRIAR 融合', tag: 'ref', idea: '品質估計器預測各線索權重，再用專家混合層加權；臉＋步態＋體型。', fit: '「品質導引融合」的架構藍圖：臉受限時 TAR 從 30.7% 升到 65.0%；但需多個 GPU 模型，整套搬不動。' },
+      { m: 'HAMoBE', tag: 'ref', idea: '凍結 CLIP ViT-L/14，外觀、體型、步態三位專家加雙輸入門控。', fit: '最接近「依情況選線索」的研究（MEVID 跨日換衣 R1 20.1，舊方法 < 6）；對弱伺服器太重。' }
     ], chart: 'briar' }],
-    choice: { v1: '品質加權片段聚合 → 各線索分數校準成似然比 → 依品質條件化 → 相加。', later: '資料夠多後試小型學習式門控（E6）。', not: '大型專家混合模型（HAMoBE、FarSight 整套）——算力不夠，且需要大量成對資料。' },
-    table: { use: '似然比融合＋品質條件化＋片段聚合', lic: '自行實作', have: '新增', cost: '可忽略' }
+    choice: { v1: '品質加權片段聚合 → 各線索校準成似然比 → 依品質分層 → 相加。',
+      cfg: [['片段聚合', '每條線索取品質最好的 8 幀加權平均', '同第 3 步'], ['分布估計', '每條線索 ≥ 1,000 對同人與不同人分數，用核密度估計', '分數分布常不對稱，高斯假設不準'], ['品質分層', '先分「好／差」兩級，資料夠再分三級', '每級資料太少時分布不穩'], ['證據上下限', '每條線索的證據限制在 ±6 之間', '避免單一線索的極端值蓋過其他線索'], ['缺線索', '看不到或品質低於下限的線索，證據設為 0', '不加也不扣'], ['刷卡證據', '上限 +2（見第 7 步）', '刷卡可能代刷，不能蓋過影像']],
+      pass: ['E6：似然比融合的跨日 mAP 高於 Z-score 加總', '校準誤差（ECE）< 0.05（建議值）：說 80% 就真的約 80% 是同一人'],
+      later: '資料夠多後試小型學習式門控（E6）。', not: '大型專家混合模型（HAMoBE、FarSight 整套）——算力不夠，也需要大量成對資料。' },
+    table: { use: '似然比融合＋品質分層＋片段聚合', lic: '自行實作', have: '新增', cost: '可忽略' }
   },
 
-  /* ------------------------------------------------ 5 時空 */
+  /* ================================================ 5 時空 */
   { id: 5, n: '時空約束',
     q: '同一個人不可能同時在兩處，也不可能比走路更快地換攝影機。這條線索完全不看衣服，所以在同制服、換裝時特別值錢。',
-    pick: '需不需要攝影機校正、能不能套到配置未知的營區。',
+    pick: '需不需要攝影機精密校正（違反「不知道攝影機配置」的泛用目標）、5 人一起走時還有沒有用。',
+    routes: [
+      { n: '硬規則（不可能配對）', how: '時間重疊、或轉移太快的兩段片段直接判定不可能是同一人。', pro: '不需訓練、零錯誤成本', con: '只能排除，不能加分', pick: true },
+      { n: '機率先驗（轉移時間分布）', how: '統計攝影機兩兩之間的轉移時間，轉移時間合理就加分。', pro: '幾乎零成本，公開資料上增益大', con: '需要一段時間的資料來估分布', pick: true },
+      { n: '幾何定位（平面圖、視野重疊）', how: '把腳點轉到平面圖座標，用位置直接連結。', pro: '視野重疊時最強', con: '每台攝影機要標定，不符合泛用目標', pick: false }
+    ],
     groups: [{ cards: [
       { m: 'st-ReID', tag: 'use', idea: '統計攝影機兩兩之間的轉移時間分布，和外觀分數合成最終分數。',
-        fit: '幾乎零成本、不改任何模型；營區拓樸固定。',
-        impl: { code: '自行實作（概念見論文）', w: '—', input: '片段的攝影機 ID 與時間戳', env: 'Python', first: '從標註資料量營區攝影機兩兩的步行時間分布（E3）', note: '公開資料上 Rank-1 91.2→97.2；營區人群密時增益可能較小' } },
+        how: { in: '片段的攝影機 ID、開始與結束時間；外觀相似度', proc: '① 用有標註的資料，統計每一對攝影機之間同一人的轉移時間，平滑成機率分布 → ② 比對時查「這兩段片段的時間差」在分布中的機率 → ③ 與外觀相似度合成（原論文用邏輯平滑後相乘）', train: '只需統計轉移時間', out: '加入時空資訊的比對分數', key: '不改任何模型，只多查一張表' },
+        us: { ang: ['g', '與俯角無關'], cloth: ['g', '完全不看衣服'], grp: ['m', '5 人一起走時轉移時間都一樣，無法區分彼此——只能排除「不可能」的人'], cpu: ['g', '查表'], lic: ['g', '自行實作（概念見論文）'] },
+        impl: { code: '自行實作', w: '—', input: '攝影機 ID＋時間戳', env: 'Python', first: '從標註資料量營區攝影機兩兩的步行時間分布（E3）', note: '公開資料 Rank-1 91.2→97.2；本專案改成似然比的一項，與第 4 步一致' } },
       { x: { n: '不可能配對規則（cannot-link）', v: '工程做法', res: '待驗證', cost: '可忽略', lic: 'ok', url: '' }, tag: 'use',
         idea: '同時出現在兩處、或轉移時間短於最短步行時間的兩段片段，直接標成「不可能是同一人」。',
-        fit: '分群時用來擋下錯誤合併；不需任何訓練。',
-        impl: { code: '自行實作', w: '—', input: '片段時間、攝影機、最短步行時間表', env: 'Python', first: '在分群前後各量一次誤併率', note: '最短步行時間表可先人工估，再用資料修正' } },
+        how: { in: '片段時間、攝影機、攝影機兩兩的最短步行時間表', proc: '對每一對片段檢查：① 時間重疊且攝影機視野不重疊 → 不可能；② 時間差 < 最短步行時間 → 不可能', train: '不需訓練', out: '不可能配對清單（交給第 6 步分群）', key: '只排除、不加分，所以不會引入新的錯誤' },
+        us: { ang: ['g', '—'], cloth: ['g', '不看衣服'], grp: ['g', '同時在畫面裡的 5 個人，彼此一定是不同人——這正是小團體最有用的約束'], cpu: ['g', '—'], lic: ['g', '自行實作'] },
+        impl: { code: '自行實作', w: '—', input: '片段時間＋步行時間表', env: 'Python', first: '在分群前後各量一次誤併率', note: '最短步行時間表可先用平面圖距離 ÷ 3 m/s（容許小跑）估，再用資料修正' } },
       { x: { n: '畫面座標轉平面圖（單應性）', v: '經典幾何', res: '—', cost: '低', lic: 'ok', url: '' }, tag: 'try',
         idea: '每台攝影機在地面上標 4 個以上的點，把腳點換成營區平面圖座標。',
-        fit: '輸出路徑到平面圖時需要；視野重疊時還能直接用位置連結。',
-        impl: { code: 'OpenCV findHomography', w: '—', input: '每台攝影機 4 個以上地面對應點', env: 'Python／OpenCV', first: '先在兩台攝影機試做', note: '每個營區要做一次，與「不依賴校正」的泛用目標有取捨' } },
+        how: { in: '每台攝影機 4 個以上「畫面點 ↔ 平面圖點」的對應', proc: '解一個 3×3 單應性矩陣，之後每個腳點都可換算到平面圖', train: '不需訓練', out: '平面圖座標', key: '輸出路徑到平面圖時需要；視野重疊時還能直接用位置連結' },
+        us: { ang: ['g', '地面平坦即可'], cloth: ['g', '—'], grp: ['g', '—'], cpu: ['g', '—'], lic: ['g', 'OpenCV'] },
+        impl: { code: 'OpenCV findHomography', w: '—', input: '地面對應點', env: 'Python／OpenCV', first: '先在兩台攝影機試做，看路徑畫在平面圖上是否合理', note: '每個營區要做一次，與泛用目標有取捨；只用來畫路徑、不當必要條件' } },
       { x: { n: 'AI City Challenge 多攝影機追蹤方法', v: '2023–2024 賽題', res: '同構管線（逐篇未驗證）', cost: '—', lic: 'unk', url: '' }, tag: 'ref',
-        idea: '單相機追蹤 → 片段 ReID 特徵 → 相機幾何與時間約束 → 跨相機階層分群。',
-        fit: '和本專案架構同構，可參考前幾名的工程細節。',
-        impl: { code: '各隊公開程式碼不一', w: '—', input: '多攝影機影片', env: '多為 GPU', first: '挑一兩篇讀實作細節', note: '本次未逐篇驗證數字' } }
+        idea: '單相機追蹤 → 片段 ReID 特徵 → 相機幾何與時間約束 → 跨相機階層分群。', fit: '和本專案架構同構，可參考前幾名的工程細節；但多依賴校正過的攝影機與 GPU。' }
     ], chart: 'st-chart' }],
-    choice: { v1: '攝影機兩兩的轉移時間分布（st-ReID 式）＋不可能配對規則。', later: '需要平面圖路徑時加單應性轉換。', not: '依賴精密攝影機校正的 3D 方法（違反泛用目標）。' },
-    table: { use: '轉移時間先驗＋不可能配對規則', lic: '自行實作', have: '新增', cost: '可忽略' }
+    choice: { v1: '不可能配對規則＋攝影機兩兩的轉移時間分布（作為第 4 步的一項證據）。',
+      cfg: [['最短步行時間', '平面圖距離 ÷ 3 m/s', '容許小跑，避免誤判'], ['同時出現', '時間重疊超過 1 秒、且兩台攝影機視野不重疊 → 不可能', '容忍時鐘誤差'], ['轉移時間分布', '每對攝影機以 10 秒為一格統計，再平滑', '資料少時分布不穩；先用 2 週資料'], ['時鐘同步', '所有攝影機與門禁系統時鐘誤差 < 1 秒', '約束全靠時間戳']],
+      pass: ['E3：加入時空後，分群純度與跨攝影機 Rank-1 的增益（若 < 3 點，先檢查拓樸資料與時鐘）'],
+      later: '需要在平面圖上畫路徑時加單應性轉換。', not: '依賴精密攝影機校正的 3D 定位方法（違反泛用目標）。' },
+    table: { use: '不可能配對規則＋轉移時間分布', lic: '自行實作', have: '新增', cost: '可忽略' }
   },
 
-  /* ------------------------------------------------ 6 分群 */
+  /* ================================================ 6 分群 */
   { id: 6, n: '分群（片段聚成人）',
-    q: '把一天所有片段聚成一群群「匿名的人」，不需要人員名冊。之後跨日再把同一人連起來。',
-    pick: '每天的規模（數十到數百人）、能不能加入不可能配對規則、需不需要訓練。',
+    q: '把一天所有片段聚成一群群「匿名的人」，不需要人員名冊。之後跨日再把同一人連起來。另外，大量無標註的營區影片也可以反過來改善第 3 步的外觀模型（無監督訓練）。',
+    pick: '每天的規模（數十到數百人、數千段片段）、能不能加入不可能配對規則、需不需要訓練、混群（兩人併成一群）的風險。',
+    routes: [
+      { n: '傳統分群（凝聚、密度）', how: '依兩兩相似度直接分群。', pro: '免訓練、容易加約束', con: '門檻要調', pick: true },
+      { n: '圖神經網路分群', how: '把分群當成「兩點是否同一人」的連結預測，用標註資料訓練。', pro: '百萬級資料上很強', con: '規模優勢用不上，還需自己的標註', pick: false },
+      { n: '線上增量分群', how: '新資料進來時只更新受影響的群。', pro: '跨日不必整批重算', con: '早期錯誤會累積', pick: false }
+    ],
     groups: [{ cards: [
       { x: { n: '約束式平均連結凝聚分群', v: '經典＋約束', res: '小規模下通常已足夠（推論）', cost: '低', lic: 'ok', url: '' }, tag: 'use',
         idea: '由最像的一對開始逐步合併，合併前檢查兩群之間有沒有不可能配對。',
-        fit: '免訓練、最容易加約束；每日規模小，計算量沒問題。',
-        impl: { code: '自行實作（scikit-learn 的凝聚分群不支援不可能配對規則）', w: '—', input: '片段兩兩的融合證據＋約束', env: 'Python／NumPy', first: '在標註的一天資料上掃門檻，同時看人數誤差與純度（E7）', note: '低信心片段另存，不要硬併' } },
-      { x: { n: 'HDBSCAN', v: '經典', res: '—', cost: '低', lic: 'ok', url: '' }, tag: 'try',
-        idea: '依密度自動決定群數，離群點當雜訊。', fit: '不用調群數；但被當雜訊的片段要另報為「低信心」，不能丟。',
-        impl: { code: 'scikit-learn（1.3 以上內建）', w: '—', input: '距離矩陣', env: 'Python', first: '與凝聚分群比較', note: '加約束較不直接' } },
+        how: { in: '片段兩兩的總證據（第 4 步）＋不可能配對清單（第 5 步）', proc: '① 每段片段先自成一群 → ② 找平均證據最高的兩群 → ③ 若兩群之間有任何不可能配對就跳過、找下一對 → ④ 合併，重算平均 → ⑤ 直到最高的平均證據低於門檻 τ', train: '不需訓練；τ 用一天的標註資料掃描決定', out: '每段片段的匿名 ID；低信心片段另列', key: '最容易把「不可能配對」當成硬約束加進去' },
+        us: { ang: ['g', '吃第 4 步的證據，與俯角無關'], cloth: ['m', '換裝前後的片段要靠臉、步態、身高的證據才併得起來'], grp: ['g', '同時在畫面的 5 人彼此不可能，約束直接擋下誤併'], cpu: ['g', '每日數千段片段，以優先佇列實作在 CPU 上幾秒到幾分鐘'], lic: ['g', '自行實作'] },
+        impl: { code: '自行實作（scikit-learn 的凝聚分群不支援不可能配對規則）', w: '—', input: '證據矩陣＋約束', env: 'Python／NumPy', first: '在標註的一天資料上掃 τ，同時看人數誤差、純度、碎裂率（E7）', note: '本章上方的實驗台就是這個演算法' } },
       { m: 'Cluster Contrast', tag: 'use', idea: '先分群產生偽標籤，再用對比學習訓練外觀模型，反覆進行（無標註訓練）。',
-        fit: '用大量無標註營區影片改善外觀模型；MIT、與 PyTorch 1.11 相容。',
-        impl: { code: 'github.com/alibaba/cluster-contrast-reid', w: '用 SOLIDER／PersonViT 權重初始化', input: '無標註人形裁切', env: 'PyTorch', first: '以少量註冊樣本做半監督，避免同制服把不同人併成一群', note: '無標註最好約 50 mAP，與有標註差 27–30 點' } },
-      { m: 'ISE', tag: 'try', idea: '專門處理「一群裡混了不同人」的無監督訓練。', fit: '混合叢集正是同制服的失敗模式。',
-        impl: { code: '見論文', w: '—', input: '無標註', env: '—', first: 'Cluster Contrast 出現大量混群時再試', note: '—' } },
-      { m: 'PPLR', tag: 'try', idea: '無監督訓練中加入相機 ID 資訊。', fit: '可用相機 ID；授權待確認。',
-        impl: { code: '見論文', w: '—', input: '無標註＋相機 ID', env: '—', first: '—', note: '—' } },
+        how: { in: '大量無標註的人形裁切', proc: '每一輪：① 用目前的模型抽特徵 → ② DBSCAN 分群，每群當一個偽身分 → ③ 每群只存一個中心特徵（叢集記憶），以動量更新 → ④ 用 ClusterNCE 對比損失訓練：拉近樣本與自己群的中心、推遠其他群', train: '無標註；以 SOLIDER 權重初始化', out: '更適應營區畫面的外觀模型', key: '每群只存一個中心，比存每個樣本的做法穩定、省記憶體' },
+        us: { ang: ['g', '直接用營區畫面學，正好適應路邊俯角'], cloth: ['b', '同制服會讓不同人被分進同一群（混群），偽標籤錯誤'], grp: ['m', '—'], cpu: ['m', '訓練需 GPU 一段時間；推論不變'], lic: ['g', 'MIT，與 PyTorch 1.11 相容'] },
+        impl: { code: 'github.com/alibaba/cluster-contrast-reid', w: '用 SOLIDER 權重初始化', input: '無標註裁切', env: 'PyTorch', first: '加入少量註冊人員的標註做半監督，並用不可能配對規則拆開混群', note: '純無標註最好約 50 mAP，與有標註差 27–30 點' } },
+      { x: { n: 'HDBSCAN', v: '經典', res: '—', cost: '低', lic: 'ok', url: '' }, tag: 'try',
+        idea: '依密度自動決定群數，離群點當雜訊。',
+        how: { in: '距離矩陣', proc: '計算「相互可達距離」→ 建最小生成樹 → 依群的穩定度挑出最終的群；密度不夠的點標為雜訊', train: '不需訓練；主要參數是最小群大小', out: '群標籤＋雜訊點', key: '不用預設群數或門檻' },
+        us: { ang: ['g', '—'], cloth: ['m', '同凝聚分群'], grp: ['m', '加入不可能配對較不直接'], cpu: ['g', '—'], lic: ['g', 'scikit-learn 內建（1.3 以上）'] },
+        impl: { code: 'scikit-learn', w: '—', input: '距離矩陣', env: 'Python', first: '與凝聚分群在同一天資料比較', note: '被當成雜訊的片段要另報為「低信心」，不能丟——系統要報人數' } },
+      { m: 'ISE', tag: 'try', idea: '專門處理「一群裡混了不同人」的無監督訓練。',
+        how: { in: '無標註裁切', proc: '在叢集之間的邊界附近生成「支援樣本」，讓模型學會把貼得很近的群分開', train: '無標註', out: '外觀模型', key: '直接針對混群' },
+        us: { ang: ['g', '—'], cloth: ['g', '混群正是同制服的失敗模式'], grp: ['m', '—'], cpu: ['m', '訓練需 GPU'], lic: ['m', '授權待確認'] },
+        impl: { code: '見論文', w: '—', input: '無標註', env: '—', first: 'Cluster Contrast 出現大量混群時再試', note: 'MSMT17 mAP 35.0' } },
       { x: { n: 'OGMC 線上分群', v: 'arXiv 2021', res: 'IJB-B F 最高、約快 6 倍', cost: '低', lic: 'unk', url: 'https://arxiv.org/abs/2103.17272' }, tag: 'try',
-        idea: '每個人用多個高斯分布表示，新資料進來不必整批重聚。', fit: '適合跨日的增量連結。',
-        impl: { code: '待確認', w: '—', input: '特徵', env: '—', first: '同日分群穩定後再做跨日', note: '—' } },
+        idea: '每個人用多個高斯分布表示，新資料進來不必整批重聚。',
+        how: { in: '新一天的匿名群特徵', proc: '每個全域身分以多個高斯分量表示（對應不同服裝、角度）；新群若落在某身分的分量內就併入，否則新建身分', train: '不需訓練', out: '跨日的全域匿名 ID', key: '「一個人多個分量」正好對應「一個人多套服裝」' },
+        us: { ang: ['g', '—'], cloth: ['g', '多分量可容納不同服裝'], grp: ['g', '—'], cpu: ['g', '增量計算'], lic: ['m', '程式碼與授權待確認'] },
+        impl: { code: '待確認', w: '—', input: '特徵', env: '—', first: '同日分群穩定後再做跨日', note: '跨日只用臉、步態、身高等跨日穩定的線索' } },
+      { m: 'PPLR', tag: 'ref', idea: '用身體各部位特徵互相校正偽標籤的無監督訓練。', fit: '可當 Cluster Contrast 的替代比較；授權待確認。' },
       { x: { n: '圖神經網路分群（Linkage-GCN、STAR-FC 等）', v: 'CVPR 2019–2021', res: '百萬級人臉資料上很強', cost: '中高', lic: 'unk', url: 'https://arxiv.org/abs/1903.11306' }, tag: 'skip',
-        idea: '把分群當成「兩點是否同一人」的連結預測。', fit: '規模優勢用不上，還需要自己的標註重新訓練。',
-        impl: { code: '各論文倉庫', w: '—', input: '特徵', env: 'GPU', first: '—', note: '—' } },
-      { m: 'DSKC', tag: 'ref', idea: '不保留舊影像的持續學習 ReID。', fit: '長期維護、隱私考量時的研究方向。',
-        impl: { code: '見論文', w: '—', input: '依序新資料', env: '—', first: '—', note: '仍屬研究' } }
+        idea: '把分群當成「兩點是否同一人」的連結預測。', fit: '每日只有數十到數百人，規模優勢用不上，還需要自己的標註重新訓練。' },
+      { m: 'DSKC', tag: 'ref', idea: '不保留舊影像的持續學習 ReID。', fit: '長期維護、隱私考量時的研究方向，仍屬研究。' }
     ], chart: 'ch-uda' }],
-    choice: { v1: '約束式平均連結凝聚分群（同日）；外觀模型用 Cluster Contrast＋少量註冊樣本半監督改善。', later: '跨日改用 OGMC 類增量分群；混群嚴重時試 ISE。', not: '圖神經網路分群（規模不需要）。' },
+    choice: { v1: '同日：約束式平均連結凝聚分群；外觀模型以 Cluster Contrast＋少量註冊樣本半監督改善。',
+      cfg: [['合併門檻 τ', '用一天的標註資料掃描，取 BCubed F 最高者', '門檻會隨季節、服裝漂移，每月重估'], ['參與分群', '長度 ≥ 1 秒、未被標為低信心的片段', '短片段最容易誤併'], ['低信心片段', '分群後再嘗試併入最近的群，證據不足就保留為「未歸群」', '系統要報人數，不能丟'], ['跨日', '只用臉、步態、身高的證據，門檻比同日高', '外觀跨日不可靠'], ['半監督', '每週加入少量人工確認的配對', '抑制混群']],
+      pass: ['E7：人數誤差在 ±10% 以內，且混到兩人以上的群 < 5%（建議值）', '同時報純度與碎裂率：人數數對不代表分對'],
+      later: '跨日改用 OGMC 類增量分群；混群嚴重時試 ISE。', not: '圖神經網路分群（規模不需要）。' },
     table: { use: '約束式凝聚分群；Cluster Contrast 半監督', lic: '自行實作／MIT', have: '新增', cost: '低' }
   },
 
-  /* ------------------------------------------------ 7 身分 */
+  /* ================================================ 7 身分 */
   { id: 7, n: '比對名冊（刷卡輔助）',
     q: '把每個「匿名的人」對應到人員名冊；不在名冊上的要標成「未知」。門禁刷卡可以縮小候選，但可能被代刷，所以不能直接當答案。',
-    pick: '誤認率（把 A 認成 B、把陌生人認成官兵）要壓得低；能用整群多段證據；能處理刷卡與影像不一致。',
+    pick: '誤認率（把 A 認成 B、把陌生人認成官兵）要壓得低；能用整群多段證據；刷卡與影像不一致時怎麼處理。',
+    routes: [
+      { n: '封閉集 Top-1', how: '永遠回答最像的那個人。', pro: '最簡單', con: '陌生人一定會被認成某人', pick: false },
+      { n: '開放集門檻', how: '最像的那個人分數夠高才接受，否則回答「未知」。', pro: '能說「不認識」', con: '門檻要依誤認率設定', pick: true },
+      { n: '整群多證據＋外部資料', how: '用整群多段片段一起比，並納入刷卡等外部資料。', pro: '最穩，能偵測代刷', con: '需要先分好群', pick: true }
+    ],
     groups: [{ cards: [
       { x: { n: '整群多證據比對＋第一第二名間隔', v: '工程做法', res: '待驗證', cost: '低', lic: 'ok', url: '' }, tag: 'use',
-        idea: '用一整群的多段片段（多個角度、多種服裝）一起和名冊比對；第一名要夠高，而且要明顯贏過第二名。',
-        fit: '比單段比對穩定；間隔不夠就標「未知」或交人工確認。',
-        impl: { code: '自行實作', w: '—', input: '匿名群的特徵集合＋名冊註冊特徵', env: 'Python', first: '先把誤認率壓到 1% 以下，再看漏認率（E8）', note: '—' } },
-      { x: { n: '開放世界 ReID', v: 'Li 等，ECCV 2018', res: '問題定義', cost: '—', lic: 'unk', url: '' }, tag: 'ref',
-        idea: '直接定義「查詢的人可能不在資料庫裡」的評估方式。', fit: '評估設計的依據：要報誤認率與漏認率，不只報 Rank-1。',
-        impl: { code: '—', w: '—', input: '—', env: '—', first: '—', note: '—' } },
-      { x: { n: '刷卡紀錄當先驗與一致性檢查', v: '工程做法', res: '待驗證', cost: '可忽略', lic: 'ok', url: '' }, tag: 'use',
-        idea: '刷卡的時間地點用來縮小候選；比對結果與刷卡不符時，以影像為準並列入待查。',
-        fit: '用到營區既有資料，又不被代刷誤導。',
-        impl: { code: '自行實作', w: '—', input: '門禁刷卡紀錄（卡號、時間、門）', env: '—', first: '確認刷卡紀錄的格式與時鐘是否與攝影機同步', note: '刷卡只能加分，不能單獨決定身分' } },
+        idea: '用一整群的多段片段（多個角度、多種服裝）一起和名冊比對，而不是用單段片段。',
+        how: { in: '匿名群內所有片段的各線索特徵；名冊中每人的註冊特徵（多服裝）', proc: '① 對每位註冊人員，計算群內各片段與他的證據，取最好的前 k 段平均 → ② 排序 → ③ 第一名的證據 ≥ 接受門檻，且比第二名高出一定間隔，才接受；否則標「未知」或交人工確認', train: '不需訓練；門檻依誤認率設定', out: '身分、「未知-#N」或「待確認」', key: '單段片段可能剛好角度差；整群裡總有幾段角度好、品質好的' },
+        us: { ang: ['g', '整群裡挑品質最好的片段'], cloth: ['g', '註冊資料含多種服裝，換裝後仍有對應'], grp: ['g', '—'], cpu: ['g', '每天數百群 × 名冊人數，計算量小'], lic: ['g', '自行實作'] },
+        impl: { code: '自行實作', w: '—', input: '群特徵集合＋註冊特徵', env: 'Python', first: '先把誤認率壓到 1% 以下，再看漏認率（E8）', note: '—' } },
+      { x: { n: '刷卡紀錄當輔助證據與一致性檢查', v: '工程做法', res: '待驗證', cost: '可忽略', lic: 'ok', url: '' }, tag: 'use',
+        idea: '刷卡的時間地點用來加一點證據；比對結果與刷卡不符時，以影像為準並列入待查。',
+        how: { in: '門禁刷卡紀錄（卡號、時間、門）＋經過該門口攝影機的匿名群', proc: '① 刷卡前後 ±2 分鐘內出現在該門口的群，與卡主之間加一項刷卡證據（有上限）→ ② 若影像判定的身分與卡主不同、且影像證據夠強 → 標「與刷卡不符」列入待查', train: '不需訓練', out: '加入刷卡的身分判定＋不一致清單', key: '刷卡只能加分，不能單獨決定身分；不一致本身就是有價值的輸出' },
+        us: { ang: ['n', '—'], cloth: ['g', '刷卡與服裝無關'], grp: ['m', '多人同時通過門口時，刷卡無法對應到特定的人 → 證據平均分給這幾人'], cpu: ['g', '—'], lic: ['g', '自行實作'] },
+        impl: { code: '自行實作', w: '—', input: '刷卡紀錄', env: '—', first: '確認刷卡紀錄的格式、門口與攝影機的對應、時鐘是否同步', note: '牽涉人員資料，需先確認使用規範' } },
       { x: { n: '在營區攝影機下建立註冊資料', v: '工程做法', res: '—', cost: '一次性', lic: 'ok', url: '' }, tag: 'use',
         idea: '每位人員在營區自己的攝影機前，以幾種常見服裝各走一次，建立註冊特徵。',
-        fit: '與實際畫面同條件的註冊資料，比用其他來源的照片有效得多。',
-        impl: { code: '—', w: '—', input: '每人每種服裝數段影片', env: '—', first: '先以辦公室同仁試做流程與所需時間', note: '牽涉個資，需先確認保存與使用規範' } },
-      { m: 'SapiensID', tag: 'try', idea: '單一模型同時處理臉與全身。', fit: '唯一可用的「臉＋身體」統一模型候選；算力約 35 GFLOPs。',
-        impl: { code: '見論文', w: '待確認', input: '384×384 全身＋臉', env: 'GPU 較佳', first: '近距點位效果不好時再評估', note: '訓練資料授權與倫理疑慮需確認' } }
+        how: { in: '每人每種服裝數段片段（含近距臉部）', proc: '用第 3 步的模型抽出各線索特徵，存成這個人的多個「原型」（每種服裝一個）', train: '不需訓練', out: '名冊註冊特徵', key: '和實際畫面同條件的註冊資料，比用證件照或其他來源有效得多' },
+        us: { ang: ['g', '就在同樣的攝影機下拍'], cloth: ['g', '涵蓋多種服裝'], grp: ['n', '—'], cpu: ['g', '一次性'], lic: ['g', '—'] },
+        impl: { code: '—', w: '—', input: '每人每種服裝數段影片', env: '—', first: '先以辦公室同仁試做流程，估每人所需時間', note: '牽涉個資，需先確認保存與使用規範' } },
+      { m: 'SapiensID', tag: 'try', idea: '單一模型同時處理臉與全身。',
+        how: { in: '384×384 全身影像', proc: 'ViT-B 加「視網膜補丁」：動態分配影像塊給全身、上半身、臉三個區域；語意注意力頭以關鍵點周圍池化', train: '大規模臉與全身資料', out: '臉＋全身統一嵌入', key: '臉看不清時自動偏向全身，不必兩套模型' },
+        us: { ang: ['m', '臉看不清時退回全身'], cloth: ['m', '全身部分仍受服裝影響'], grp: ['m', '—'], cpu: ['b', '約 35 GFLOPs，CPU 上偏重'], lic: ['m', '訓練資料授權與倫理需確認'] },
+        impl: { code: '見論文', w: '待確認', input: '384×384', env: 'GPU 較佳', first: '近距點位效果不好時再評估', note: '遮擋 ReID R1 87.3' } },
+      { x: { n: '開放世界 ReID', v: 'Li 等，ECCV 2018', res: '問題定義', cost: '—', lic: 'unk', url: '' }, tag: 'ref',
+        idea: '直接定義「查詢的人可能不在資料庫裡」的評估方式。', fit: '評估設計的依據：要報誤認率與漏認率，不只報 Rank-1。' }
     ] }],
-    choice: { v1: '整群多證據比對＋第一第二名間隔＋刷卡一致性檢查；在營區攝影機下建立多服裝註冊資料。', later: '近距點位試 SapiensID。', not: '只靠刷卡判定身分；單段片段直接比對名冊。' },
-    table: { use: '整群比對＋間隔門檻＋刷卡一致性', lic: '自行實作', have: '新增', cost: '低' }
+    choice: { v1: '整群多證據比對＋第一第二名間隔＋刷卡輔助與一致性檢查；在營區攝影機下建立多服裝註冊資料。',
+      cfg: [['接受門檻', '依「陌生人被誤認率 = 1%」設定', '誤認比認不出來嚴重'], ['間隔門檻', '第一名比第二名的證據至少高 2（約 7 倍似然比）', '兩人都很像時寧可交人工'], ['取前 k 段', '群內品質最好的前 5 段片段', '避免被差的片段拖累'], ['刷卡證據', '±2 分鐘內同門口：+1，上限 +2；多人同時通過時平分', '只能加分'], ['註冊資料', '每人 4 種服裝（迷彩小帽、鋼盔、運動服、冬季外套）× 各 2 段，含一段近距臉部', '涵蓋同一天的換裝']],
+      pass: ['E8：陌生人誤認率 ≤ 1% 時，註冊人員的漏認率（先量現況）', '「與刷卡不符」的事件，經人工確認後的真實比例'],
+      later: '近距點位試 SapiensID。', not: '只靠刷卡判定身分；單段片段直接比對名冊。' },
+    table: { use: '整群比對＋間隔門檻＋刷卡輔助', lic: '自行實作', have: '新增', cost: '低' }
   }
 ];
 window.TAGS = { use: ['第一版採用', '#0c8a0c'], base: ['對照基準', '#2a78d6'], try: ['之後試用', '#b97e00'], ref: ['參考思路', '#6f7a71'], skip: ['暫不採用', '#c93434'] };
