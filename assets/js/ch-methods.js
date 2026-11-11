@@ -1,269 +1,585 @@
-/* ch-methods.js — 第 3–4 章：方法地圖、特徵融合 */
+/* ch-methods.js — 第 2 章（線索與方法）：方法解剖台、六類方法 × 攝影機條件、方法版圖 */
 (function (global) {
   'use strict';
-  var D = global.DATA, el = U.el, $ = U.$;
+  var R = global.R, el = U.el, $ = U.$;
   var CH = global.CH = global.CH || {};
-  var FAM = {}; D.FAMILIES.forEach(function (f) { FAM[f.id] = f; });
-  var CUE = {}; D.CUES.forEach(function (c) { CUE[c.id] = c; });
+  var P = global.PEOPLE;
+  var CW = 150, CHH = 200; // 每格畫布的邏輯尺寸
 
-  /* ======================= 3 方法地圖 ======================= */
-  var INPUT_LEVEL = { transreid: 0, clipreid: 0, cal: 0, fsam: 0, aio: 0, ramoe: 0, snr: 0, fgpr: 1, hamobe: 1, gpgait: 2, skeletongait: 2, gaitbase: 2, mmgaitformer: 2, '3dinvar': 3 };
-  var LEVEL_NAMES = ['單張 RGB', 'RGB 影片', '影片 + 姿態估計／分割', '3D 人體重建'];
-  var famOn = {}; D.FAMILIES.forEach(function (f) { famOn[f.id] = true; });
-  var curMethod = 'gpgait';
+  /* ======================= 六類方法 ======================= */
+  var FAMS = [
+    { id: 'app', n: '外觀 ReID', c: '#2a78d6', reps: ['TransReID', 'CLIP-ReID', 'SOLIDER', 'PersonViT'],
+      idea: '把裁切的人像切成小方塊，用 Transformer 學「這個人看起來長什麼樣」。',
+      learns: '衣服顏色與紋理、髮型、鞋、配件。換句話說，主要學的是衣服。',
+      needs: '單張影像即可', fails: ['同制服', '色偏燈光'],
+      num: [['MSMT17 mAP（衣著各異的街景）', '73.4–80.8', 'proven']],
+      score: 1, verdict: '全員同服時主要訊號消失。保留作弱證據，並用來抓鞋、帽、配件的細節。',
+      lic: '寬鬆（MIT／Apache）', cost: '低' },
+    { id: 'cal', n: '去衣服化', c: '#6b8fc4', reps: ['CAL', 'AIM', 'FSAM'],
+      idea: '另訓一個「衣服分類器」，再逼主模型的特徵騙過它，讓特徵不再帶衣服資訊。',
+      learns: '同一人換了衣服，特徵仍要一樣。前提是訓練資料裡同一人有好幾套衣服。',
+      needs: '單張影像＋衣服標籤', fails: ['全員同服（沒有衣服變化可學）'],
+      num: [['PRCC 換衣 Rank-1', '55.2（CAL）', 'proven'], ['MEVID 真實跨日換衣 Rank-1', '3.5（CAL）', 'proven']],
+      score: 2, verdict: '解決的是「同人換衣」，不是「不同人同衣」。全員同服時沒有可對抗的衣著變化，效益存疑。',
+      lic: '寬鬆（CAL：Apache）', cost: '低' },
+    { id: 'sil', n: '輪廓步態', c: '#1baf7a', reps: ['GaitBase', 'DeepGaitV2', 'SwinGait'],
+      idea: '把每幀的人切成黑白剪影，疊起來看身形與走路時形狀的變化。',
+      learns: '身形輪廓與步態節奏；與衣服顏色無關，但寬鬆衣物、背包會改變輪廓。',
+      needs: '連續影片（約 1 個步態週期以上）＋人形分割', fails: ['遠距低解析', '下半身遮擋', '軌跡太短'],
+      num: [['Gait3D Rank-1（39 台相機、野外）', '74.4（DeepGaitV2-P3D）', 'proven']],
+      score: 3, verdict: '建議的第一個步態模組。授權僅限學術，正式系統需取得授權或重新實作。',
+      lic: '僅學術（OpenGait）', cost: '中：11M 參數、2.9 GFLOPs' },
+    { id: 'skel', n: '骨架步態', c: '#eb6834', reps: ['GPGait', 'SkeletonGait'],
+      idea: '先估出關節點，把骨架移到原點、縮放到同一身高，再學關節怎麼動。',
+      learns: '腿長比例、膝蓋彎曲、步幅、擺臂、步頻。正規化時身高資訊會被拿掉。',
+      needs: '連續影片＋姿態估計', fails: ['遠距低解析（關節估不準）', '遮擋', '俯角過大'],
+      num: [['Gait3D Rank-1', '22.5（GPGait）', 'proven'], ['GREW Rank-1', '53.6（GPGait）', 'proven']],
+      score: 3, verdict: '不受衣服顏色影響，但上游姿態估計是瓶頸。適合作輔助模態，與輪廓互補。',
+      lic: '未確認', cost: '小（不含姿態估計）' },
+    { id: 'body', n: '3D 體型', c: '#9a7b12', reps: ['3DInvarReID', 'CLIP3DReID'],
+      idea: '從影像擬合 3D 人體，把姿態、衣服、紋理拆掉，只留下「體型」。',
+      learns: '身高、腿長、肩寬、髖寬這類不隨衣服改變的身體尺寸。',
+      needs: '單張即可（訓練需 3D 監督）', fails: ['遠距低解析（重建誤差大）', '寬鬆衣物'],
+      num: [['CCVID 換衣 Rank-1', '84.5（CLIP3DReID）', 'proven'], ['3DInvarReID 單用 → 與 CAL 融合', '70.2 → 84.3', 'proven']],
+      score: 2, verdict: '理論上最接近穩定的身體身分。高架遠距的重建誤差未知，適合當第二批實驗。',
+      lic: '未確認', cost: '推論輕（R50 學生）；訓練複雜' },
+    { id: 'fuse', n: '多專家融合', c: '#1c251f', reps: ['HAMoBE', 'FarSight'],
+      idea: '同時跑外觀、體型、步態三位專家，再由「門控」依畫面情況決定各信幾分。',
+      learns: '每位專家各學一種線索；門控學「這段影片哪個線索比較可靠」。',
+      needs: '影片', fails: ['算力（凍結 CLIP ViT-L/14）', '全部線索同時失效時救不回'],
+      num: [['MEVID 真實跨日換衣 Rank-1', '20.1（HAMoBE；舊方法 < 6）', 'proven'], ['BRIAR 臉受限 TAR@0.1%FAR', '臉 30.7 → 三模態 65.0', 'proven']],
+      score: 3, verdict: '最接近「依情況選線索」的思路，是第 3 章的核心。弱伺服器需改成小型專家＋分數層融合。',
+      lic: '未確認', cost: '高（大模型骨幹）' }
+  ];
+  var FAM = {}; FAMS.forEach(function (f) { FAM[f.id] = f; });
+  var CONDS = ['view', 'tint', 'low'];
+  var GATE = { view: { app: 0.25, body: 0.3, gait: 0.45 }, tint: { app: 0.1, body: 0.35, gait: 0.55 }, low: { app: 0.25, body: 0.45, gait: 0.3 } };
+
+  /* ======================= 特徵快取與距離 ======================= */
+  var FC = null;
+  function feats() {
+    if (FC) return FC;
+    var cams = { c1: VK.CAM1, view: VK.CAM2.view, tint: VK.CAM2.tint, low: VK.CAM2.low };
+    FC = { app: {}, sil: {}, skel: {}, body: {} };
+    Object.keys(cams).forEach(function (k) {
+      FC.app[k] = P.map(function (p) { return VK.featApp(p, cams[k]); });
+      FC.sil[k] = P.map(function (p) { return VK.featSil(p, cams[k]); });
+      FC.skel[k] = P.map(function (p) { return VK.featSkel(p, cams[k]); });
+      FC.body[k] = P.map(function (p) { return VK.featBody(p, cams[k]); });
+    });
+    FC.skStd = VK.std(FC.skel.c1.map(function (f) { return f.raw; }));
+    FC.bdStd = VK.std(FC.body.c1.map(function (f) { return f.raw; }));
+    FC.skMu = mean(FC.skel.c1.map(function (f) { return f.raw; }));
+    FC.bdMu = mean(FC.body.c1.map(function (f) { return f.raw; }));
+    return FC;
+  }
+  function mean(rows) { return rows[0].map(function (_, j) { return rows.reduce(function (s, r) { return s + r[j]; }, 0) / rows.length; }); }
+  function vec(type, k, i) {
+    var F = feats();
+    if (type === 'app') return F.app[k][i].v;
+    if (type === 'sil') return F.sil[k][i].v;
+    if (type === 'skel') return VK.scaled(F.skel[k][i].raw, F.skStd);
+    return VK.scaled(F.body[k][i].raw, F.bdStd);
+  }
+  function rawDists(type, qi, cond) { var q = vec(type, 'c1', qi); return P.map(function (_, j) { return VK.dist(q, vec(type, cond, j)); }); }
+  function med(a) { var s = a.slice().sort(function (x, y) { return x - y; }); return s[Math.floor(s.length / 2)]; }
+  function norm(a) { var m = med(a) || 1; return a.map(function (x) { return x / m; }); }
+  /** 回傳攝影機 2 上 5 個人與查詢者的距離 */
+  function dists(fid, qi, cond) {
+    if (fid === 'app' || fid === 'cal') return rawDists('app', qi, cond);
+    if (fid === 'sil' || fid === 'skel' || fid === 'body') return rawDists(fid, qi, cond);
+    var g = GATE[cond], a = norm(rawDists('app', qi, cond)), b = norm(rawDists('body', qi, cond)),
+      s = norm(rawDists('sil', qi, cond)), k = norm(rawDists('skel', qi, cond));
+    return a.map(function (_, j) { return g.app * a[j] + g.body * b[j] + g.gait * (s[j] + k[j]) / 2; });
+  }
+  function rankOf(d, qi) { return d.filter(function (x, j) { return j !== qi && x <= d[qi]; }).length + 1; }
+  function hardest(d, qi) { var best = -1; d.forEach(function (x, j) { if (j !== qi && (best < 0 || x < d[best])) best = j; }); return best; }
+
+  /* ======================= 狀態 ======================= */
+  var A = { fam: 'app', qi: 0, cond: 'tint', t: 1.2, raf: 0, playing: !U.reduceMotion, cells: [] };
 
   CH.methods = {
     init: function () {
-      var chips = $('#fam-chips');
-      D.FAMILIES.forEach(function (f) {
-        var b = U.h('button', { class: 'chip', 'aria-pressed': 'true' }, '<span class="sw-dot" style="--c:' + f.color + '"></span>' + f.name);
-        b.addEventListener('click', function () { famOn[f.id] = !famOn[f.id]; b.setAttribute('aria-pressed', famOn[f.id]); drawMap(); });
-        chips.appendChild(b);
-      });
-      var sel = $('#method-sel');
-      D.METHODS.forEach(function (m) { var o = document.createElement('option'); o.value = m.id; o.textContent = m.name + '（' + m.venue + '）'; sel.appendChild(o); });
-      sel.value = curMethod;
-      sel.addEventListener('change', function () { selectMethod(sel.value); });
-      drawMap(); selectMethod(curMethod); drawNums();
+      buildFamTabs(); buildCtrls(); buildGrid(); drawAll(); drawMatrix(); initLandscape();
+      var btn = $('#ana-play');
+      function sync() { btn.textContent = A.playing ? '暫停' : '播放'; btn.setAttribute('aria-pressed', A.playing ? 'true' : 'false'); }
+      btn.addEventListener('click', function () { A.playing = !A.playing; sync(); if (A.playing) loop(); });
+      sync();
+    },
+    enter: function () { if (A.playing) loop(); },
+    leave: function () { cancelAnimationFrame(A.raf); A.raf = 0; }
+  };
+  function loop() {
+    if (A.raf) return;
+    var last = performance.now();
+    function step(now) {
+      A.raf = 0;
+      if (!A.playing || !document.getElementById('ch-cues').classList.contains('active')) return;
+      A.t += Math.min(0.05, (now - last) / 1000); last = now;
+      drawCells(true);
+      A.raf = requestAnimationFrame(step);
     }
+    A.raf = requestAnimationFrame(step);
+  }
+
+  function buildFamTabs() {
+    var box = $('#ana-fam');
+    FAMS.forEach(function (f) {
+      var b = U.h('button', { 'data-f': f.id, 'aria-pressed': f.id === A.fam ? 'true' : 'false' }, '<span class="sw" style="background:' + f.c + '"></span>' + f.n);
+      box.appendChild(b);
+    });
+    U.segGroup(box, 'data-f', function (v) { setFam(v); });
+  }
+  function setFam(v) {
+    A.fam = v;
+    U.$$('#ana-fam button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-f') === v ? 'true' : 'false'); });
+    buildGrid(); drawAll(); drawMatrix();
+  }
+  function setCond(v) {
+    A.cond = v;
+    U.$$('#ana-cond button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-c') === v ? 'true' : 'false'); });
+    buildGrid(); drawAll(); drawMatrix();
+  }
+  function buildCtrls() {
+    var c = $('#ana-cond');
+    CONDS.forEach(function (k) { c.appendChild(U.h('button', { 'data-c': k, 'aria-pressed': k === A.cond ? 'true' : 'false' }, VK.CAM2[k].n)); });
+    U.segGroup(c, 'data-c', function (v) { setCond(v); });
+    var q = $('#ana-q');
+    P.forEach(function (p, i) { q.appendChild(U.h('button', { 'data-q': String(i), 'aria-pressed': i === A.qi ? 'true' : 'false' }, p.id)); });
+    U.segGroup(q, 'data-q', function (v) { A.qi = +v; buildGrid(); drawAll(); });
+  }
+
+  /* ======================= 解剖台格線 ======================= */
+  function rows() {
+    var d = dists(A.fam, A.qi, A.cond), imp = hardest(d, A.qi), c2 = VK.CAM2[A.cond];
+    return [
+      { role: '查詢', sub: '攝影機 1', pi: A.qi, p: P[A.qi], cam: VK.CAM1, k: 'c1' },
+      { role: '本人', sub: '攝影機 2', pi: A.qi, p: P[A.qi], cam: c2, k: A.cond, good: true },
+      { role: '最像的冒充者', sub: '攝影機 2・同制服', pi: imp, p: P[imp], cam: c2, k: A.cond, bad: true }
+    ];
+  }
+  function buildGrid() {
+    var f = FAM[A.fam], st = STAGES[A.fam], grid = U.clear($('#ana-grid'));
+    grid.style.setProperty('--n', st.length);
+    grid.appendChild(U.h('div', { class: 'ana-corner' }, ''));
+    st.forEach(function (s, i) {
+      grid.appendChild(U.h('div', { class: 'ana-sh' + (i === st.length - 1 ? ' last' : '') }, '<span class="num">' + (i + 1) + '</span><b>' + s[0] + '</b><small>' + s[1] + '</small>'));
+    });
+    A.cells = [];
+    rows().forEach(function (r) {
+      grid.appendChild(U.h('div', { class: 'ana-rl' + (r.good ? ' good' : r.bad ? ' bad' : '') }, '<b>' + r.role + '</b><span>人員 ' + r.p.id + '</span><small>' + r.sub + '</small>'));
+      st.forEach(function (s, i) {
+        var cell = U.h('div', { class: 'ana-cell' + (i === st.length - 1 ? ' last' : '') });
+        var cv = document.createElement('canvas');
+        cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', '人員 ' + r.p.id + '：' + s[0]);
+        cell.appendChild(cv); grid.appendChild(cell);
+        A.cells.push({ cv: cv, ctx: VK.hiDPI(cv, CW, CHH), fn: s[2], row: r, anim: s[3] !== false });
+      });
+    });
+  }
+  function drawCells(animOnly) {
+    A.cells.forEach(function (c) {
+      if (animOnly && !c.anim) return;
+      var ctx = c.ctx;
+      ctx.save(); ctx.clearRect(0, 0, CW, CHH); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, CW, CHH);
+      try { c.fn(ctx, CW, CHH, c.row, A.t); } catch (e) { console.error(e); }
+      ctx.restore();
+    });
+  }
+  function drawAll() { drawCells(false); drawRank(); drawInfo(); }
+
+  /* ---------- 共用的格內繪圖 ---------- */
+  var CROP = { x: 37, y: 6, w: 76, h: 152 };
+  function inRect(ctx, r, fn) { ctx.save(); ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip(); ctx.translate(r.x, r.y); fn(); ctx.restore(); }
+  function caption(ctx, s, color) { ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fillRect(0, CHH - 27, CW, 27); VK.label(ctx, CW / 2, CHH - 12, s, { align: 'center', size: 11.5, color: color || '#48544b' }); }
+  function cropRGB(ctx, row, t, extra) { inRect(ctx, CROP, function () { VK.frame(ctx, CROP.w, CROP.h, row.p, t, row.cam, Object.assign({ kind: 'crop' }, extra || {})); }); ctx.strokeStyle = '#c5ccc2'; ctx.lineWidth = 1; ctx.strokeRect(CROP.x + 0.5, CROP.y + 0.5, CROP.w - 1, CROP.h - 1); }
+  function cellRect(i) { var cw = CROP.w / 4, ch = CROP.h / 8; return { x: CROP.x + (i % 4) * cw, y: CROP.y + Math.floor(i / 4) * ch, w: cw, h: ch }; }
+
+  function sInput(ctx, W, H, row, t) {
+    VK.frame(ctx, W, H, row.p, t, row.cam, { kind: 'scene' });
+    var v = VK.view(row.p, W, H, row.cam, 'scene'), J = VK.joints2D(row.p, t, v, 0);
+    var xs = [], ys = [];
+    for (var k in J) if (k !== 'headR') { xs.push(J[k][0]); ys.push(J[k][1]); }
+    var x0 = Math.min.apply(null, xs) - 9, x1 = Math.max.apply(null, xs) + 9, y0 = Math.min.apply(null, ys) - J.headR - 5, y1 = Math.max.apply(null, ys) + 5;
+    ctx.setLineDash([4, 3]); ctx.strokeStyle = '#1c251f'; ctx.lineWidth = 1.4; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0); ctx.setLineDash([]);
+    VK.rr(ctx, 5, 5, row.k === 'c1' ? 58 : 58, 18, 3); ctx.fillStyle = 'rgba(28,37,31,.82)'; ctx.fill();
+    VK.label(ctx, 34, 18, row.k === 'c1' ? '攝影機 1' : '攝影機 2', { align: 'center', size: 11, color: '#fff' });
+    if (row.cam.low > 1) VK.label(ctx, W - 6, H - 8, '解析度 1/4', { align: 'right', size: 11, color: '#fff', halo: 'rgba(28,37,31,.7)' });
+  }
+
+  /* 外觀 */
+  function sPatch(ctx, W, H, row, t) {
+    cropRGB(ctx, row, t);
+    ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1;
+    for (var i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(CROP.x + i * CROP.w / 4, CROP.y); ctx.lineTo(CROP.x + i * CROP.w / 4, CROP.y + CROP.h); ctx.stroke(); }
+    for (var j = 1; j < 8; j++) { ctx.beginPath(); ctx.moveTo(CROP.x, CROP.y + j * CROP.h / 8); ctx.lineTo(CROP.x + CROP.w, CROP.y + j * CROP.h / 8); ctx.stroke(); }
+    var c = cellRect(Math.floor(t * 5) % 32);
+    ctx.strokeStyle = '#2a78d6'; ctx.lineWidth = 2.2; ctx.strokeRect(c.x + 1, c.y + 1, c.w - 2, c.h - 2);
+    caption(ctx, '每塊變成一個 token');
+  }
+  /** 示意注意力：以剪影在每塊的佔比估計（與光線無關），軀幹區塊再加重 */
+  function attn(row) {
+    var f = feats().sil[row.k][row.pi], out = [];
+    for (var i = 0; i < 32; i++) {
+      var cx = i % 4, cy = Math.floor(i / 4), s = 0, n = 0;
+      for (var y = cy * 4; y < cy * 4 + 4; y++) for (var x = Math.floor(cx * 5.5); x < Math.floor((cx + 1) * 5.5); x++) { s += f.gei[y * f.W + x]; n++; }
+      out.push(U.clamp((s / n) * 2.2 * (cy >= 2 && cy <= 4 ? 1.25 : 1), 0, 1));
+    }
+    return out;
+  }
+  function sAttn(ctx, W, H, row, t) {
+    cropRGB(ctx, row, t);
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(CROP.x, CROP.y, CROP.w, CROP.h);
+    var a = attn(row), pulse = 0.85 + 0.15 * Math.sin(t * 3);
+    a.forEach(function (v, i) { var c = cellRect(i); ctx.fillStyle = 'rgba(42,120,214,' + (v * 0.8 * pulse).toFixed(3) + ')'; ctx.fillRect(c.x + 1, c.y + 1, c.w - 2, c.h - 2); });
+    caption(ctx, '注意力多落在制服上', '#2a78d6');
+  }
+  function mosaic(ctx, cols, x, y, cw, ch) {
+    cols.forEach(function (c, i) { ctx.fillStyle = VK.rgb(c); ctx.fillRect(x + (i % 4) * cw, y + Math.floor(i / 4) * ch, cw - 1.5, ch - 1.5); });
+  }
+  function sAppEmb(ctx, W, H, row) {
+    var cols = feats().app[row.k][row.pi].cols;
+    mosaic(ctx, cols, 39, 8, 18, 18.5);
+    caption(ctx, '32 塊平均色（示意）');
+  }
+
+  /* 去衣服化 */
+  function sClothTag(ctx, W, H, row, t) {
+    cropRGB(ctx, row, t);
+    VK.rr(ctx, 8, 116, 134, 40, 5); ctx.fillStyle = 'rgba(255,255,255,.93)'; ctx.fill(); ctx.strokeStyle = '#6b8fc4'; ctx.lineWidth = 1.4; ctx.stroke();
+    VK.label(ctx, 75, 132, '衣服標籤', { align: 'center', size: 11, color: '#6f7a71' });
+    VK.label(ctx, 75, 149, '迷彩服（第 1 套）', { align: 'center', size: 12.5, bold: true, color: '#6b8fc4' });
+    caption(ctx, '訓練時需要衣服標籤');
+  }
+  function sClothCls(ctx, W, H, row, t) {
+    VK.label(ctx, 8, 20, '衣服分類器輸出', { size: 12, bold: true });
+    var classes = [['迷彩服', 1], ['軍便服', 0], ['便服', 0]];
+    classes.forEach(function (c, i) {
+      var y = 34 + i * 26;
+      VK.label(ctx, 8, y + 13, c[0], { size: 11.5, color: '#48544b' });
+      ctx.fillStyle = '#eef0eb'; ctx.fillRect(54, y + 2, 86, 14);
+      ctx.fillStyle = c[1] ? '#6b8fc4' : '#c5ccc2'; ctx.fillRect(54, y + 2, Math.max(2, 86 * c[1]), 14);
+    });
+    VK.rr(ctx, 8, 118, 134, 50, 5); ctx.fillStyle = '#eef3fa'; ctx.fill();
+    VK.label(ctx, 75, 138, '三列完全一樣', { align: 'center', size: 12, bold: true, color: '#6b8fc4' });
+    VK.label(ctx, 75, 156, '沒有衣服差異可對抗', { align: 'center', size: 11.5, color: '#48544b' });
+    caption(ctx, '對抗損失 ≈ 0', '#c93434');
+  }
+  function sCalEmb(ctx, W, H, row) { sAppEmb(ctx, W, H, row); ctx.fillStyle = '#fff'; ctx.fillRect(0, CHH - 26, CW, 26); caption(ctx, '≈ 原本的外觀嵌入', '#c93434'); }
+
+  /* 輪廓步態 */
+  var silCv = document.createElement('canvas'); silCv.width = 22; silCv.height = 32;
+  var silCtx = silCv.getContext('2d');
+  function sSeg(ctx, W, H, row, t) {
+    VK.frame(silCtx, 22, 32, row.p, t, row.cam, { kind: 'crop', mode: 'sil', bg: 'white', style: { silColor: '#1c251f' } });
+    ctx.imageSmoothingEnabled = false; ctx.drawImage(silCv, CROP.x - 7, CROP.y, 88, 128 * 1.1875);
+    ctx.strokeStyle = '#c5ccc2'; ctx.strokeRect(CROP.x - 6.5, CROP.y + 0.5, 87, 151);
+    caption(ctx, '每幀一張黑白剪影');
+  }
+  function drawGEI(ctx, f, x, y, cw, ch) {
+    for (var yy = 0; yy < f.H; yy++) for (var xx = 0; xx < f.W; xx++) { ctx.fillStyle = VK.gray(f.gei[yy * f.W + xx]); ctx.fillRect(x + xx * cw, y + yy * ch, cw + 0.3, ch + 0.3); }
+  }
+  function sGEI(ctx, W, H, row, t) {
+    var f = feats().sil[row.k][row.pi];
+    drawGEI(ctx, f, CROP.x - 7, CROP.y, 4, 4.75);
+    caption(ctx, '一個週期的剪影平均');
+  }
+  function sHPP(ctx, W, H, row) {
+    var f = feats().sil[row.k][row.pi];
+    drawGEI(ctx, f, 10, CROP.y, 3.6, 4.75);
+    for (var b = 0; b < 8; b++) {
+      var y = CROP.y + b * 19;
+      ctx.strokeStyle = b % 2 ? '#1baf7a' : '#7fd3b3'; ctx.lineWidth = 1.2; ctx.strokeRect(10.5, y + 0.5, 79, 18);
+      var m = f.bands[b].reduce(function (s, x) { return s + x; }, 0) / 4;
+      ctx.fillStyle = '#1baf7a'; ctx.fillRect(96, y + 4, Math.max(1.5, m * 90), 10);
+    }
+    caption(ctx, '切 8 條水平帶各自池化');
+  }
+  function sSilEmb(ctx, W, H, row) {
+    var f = feats().sil[row.k][row.pi];
+    f.bands.forEach(function (bd, b) { bd.forEach(function (v, k) { ctx.fillStyle = VK.gray(v * 1.3); ctx.fillRect(35 + k * 20, 8 + b * 19, 18.5, 17.5); }); });
+    caption(ctx, '8 帶 × 4 段（示意）');
+  }
+
+  /* 骨架步態 */
+  function sPose(ctx, W, H, row, t) {
+    VK.frame(ctx, W, H, row.p, t, row.cam, { kind: 'scene' });
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(0, 0, W, H);
+    var v = VK.view(row.p, W, H, row.cam, 'scene'), r = U.rng(Math.floor(t * 12) * 97 + row.pi * 7 + (row.cam.low > 1 ? 1 : 0));
+    skelLines(ctx, VK.joints2D(row.p, t, v, VK.poseNoise(row.cam) * 1.4, r), '#eb6834', 2.2);
+    if (row.cam.low > 1) VK.label(ctx, W / 2, 22, '關節在跳動', { align: 'center', size: 12, bold: true, color: '#c93434' });
+    caption(ctx, '估出 17 個關節點');
+  }
+  var BONES = [['neck', 'pelvis'], ['lSho', 'rSho'], ['lHip', 'rHip'], ['lSho', 'lElb'], ['lElb', 'lWri'], ['rSho', 'rElb'], ['rElb', 'rWri'], ['lHip', 'lKnee'], ['lKnee', 'lAnkle'], ['rHip', 'rKnee'], ['rKnee', 'rAnkle']];
+  function skelLines(ctx, J, c, w) {
+    ctx.strokeStyle = c; ctx.lineWidth = w; ctx.lineCap = 'round';
+    BONES.forEach(function (b) { ctx.beginPath(); ctx.moveTo(J[b[0]][0], J[b[0]][1]); ctx.lineTo(J[b[1]][0], J[b[1]][1]); ctx.stroke(); });
+    ctx.beginPath(); ctx.arc(J.head[0], J.head[1], J.headR, 0, 7); ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ['lKnee', 'rKnee', 'lAnkle', 'rAnkle', 'lElb', 'rElb', 'lHip', 'rHip', 'lSho', 'rSho'].forEach(function (k) { ctx.beginPath(); ctx.arc(J[k][0], J[k][1], 2.4, 0, 7); ctx.fill(); ctx.stroke(); });
+  }
+  function hotView(row) { return VK.view(row.p, CW, CHH, row.cam, 'crop', 0.72); }
+  function sHOT(ctx, W, H, row, t) {
+    ctx.strokeStyle = '#eef0eb'; ctx.lineWidth = 1;
+    for (var x = 0; x <= W; x += 15) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H - 26); ctx.stroke(); }
+    for (var y = 0; y <= H - 26; y += 15) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    var v = hotView(row), nz = VK.poseNoise(row.cam), T = VK.cyc(row.p);
+    ['lAnkle', 'rAnkle'].forEach(function (jn, k) {
+      ctx.strokeStyle = k ? 'rgba(213,81,129,.4)' : 'rgba(213,81,129,.9)'; ctx.lineWidth = 1.8; ctx.beginPath();
+      for (var s = 0; s <= 24; s++) { var tt = t - T + s * T / 24, J = VK.joints2D(row.p, tt, v, nz, U.rng(Math.floor(tt * 12) * 97 + row.pi * 7 + row.cam.low)); s ? ctx.lineTo(J[jn][0], J[jn][1]) : ctx.moveTo(J[jn][0], J[jn][1]); }
+      ctx.stroke();
+    });
+    skelLines(ctx, VK.joints2D(row.p, t, v, nz, U.rng(Math.floor(t * 12) * 97 + row.pi * 7 + row.cam.low)), '#eb6834', 2);
+    caption(ctx, '置中、縮成同一身高');
+  }
+  function sSeries(ctx, W, H, row, t) {
+    var s = feats().skel[row.k][row.pi].series, x0 = 12, x1 = W - 8, y0 = 30, y1 = 150;
+    VK.label(ctx, 8, 18, '膝蓋彎曲角度', { size: 12, bold: true });
+    ctx.strokeStyle = '#dde2da'; ctx.lineWidth = 1; ctx.strokeRect(x0 + 0.5, y0 + 0.5, x1 - x0, y1 - y0);
+    function Y(v) { return y1 - U.clamp(v / 1.4, 0, 1) * (y1 - y0); }
+    [['kl', '#eb6834'], ['kr', 'rgba(235,104,52,.45)']].forEach(function (k) {
+      ctx.strokeStyle = k[1]; ctx.lineWidth = 2; ctx.beginPath();
+      for (var i = 0; i <= s.length; i++) { var v = s[i % s.length][k[0]], x = x0 + i / s.length * (x1 - x0); i ? ctx.lineTo(x, Y(v)) : ctx.moveTo(x, Y(v)); }
+      ctx.stroke();
+    });
+    var T = VK.cyc(row.p), cx = x0 + ((t % T) / T) * (x1 - x0);
+    ctx.strokeStyle = '#1c251f'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx, y0); ctx.lineTo(cx, y1); ctx.stroke();
+    VK.label(ctx, x0, y1 + 14, '一個步態週期 →', { size: 11, color: '#6f7a71' });
+    caption(ctx, '實線左膝・淡線右膝');
+  }
+  function zBars(ctx, names, z, color, y0, rh) {
+    names.forEach(function (n, i) {
+      var y = y0 + i * rh, cx = 96, v = U.clamp(z[i], -2.5, 2.5) / 2.5 * 48;
+      VK.label(ctx, 8, y + 11, n, { size: 11, color: '#48544b' });
+      ctx.fillStyle = '#eef0eb'; ctx.fillRect(48, y + 2, 96, 11);
+      ctx.fillStyle = color; ctx.fillRect(Math.min(cx, cx + v), y + 2, Math.max(1.5, Math.abs(v)), 11);
+      ctx.fillStyle = '#1c251f'; ctx.fillRect(cx - 0.5, y, 1, 15);
+    });
+  }
+  function sSkEmb(ctx, W, H, row) {
+    var F = feats(), raw = F.skel[row.k][row.pi].raw;
+    zBars(ctx, VK.SK_NAMES, raw.map(function (v, i) { return (v - F.skMu[i]) / F.skStd[i]; }), '#eb6834', 12, 24);
+    caption(ctx, '與五人平均的差（標準化）');
+  }
+
+  /* 3D 體型 */
+  function sFit(ctx, W, H, row, t) {
+    var cam = Object.assign({}, row.cam, { yaw: row.cam.yaw + t * 0.9 });
+    VK.frame(ctx, W, H - 22, row.p, t, cam, { kind: 'crop', mode: 'sil', bg: 'white', fill: 0.86, style: { silColor: '#b6bdb2' } });
+    var v = VK.view(row.p, W, H - 22, cam, 'crop', 0.86);
+    var J = VK.joints2D(row.p, t, v, 0);
+    ctx.globalAlpha = 0.9; skelLines(ctx, J, '#8b7317', 1.2); ctx.globalAlpha = 1;
+    caption(ctx, '擬合 3D 人體（旋轉檢視）');
+  }
+  function sCanon(ctx, W, H, row) {
+    var p = row.p, cam = { yaw: Math.PI / 2, pitch: 0, low: 1 }, v = VK.view(p, W, H - 30, cam, 'scene');
+    v.scale = (H - 30) * 0.86; v.y = H - 34;
+    var parts = PersonModel.parts(Object.assign({}, p, { armSwing: 0, stride: 0, kneeFlex: 0, bounce: 0 }), 0, v, 'sil');
+    PersonModel.renderCanvas(ctx, parts, { silColor: '#b6bdb2' });
+    var J = PersonModel.joints(p, 0), pr = function (k) { var q = PersonModel.project(J[k], cam.yaw, 0); return [v.x + q[0] * v.scale, v.y + q[1] * v.scale]; };
+    var top = pr('head')[1] - J.headR * v.scale, ls = pr('lSho'), rs = pr('rSho'), lh = pr('lHip'), rh = pr('rHip');
+    ctx.strokeStyle = '#9a7b12'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(14, top); ctx.lineTo(8, top); ctx.lineTo(8, v.y); ctx.lineTo(14, v.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ls[0], ls[1] - 9); ctx.lineTo(rs[0], rs[1] - 9); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(lh[0], lh[1] + 3); ctx.lineTo(rh[0], rh[1] + 3); ctx.stroke();
+    caption(ctx, '去掉姿態、衣服、紋理');
+  }
+  function sBodyEmb(ctx, W, H, row) {
+    var F = feats(), raw = F.body[row.k][row.pi].raw;
+    zBars(ctx, VK.BODY_NAMES, raw.map(function (v, i) { return (v - F.bdMu[i]) / F.bdStd[i]; }), '#9a7b12', 24, 30);
+    if (row.cam.low > 1) VK.label(ctx, W / 2, 150, '低解析 → 誤差變大', { align: 'center', size: 11.5, bold: true, color: '#c93434' });
+    caption(ctx, '體型參數（標準化）');
+  }
+
+  /* 多專家融合 */
+  function sVideo(ctx, W, H, row, t) {
+    [-0.5, -0.25, 0].forEach(function (dt, i) {
+      var o = (2 - i) * 9;
+      ctx.save(); ctx.translate(o, 18 - o * 0.9); ctx.beginPath(); ctx.rect(0, 0, W - 22, H - 52); ctx.clip();
+      ctx.scale((W - 22) / W, (H - 52) / H);
+      VK.frame(ctx, W, H, row.p, t + dt, row.cam, { kind: 'scene' });
+      ctx.restore();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.strokeRect(o, 18 - o * 0.9, W - 22, H - 52);
+    });
+    caption(ctx, '16 幀影片片段');
+  }
+  function sCLIP(ctx, W, H, row, t) {
+    var cols = feats().app[row.k][row.pi].cols;
+    cols.forEach(function (c, i) {
+      var r = cellRect(i), l = (c[0] + c[1] + c[2]) / 765, sh = 0.08 * Math.sin(t * 2 + i * 1.7);
+      ctx.fillStyle = 'hsl(' + (205 + l * 30) + ',55%,' + Math.round((28 + l * 45 + sh * 20)) + '%)';
+      ctx.fillRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
+    });
+    caption(ctx, '凍結 CLIP 的特徵圖');
+  }
+  function sExperts(ctx, W, H, row, t) {
+    var F = feats();
+    VK.label(ctx, 8, 16, '外觀', { size: 11.5, bold: true, color: '#2a78d6' });
+    mosaic(ctx, F.app[row.k][row.pi].cols.slice(0, 16), 58, 6, 9, 9);
+    VK.label(ctx, 8, 70, '體型', { size: 11.5, bold: true, color: '#9a7b12' });
+    var raw = F.body[row.k][row.pi].raw;
+    raw.forEach(function (v, i) { var z = (v - F.bdMu[i]) / F.bdStd[i]; ctx.fillStyle = '#9a7b12'; var hh = 8 + U.clamp(z, -2, 2) * 7; ctx.fillRect(60 + i * 18, 84 - hh, 13, hh); });
+    VK.label(ctx, 8, 116, '步態', { size: 11.5, bold: true, color: '#d55181' });
+    var s = F.skel[row.k][row.pi].series;
+    ctx.strokeStyle = '#d55181'; ctx.lineWidth = 1.8; ctx.beginPath();
+    s.forEach(function (q, i) { var x = 58 + i / (s.length - 1) * 82, y = 130 - q.kl * 20; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
+    caption(ctx, '三位專家各算一份');
+  }
+  function sGate(ctx, W, H, row, t) {
+    var g = GATE[A.cond], items = [['外觀', g.app, '#2a78d6'], ['體型', g.body, '#9a7b12'], ['步態', g.gait, '#d55181']];
+    VK.label(ctx, 8, 18, '門控給的權重', { size: 12, bold: true });
+    items.forEach(function (it, i) {
+      var y = 34 + i * 36;
+      VK.label(ctx, 8, y + 13, it[0], { size: 11.5, color: '#48544b' });
+      ctx.fillStyle = it[2]; ctx.fillRect(42, y + 2, 72 * it[1] / 0.6, 14);
+      VK.label(ctx, 42 + 72 * it[1] / 0.6 + 4, y + 13.5, Math.round(it[1] * 100) + '%', { size: 11.5, bold: true, color: '#1c251f' });
+    });
+    caption(ctx, A.cond === 'low' ? '低解析：步態降權' : A.cond === 'tint' ? '色偏：外觀降權' : '依畫面品質調整');
+  }
+  function sFuseEmb(ctx, W, H, row) {
+    var g = GATE[A.cond], F = feats(), x = 12, total = 126;
+    [['app', '#2a78d6'], ['body', '#9a7b12'], ['gait', '#d55181']].forEach(function (k) {
+      var w = total * g[k[0]];
+      for (var i = 0; i < 8; i++) {
+        var val = k[0] === 'app' ? (F.app[row.k][row.pi].cols[i * 4 + 1][1] / 255) : k[0] === 'body' ? 0.5 + 0.2 * ((F.body[row.k][row.pi].raw[i % 4] - F.bdMu[i % 4]) / F.bdStd[i % 4]) : 0.5 + 0.15 * ((F.skel[row.k][row.pi].raw[i % 6] - F.skMu[i % 6]) / F.skStd[i % 6]);
+        ctx.globalAlpha = U.clamp(0.25 + val * 0.7, 0.15, 1); ctx.fillStyle = k[1];
+        ctx.fillRect(x, 20 + i * 16, Math.max(2, w - 2), 14);
+      }
+      ctx.globalAlpha = 1; x += w;
+    });
+    caption(ctx, '寬度 = 權重（示意）');
+  }
+
+  // [名稱, 形狀說明, 繪圖, 是否動畫]
+  var STAGES = {
+    app: [['輸入影像', '一幀＋偵測框', sInput], ['裁切・切塊', '256×128 → 16×8 塊', sPatch], ['Transformer 注意力', '哪些塊最重要', sAttn], ['外觀嵌入', '768 維向量', sAppEmb, false]],
+    cal: [['輸入影像', '一幀＋偵測框', sInput], ['裁切＋衣服標籤', '訓練時才需要', sClothTag], ['衣服分類器（對抗）', '想讓特徵騙過它', sClothCls, false], ['去衣服化嵌入', '2048 維向量', sCalEmb, false]],
+    sil: [['輸入影片', '≥ 1 個步態週期', sInput], ['人形分割', '每幀一張剪影', sSeg], ['時間池化', '步態能量圖', sGEI, false], ['水平切條', '頭、胸、腿分開學', sHPP, false], ['步態嵌入', '各帶串接', sSilEmb, false]],
+    skel: [['輸入影片', '≥ 1 個步態週期', sInput], ['姿態估計', 'T × 17 × 2 關節點', sPose], ['正規化（HOT）', '移除位置與尺寸', sHOT], ['關節時序', '圖卷積的輸入', sSeries], ['步態嵌入', '動作特徵', sSkEmb, false]],
+    body: [['輸入影像', '單張即可', sInput], ['3D 人體擬合', '姿態＋體型參數', sFit], ['拆解', '只留體型', sCanon, false], ['體型嵌入', '身體尺寸', sBodyEmb, false]],
+    fuse: [['輸入影片', 'T = 16 幀', sVideo], ['凍結大模型', 'CLIP ViT-L/14', sCLIP], ['三位專家', '外觀・體型・步態', sExperts, false], ['門控', '決定各信幾分', sGate, false], ['融合嵌入', '加權合併', sFuseEmb, false]]
   };
 
-  function drawMap() {
-    var svg = U.clear($('#method-map'));
-    var L = 190, R = 940, T = 40, B = 440;
-    var colW = (R - L) / 5, rowH = (B - T) / 4;
-    function X(cd) { return L + (4 - cd) * colW + colW / 2; }
-    // 推薦區
-    el('rect', { x: L + 3 * colW, y: T + rowH * 1, width: colW * 2, height: rowH * 2, fill: '#e3e8d6', rx: 6 }, svg);
-    el('text', { x: L + 5 * colW - 10, y: T + rowH + 20, 'text-anchor': 'end', 'font-size': 13, fill: 'var(--olive)', 'font-weight': 700, text: '同制服首選區' }, svg);
-    el('text', { x: L + 5 * colW - 10, y: T + rowH + 38, 'text-anchor': 'end', 'font-size': 12, fill: 'var(--olive)', text: '衣服依賴低、一般 RGB 影片可取得' }, svg);
-    for (var r = 0; r < 4; r++) {
-      el('line', { x1: L, x2: R, y1: T + r * rowH, y2: T + r * rowH, stroke: 'var(--rule-2)' }, svg);
-      el('text', { x: L - 12, y: T + r * rowH + rowH / 2 + 4, 'text-anchor': 'end', 'font-size': 13, fill: 'var(--ink-2)', text: LEVEL_NAMES[r] }, svg);
-    }
-    el('line', { x1: L, x2: R, y1: B, y2: B, stroke: 'var(--ink-3)' }, svg);
-    ['極高', '高', '中', '低', '極低'].forEach(function (n, i) {
-      el('text', { x: L + i * colW + colW / 2, y: B + 20, 'text-anchor': 'middle', 'font-size': 12.5, fill: 'var(--ink-2)', text: n }, svg);
+  /* ---------- 排名結果 ---------- */
+  function drawRank() {
+    var svg = U.clear($('#ana-rank')), d = dists(A.fam, A.qi, A.cond), rk = rankOf(d, A.qi), imp = hardest(d, A.qi);
+    var order = d.map(function (x, j) { return j; }).sort(function (a, b) { return d[a] - d[b]; });
+    var mx = Math.max.apply(null, d) * 1.08, L = 112, W = 300;
+    el('text', { x: 0, y: 16, 'font-size': 13.5, 'font-weight': 700, fill: 'var(--ink)', text: '攝影機 2 裡的五個人，誰最像查詢的人？' }, svg);
+    el('text', { x: 0, y: 34, 'font-size': 12, fill: 'var(--ink-3)', text: '長條 = 與查詢的特徵距離，越短越像。由上而下就是系統給的排名。' }, svg);
+    order.forEach(function (j, r) {
+      var y = 50 + r * 30, self = j === A.qi;
+      el('text', { x: 0, y: y + 15, 'font-size': 12.5, fill: 'var(--ink-3)', class: 'num', text: '#' + (r + 1) }, svg);
+      el('text', { x: 26, y: y + 15, 'font-size': 13, 'font-weight': self ? 700 : 400, fill: self ? 'var(--ink)' : 'var(--ink-2)', text: '人員 ' + P[j].id + (self ? '（本人）' : '') }, svg);
+      el('rect', { x: L, y: y + 3, width: Math.max(2, d[j] / mx * W), height: 16, rx: 3, fill: self ? 'var(--ink)' : j === imp ? 'var(--bad)' : '#b8bfb5' }, svg);
+      el('text', { x: L + d[j] / mx * W + 6, y: y + 15, 'font-size': 12, fill: 'var(--ink-2)', class: 'num', text: d[j].toFixed(2) }, svg);
     });
-    el('text', { x: L, y: B + 42, 'font-size': 12.5, fill: 'var(--ink-3)', text: '← 衣服依賴高' }, svg);
-    el('text', { x: R, y: B + 42, 'text-anchor': 'end', 'font-size': 12.5, fill: 'var(--ink-3)', text: '衣服依賴低 →' }, svg);
-    el('text', { x: 18, y: T - 14, 'font-size': 12.5, fill: 'var(--ink-3)', text: '輸入需求 ↓' }, svg);
+    var ok = rk === 1, ratio = d[imp] / d[A.qi];
+    el('text', { x: 0, y: 222, 'font-size': 20, 'font-weight': 700, fill: ok ? 'var(--good)' : 'var(--bad)', text: ok ? '✓ 本人排第 1' : '✗ 本人排第 ' + rk }, svg);
+    el('text', { x: 0, y: 244, 'font-size': 12.5, fill: 'var(--ink-2)', text: '分離度（最像冒充者距離 ÷ 本人距離）= ' + ratio.toFixed(2) }, svg);
+    el('text', { x: 0, y: 262, 'font-size': 12, fill: 'var(--ink-3)', text: ratio < 1 ? '小於 1：冒充者比本人更像，系統會認錯人。' : ratio < 1.1 ? '接近 1：勉強分開，換個雜訊就可能翻盤。' : '大於 1.1：有明確差距。' }, svg);
+  }
+  function drawInfo() {
+    var f = FAM[A.fam];
+    var stars = '●●●●'.slice(0, f.score) + '○○○○'.slice(0, 4 - f.score);
+    var ev = { proven: '<span class="ev proven"><i></i>論文報告</span>', inferred: '<span class="ev inferred"><i></i>合理推論</span>' };
+    $('#ana-info').innerHTML =
+      '<p class="ana-idea">' + f.idea + '</p>' +
+      '<div class="ana-reps">' + f.reps.map(function (r) { return '<span class="tag">' + r + '</span>'; }).join('') + '</div>' +
+      '<dl>' +
+      '<dt>學到什麼</dt><dd>' + f.learns + '</dd>' +
+      '<dt>需要</dt><dd>' + f.needs + '</dd>' +
+      '<dt>何時失效</dt><dd>' + f.fails.map(function (x) { return '<span class="fail">' + x + '</span>'; }).join('') + '</dd>' +
+      '<dt>文獻數字</dt><dd>' + f.num.map(function (n) { return n[0] + '：<b class="num">' + n[1] + '</b> ' + ev[n[2]]; }).join('<br>') + '</dd>' +
+      '<dt>同制服價值</dt><dd><span class="num stars">' + stars + '</span>　' + f.verdict + '</dd>' +
+      '<dt>授權・算力</dt><dd>' + f.lic + '；' + f.cost + '</dd>' +
+      '</dl>';
+  }
 
-    var cells = {};
-    D.METHODS.forEach(function (m) { var k = m.clothDep + '-' + INPUT_LEVEL[m.id]; (cells[k] = cells[k] || []).push(m); });
-    Object.keys(cells).forEach(function (k) {
-      var list = cells[k], n = list.length;
-      list.forEach(function (m, i) {
-        var lv = INPUT_LEVEL[m.id];
-        var cx = X(m.clothDep) - 52, cy = T + lv * rowH + rowH / 2 + (i - (n - 1) / 2) * 21;
-        var g = el('g', { tabindex: 0, role: 'button', 'aria-label': m.name, style: 'cursor:pointer', opacity: famOn[m.fam] ? 1 : 0.15 }, svg);
-        var sel = m.id === curMethod;
-        el('circle', { cx: cx, cy: cy, r: sel ? 7.5 : 6, fill: FAM[m.fam].color, stroke: sel ? 'var(--ink)' : '#fff', 'stroke-width': sel ? 2.2 : 1.5 }, g);
-        el('text', { x: cx + 12, y: cy + 4.5, 'font-size': 13.5, fill: 'var(--ink)', 'font-weight': sel ? 700 : 400, text: m.name.split('（')[0] }, g);
-        U.tip(g, '<b>' + m.name + '</b>（' + m.venue + '）<br>' + m.problem + '<br>輸入：' + m.input);
-        function go() { $('#method-sel').value = m.id; selectMethod(m.id); }
+  /* ---------- 六類方法 × 三種條件 ---------- */
+  function drawMatrix() {
+    var svg = U.clear($('#ana-matrix'));
+    var L = 128, cw = 150, rh = 40, T = 46;
+    CONDS.forEach(function (k, j) {
+      el('text', { x: L + j * cw + cw / 2, y: 18, 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 700, fill: 'var(--ink)', text: VK.CAM2[k].n }, svg);
+    });
+    el('text', { x: L + 1.5 * cw, y: 36, 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--ink-3)', text: '條件由左到右逐步變差 →' }, svg);
+    FAMS.forEach(function (f, i) {
+      var y = T + i * rh;
+      var on = f.id === A.fam;
+      el('rect', { x: 0, y: y, width: L + 3 * cw, height: rh - 4, rx: 4, fill: on ? '#fff' : 'transparent', stroke: on ? 'var(--ink)' : 'none' }, svg);
+      el('circle', { cx: 10, cy: y + rh / 2 - 2, r: 5, fill: f.c }, svg);
+      el('text', { x: 22, y: y + rh / 2 + 3, 'font-size': 13, 'font-weight': on ? 700 : 400, fill: 'var(--ink)', text: f.n }, svg);
+      CONDS.forEach(function (k, j) {
+        var ok = 0, rs = [];
+        P.forEach(function (_, qi) { var d = dists(f.id, qi, k), r = rankOf(d, qi); rs.push(r === 1); if (r === 1) ok++; });
+        var x = L + j * cw, g = el('g', { tabindex: 0, role: 'button', 'aria-label': f.n + '，' + VK.CAM2[k].n + '，' + ok + ' / 5 人排第一', style: 'cursor:pointer' }, svg);
+        var sel = on && k === A.cond;
+        el('rect', { x: x + 6, y: y + 3, width: cw - 12, height: rh - 10, rx: 4, fill: ok >= 4 ? '#dbeedb' : ok >= 3 ? '#f4ead0' : '#f6dcdc', stroke: sel ? 'var(--ink)' : 'none', 'stroke-width': 2 }, g);
+        rs.forEach(function (b, q) { el('circle', { cx: x + 22 + q * 13, cy: y + rh / 2 - 2, r: 4.5, fill: b ? 'var(--good)' : '#fff', stroke: b ? 'var(--good)' : 'var(--bad)', 'stroke-width': 1.4 }, g); });
+        el('text', { x: x + cw - 16, y: y + rh / 2 + 3, 'text-anchor': 'end', 'font-size': 13, 'font-weight': 700, class: 'num', fill: ok >= 4 ? 'var(--good)' : ok >= 3 ? 'var(--warn)' : 'var(--bad)', text: ok + ' / 5' }, g);
+        function go() { A.fam = f.id; A.cond = k; U.$$('#ana-cond button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-c') === k ? 'true' : 'false'); }); setFam(f.id); }
         g.addEventListener('click', go);
         g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
       });
     });
   }
 
-  function selectMethod(id) {
-    curMethod = id;
-    var m = D.METHODS.filter(function (x) { return x.id === id; })[0];
-    var fam = FAM[m.fam];
-    var KIND = { in: '輸入', pre: '前處理', model: '模型', train: '訓練用', emb: '輸出嵌入', match: '比對' };
-    var html = '';
-    m.stages.forEach(function (s, i) {
-      if (i) html += '<div class="arrow" aria-hidden="true"><svg width="22" height="14"><path d="M0 7h16M12 2l6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div>';
-      var barC = (s.k === 'model' || s.k === 'emb') ? fam.color : (s.k === 'train' ? 'transparent' : 'var(--rule)');
-      html += '<div class="stage' + (s.k === 'train' ? ' train' : '') + '"><span class="bar" style="background:' + barC + '"></span><span class="small muted">' + KIND[s.k] + '</span><b>' + U.esc(s.t) + '</b>' + (s.s ? '<span class="shape">' + U.esc(s.s) + '</span>' : '') + '</div>';
-    });
-    $('#pipe').innerHTML = html;
-    var ref = D.REFS[m.ref];
-    var cueTags = m.cue.map(function (c) { return '<span class="tag"><span class="sw-dot" style="--c:' + CUE[c].color + ';width:8px;height:8px"></span> ' + CUE[c].name + '</span>'; }).join('');
-    var stars = '●●●●'.slice(0, m.uniform) + '○○○○'.slice(0, 4 - m.uniform);
-    $('#method-detail').innerHTML = '<h3>' + m.name + ' <span class="muted small">' + m.venue + '</span></h3>' +
-      '<dl>' +
-      '<dt>解決的問題</dt><dd>' + m.problem + '</dd>' +
-      '<dt>輸入</dt><dd>' + m.input + '</dd>' +
-      '<dt>真正學到的</dt><dd>' + m.learns + '</dd>' +
-      '<dt>依賴線索</dt><dd>' + cueTags + '</dd>' +
-      '<dt>優點</dt><dd>' + m.plus + '</dd>' +
-      '<dt>限制</dt><dd>' + m.minus + '</dd>' +
-      (m.result ? '<dt>代表結果</dt><dd>' + m.result + ' <span class="ev proven"><i></i>論文報告</span></dd>' : '') +
-      '<dt>同制服價值</dt><dd><span class="num" aria-label="' + m.uniform + ' / 4">' + stars + '</span>　' + m.uniformNote + '</dd>' +
-      '<dt>出處</dt><dd>' + ref.a + '，' + (ref.u ? '<a href="' + ref.u + '" target="_blank" rel="noopener">' + ref.t + '</a>' : ref.t) + '</dd>' +
-      '</dl>';
-    drawMap();
-  }
-
-  function drawNums() {
-    var svg = $('#nums');
-    var panels = [
-      { t: 'CAL · CCVID 換衣協定', bars: [['Rank-1', 81.7], ['mAP', 79.6]] },
-      { t: 'MMGaitFormer · CASIA-B 換衣條件', bars: [['Rank-1', 94.8]] },
-      { t: 'Industrial-Gait · RGB 研究', bars: [['Rank-1', 88.3], ['Rank-5', 98.3]], verify: true }
-    ];
-    var pw = 290;
-    panels.forEach(function (p, i) {
-      var x0 = 10 + i * (pw + 15), g = el('g', {}, svg);
-      el('text', { x: x0, y: 22, 'font-size': 14, 'font-weight': 700, fill: 'var(--ink)', text: p.t }, g);
-      if (p.verify) el('text', { x: x0, y: 40, 'font-size': 12, fill: 'var(--warn)', text: '2026 · 待核對' }, g);
-      var L = x0 + 60, W = pw - 110;
-      [0, 50, 100].forEach(function (v) {
-        el('line', { x1: L + v / 100 * W, x2: L + v / 100 * W, y1: 52, y2: 52 + 2 * 46, stroke: 'var(--rule-2)' }, g);
-        el('text', { x: L + v / 100 * W, y: 52 + 2 * 46 + 16, 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--ink-3)', class: 'num', text: v + '%' }, g);
-      });
-      p.bars.forEach(function (b, j) {
-        var y = 60 + j * 46;
-        el('text', { x: L - 8, y: y + 18, 'text-anchor': 'end', 'font-size': 13, fill: 'var(--ink-2)', text: b[0] }, g);
-        el('rect', { x: L, y: y, width: b[1] / 100 * W, height: 26, rx: 3, fill: p.verify ? 'none' : 'var(--ink-2)', stroke: p.verify ? 'var(--ink-2)' : 'none', 'stroke-dasharray': p.verify ? '4 3' : null, 'stroke-width': 1.5 }, g);
-        el('text', { x: L + b[1] / 100 * W + 6, y: y + 18, 'font-size': 14, fill: 'var(--ink)', class: 'num', text: b[1].toFixed(1) }, g);
-      });
-    });
-  }
-
-  /* ======================= 4 特徵融合 ======================= */
-  var MODS = [
-    { k: 'app', n: '外觀', c: '#2a78d6', g: 0.83, i: 0.80 },
-    { k: 'skel', n: '骨架', c: '#eb6834', g: 0.80, i: 0.55 },
-    { k: 'sil', n: '輪廓', c: '#1baf7a', g: 0.76, i: 0.60 },
-    { k: 'face', n: '臉部', c: '#6250d6', g: 0.92, i: 0.35 }
-  ];
-  var SCENES = {
-    front: { app: 0.9, skel: 0.9, sil: 0.85, face: 0.9, note: '條件良好：每個模態都可靠，三種策略都能排對。' },
-    back: { app: 0.8, skel: 0.85, sil: 0.8, face: 0, note: '看不到臉：等權與固定權重仍把權重分給「不存在的臉」，被稀釋；品質門控把它遮掉，邊際最大。' },
-    far: { app: 0.6, skel: 0.25, sil: 0.45, face: 0, note: '遠距低解析：姿態估計先壞，外觀又分不出同制服——沒有任何融合策略救得回來。正確做法是拒判或等待更多幀（見第 6 章）。' },
-    occ: { app: 0.55, skel: 0.35, sil: 0.3, face: 0.6, note: '下半身遮擋：骨架與輪廓品質下降且開始誤導；門控把權重移到還可信的臉部。' }
-  };
-  var FIXED_W = { app: 0.3, skel: 0.15, sil: 0.15, face: 0.4 };
-  var q = Object.assign({}, SCENES.front);
-
-  function simOf(m, which, qq) {
-    var base = which === 'g' ? m.g : m.i, bias = which === 'g' ? -0.05 : 0.15;
-    return 0.5 + (base - 0.5) * qq + bias * (1 - qq);
-  }
-  function fuse(strategy) {
-    var w = {}, sum = 0;
-    MODS.forEach(function (m) {
-      var v = strategy === 'mean' ? 1 : strategy === 'fixed' ? FIXED_W[m.k] : q[m.k];
-      w[m.k] = v; sum += v;
-    });
-    var G = 0, I = 0;
-    MODS.forEach(function (m) {
-      w[m.k] = sum ? w[m.k] / sum : 0;
-      var gs = q[m.k] > 0 ? simOf(m, 'g', q[m.k]) : 0.5, is = q[m.k] > 0 ? simOf(m, 'i', q[m.k]) : 0.5;
-      G += w[m.k] * gs; I += w[m.k] * is;
-    });
-    return { w: w, G: G, I: I };
-  }
-
-  CH.fusion = {
-    init: function () {
-      drawAlign();
-      var box = $('#q-sliders');
-      MODS.forEach(function (m) {
-        var d = U.h('div', { class: 'slider' }, '<label for="q-' + m.k + '"><span class="sw-dot" style="--c:' + m.c + '"></span> ' + m.n + ' 品質</label><output id="q-' + m.k + '-o" class="num"></output><input id="q-' + m.k + '" type="range" min="0" max="1" step="0.05">');
-        box.appendChild(d);
-        $('#q-' + m.k, d).addEventListener('input', function (e) { q[m.k] = +e.target.value; q.note = '自訂品質：觀察哪個策略的邊際先變成負數。'; drawFusion(); });
-      });
-      U.segGroup($('#scene'), 'data-s', function (s) { q = Object.assign({}, SCENES[s]); syncSliders(); drawFusion(); });
-      syncSliders(); drawFusion();
-      var rows = [
-        ['串接 Concatenation', 'z = [z₁; z₂; z₃]', '最簡單的基準', '不知道哪個特徵壞了', '必做基準'],
-        ['共享投影', 'Pᵢ(zᵢ) → 512D', '統一維度與尺度', '仍需對齊損失', '高'],
-        ['固定加權', 'z = Σ wᵢ zᵢ', '簡單、可解釋', '同一組權重不適合每台攝影機', '中'],
-        ['注意力', '特徵自選重要 token', '彈性大', '資料與計算量大', '高'],
-        ['交叉注意力', '骨架 query 輪廓（反之亦然）', '顯式交換互補資訊', '對對齊誤差敏感', '高（MMGaitFormer 類）'],
-        ['門控 Gating', 'w = g(q₁, q₂, …)', '依品質動態調整', '門控塌縮（永遠只選一個）', '非常高'],
-        ['專家混合 MoE', '多專家 + 路由器', '模態專業化', '訓練複雜', '非常高（HAMoBE、RaMoE）'],
-        ['分數融合', 'score = Σ wᵢ sᵢ', '直接接現成模型', '沒有特徵層互動', '第一個實驗最適合'],
-        ['決策層融合', '各自判斷再投票', '好除錯、模組化', '幾乎沒有協同效果', '部署友善']
-      ];
-      $('#fusion-tbl').innerHTML = '<thead><tr><th>策略</th><th>核心概念</th><th>優點</th><th>主要問題</th><th>同制服評價</th></tr></thead><tbody>' +
-        rows.map(function (r) { return '<tr><td><b>' + r[0] + '</b></td><td style="font-family:var(--num)">' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td><td>' + r[4] + '</td></tr>'; }).join('') + '</tbody>';
+  /* ======================= 方法版圖（55 個方法） ======================= */
+  var LANES = ['det', 'st', 'app', 'vid', 'part', 'cc', 'uni', 'gait', 'mm', 'face', 'uda', 'life'];
+  var PICK = ['st-ReID', 'PersonViT ViT-S/16', 'SOLIDER Swin-S', 'DeepGaitV2-P3D', 'Cluster Contrast', 'ByteTrack', 'CLIP3DReID', 'MagFace', 'YOLOX-S'];
+  var HAVE = ['BoT（BagTricks）R50', 'CLIP-ReID ViT-B/16', 'YOLOv7（你現有）'];
+  var LAYER = { det: '1 看見人', st: '2 時空約束', app: '3 外觀', vid: '3 外觀', part: '3 外觀', cc: '4 衣服以外', uni: '4 衣服以外', gait: '4 衣服以外', mm: '5 融合', face: '4 衣服以外', uda: '6 少標註', life: '6 少標註' };
+  var landSel = null;
+  function initLandscape() { drawLand(); }
+  function yearOf(m) { var y = (m.v.match(/(20\d\d)/) || [0, 2023])[1]; return +y; }
+  function drawLand() {
+    var svg = U.clear($('#land')), L = 150, Rr = 960, T = 34, rh = 38, y0 = 2018, y1 = 2026;
+    function X(y) { return L + (y - y0 + 0.5) / (y1 - y0 + 1) * (Rr - L); }
+    for (var y = y0; y <= y1; y++) {
+      el('line', { x1: X(y) - (Rr - L) / (y1 - y0 + 1) / 2, x2: X(y) - (Rr - L) / (y1 - y0 + 1) / 2, y1: T - 6, y2: T + LANES.length * rh, stroke: 'var(--rule-2)' }, svg);
+      el('text', { x: X(y), y: T - 12, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--ink-3)', class: 'num', text: y }, svg);
     }
-  };
-  function syncSliders() {
-    MODS.forEach(function (m) { $('#q-' + m.k).value = q[m.k]; });
+    var groups = {};
+    R.METHODS2.forEach(function (m) { var k = m.fam + '|' + yearOf(m); (groups[k] = groups[k] || []).push(m); });
+    LANES.forEach(function (fk, i) {
+      var y = T + i * rh;
+      el('rect', { x: 0, y: y, width: Rr, height: rh - 2, fill: i % 2 ? 'transparent' : 'rgba(255,255,255,.55)' }, svg);
+      el('text', { x: L - 12, y: y + rh / 2 + 3, 'text-anchor': 'end', 'font-size': 12.5, fill: 'var(--ink)', text: R.FAM2[fk] }, svg);
+    });
+    Object.keys(groups).forEach(function (k) {
+      var fk = k.split('|')[0], yr = +k.split('|')[1], li = LANES.indexOf(fk), list = groups[k];
+      list.forEach(function (m, j) {
+        var cx = X(yr) + (j - (list.length - 1) / 2) * 15, cy = T + li * rh + rh / 2 - 1;
+        var pick = PICK.indexOf(m.n) >= 0, have = HAVE.indexOf(m.n) >= 0, sel = landSel === m.n;
+        var g = el('g', { tabindex: 0, role: 'button', 'aria-label': m.n, style: 'cursor:pointer' }, svg);
+        var c = R.LIC[m.lic].c;
+        if (have) el('rect', { x: cx - 6.5, y: cy - 6.5, width: 13, height: 13, transform: 'rotate(45 ' + cx + ' ' + cy + ')', fill: c, stroke: 'var(--ink)', 'stroke-width': sel ? 2.6 : 1.4 }, g);
+        else el('circle', { cx: cx, cy: cy, r: pick ? 7.5 : 5.5, fill: c, stroke: pick || sel ? 'var(--ink)' : '#fff', 'stroke-width': sel ? 3 : pick ? 2.2 : 1.2, opacity: pick || have ? 1 : 0.8 }, g);
+        U.tip(g, '<b>' + U.esc(m.n) + '</b>　' + m.v + '<br>' + m.res + '<br>授權：' + R.LIC[m.lic].n + '　算力：' + m.cost + '<br>' + m.verdict);
+        function go() { landSel = m.n; drawLand(); }
+        g.addEventListener('click', go);
+        g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+      });
+    });
+    // 標註建議與已有
+    var labelled = {};
+    R.METHODS2.forEach(function (m) {
+      if (PICK.indexOf(m.n) < 0 && HAVE.indexOf(m.n) < 0) return;
+      var li = LANES.indexOf(m.fam), list = groups[m.fam + '|' + yearOf(m)], j = list.indexOf(m);
+      var cx = X(yearOf(m)) + (j - (list.length - 1) / 2) * 15, cy = T + li * rh + rh / 2 - 1;
+      var key = li + '|' + yearOf(m), dy = labelled[key] ? -13 : 0; labelled[key] = 1;
+      el('text', { x: cx + 10, y: cy + 4 + dy, 'font-size': 11.5, 'font-weight': 700, fill: 'var(--ink)', text: m.n.replace('（BagTricks）', '').replace('（你現有）', ''), 'paint-order': 'stroke', stroke: 'var(--sheet)', 'stroke-width': 3 }, svg);
+    });
+    var m = R.METHODS2.filter(function (x) { return x.n === landSel; })[0];
+    $('#land-detail').innerHTML = m ? '<h3 style="margin-top:0">' + U.esc(m.n) + ' <span class="small muted">' + m.v + '・' + R.FAM2[m.fam] + '</span></h3><dl>' +
+      '<dt>輸入</dt><dd>' + m.input + '</dd><dt>關鍵結果</dt><dd>' + m.res + '</dd><dt>規模／算力</dt><dd>' + m.cost + '</dd>' +
+      '<dt>授權</dt><dd><span class="lic" style="--c:' + R.LIC[m.lic].c + '"><i></i>' + R.LIC[m.lic].n + '</span>　' + R.LIC[m.lic].d + '</dd><dt>對本專案</dt><dd>' + m.verdict + '</dd>' +
+      '<dt>在系統的哪一層</dt><dd>' + LAYER[m.fam] + '</dd><dt>出處</dt><dd><a href="' + m.url + '" target="_blank" rel="noopener">' + m.url.replace(/^https?:\/\//, '').split('/').slice(0, 2).join('/') + '</a></dd></dl>'
+      : '<p class="small muted" style="margin:0">點任一個點看細節。粗框圓點 = 建議起步；菱形 = 你們已有；顏色 = 授權。</p>';
   }
 
-  function drawFusion() {
-    MODS.forEach(function (m) { $('#q-' + m.k + '-o').textContent = q[m.k].toFixed(2); });
-    var svg = U.clear($('#fusion-svg'));
-    var L = 110, R = 560, lo = 0.3, hi = 1.0;
-    function X(v) { return L + (v - lo) / (hi - lo) * (R - L); }
-    // 標題
-    el('text', { x: 0, y: 18, 'font-size': 13.5, 'font-weight': 700, fill: 'var(--ink)', text: '各模態相似度（query 對兩位候選人）' }, svg);
-    // 圖例
-    el('circle', { cx: L + 250, cy: 14, r: 5.5, fill: 'var(--ink)' }, svg);
-    el('text', { x: L + 260, y: 18, 'font-size': 12.5, fill: 'var(--ink-2)', text: '本人' }, svg);
-    drawShape(svg, 'triangle', L + 310, 14, 6, 'var(--bad)');
-    el('text', { x: L + 320, y: 18, 'font-size': 12.5, fill: 'var(--ink-2)', text: '同制服冒充者' }, svg);
-    [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0].forEach(function (v) {
-      el('line', { x1: X(v), x2: X(v), y1: 30, y2: 400, stroke: 'var(--rule-2)' }, svg);
-      el('text', { x: X(v), y: 412, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-3)', class: 'num', text: v.toFixed(1) }, svg);
-    });
-    MODS.forEach(function (m, i) {
-      var y = 48 + i * 36;
-      el('text', { x: L - 10, y: y + 4, 'text-anchor': 'end', 'font-size': 13, fill: 'var(--ink)', text: m.n }, svg);
-      el('circle', { cx: 12, cy: y, r: 4.5, fill: m.c }, svg);
-      if (q[m.k] <= 0) { el('text', { x: X(0.5), y: y + 4, 'font-size': 12.5, fill: 'var(--ink-3)', text: '缺失（看不到）' }, svg); return; }
-      var gs = simOf(m, 'g', q[m.k]), is = simOf(m, 'i', q[m.k]);
-      el('line', { x1: X(gs), x2: X(is), y1: y, y2: y, stroke: gs >= is ? 'var(--ink-3)' : 'var(--bad)', 'stroke-width': 2 }, svg);
-      el('circle', { cx: X(gs), cy: y, r: 5.5, fill: 'var(--ink)' }, svg);
-      drawShape(svg, 'triangle', X(is), y, 6, 'var(--bad)');
-    });
-    el('line', { x1: 0, x2: R + 30, y1: 196, y2: 196, stroke: 'var(--rule)' }, svg);
-    el('text', { x: 0, y: 220, 'font-size': 13.5, 'font-weight': 700, fill: 'var(--ink)', text: '融合後分數' }, svg);
-    var strat = [['mean', '等權平均'], ['fixed', '固定權重'], ['gate', '品質門控']];
-    var wHtml = '<h3 style="font-size:15px">各策略分給模態的權重</h3>';
-    strat.forEach(function (s, i) {
-      var r = fuse(s[0]), y = 248 + i * 50, ok = r.G > r.I;
-      el('text', { x: L - 10, y: y + 4, 'text-anchor': 'end', 'font-size': 13.5, fill: 'var(--ink)', text: s[1] }, svg);
-      el('line', { x1: X(r.G), x2: X(r.I), y1: y, y2: y, stroke: ok ? 'var(--ink-3)' : 'var(--bad)', 'stroke-width': 2.2 }, svg);
-      el('circle', { cx: X(r.G), cy: y, r: 6.5, fill: 'var(--ink)' }, svg);
-      drawShape(svg, 'triangle', X(r.I), y, 7, 'var(--bad)');
-      el('text', { x: L - 10, y: y + 22, 'text-anchor': 'end', 'font-size': 12, fill: ok ? 'var(--good)' : 'var(--bad)', 'font-weight': 700, text: (ok ? '✓ 本人第一' : '✗ 冒充者第一') + '  ' + (r.G - r.I >= 0 ? '+' : '') + (r.G - r.I).toFixed(3) }, svg);
-      // 權重堆疊條
-      wHtml += '<div style="margin:8px 0 2px;font-size:13px">' + s[1] + '</div><div style="display:flex;gap:2px;height:14px">';
-      MODS.forEach(function (m) { if (r.w[m.k] > 0.001) wHtml += '<span title="' + m.n + ' ' + (r.w[m.k] * 100).toFixed(0) + '%" style="flex:' + r.w[m.k] + ';background:' + m.c + ';border-radius:3px"></span>'; });
-      wHtml += '</div><div class="small muted num" style="font-size:12px">' + MODS.map(function (m) { return m.n + ' ' + (r.w[m.k] * 100).toFixed(0) + '%'; }).join('　') + '</div>';
-    });
-    wHtml += '<p class="small" style="margin-top:12px">' + q.note + '</p>';
-    $('#fusion-weights').innerHTML = wHtml;
-  }
-
-  function drawAlign() {
-    var svg = $('#align');
-    var ins = [['骨架專家', 256, '#eb6834', 'GPGait / SkeletonGait'], ['輪廓專家', 512, '#1baf7a', 'GaitBase'], ['外觀專家', 768, '#2a78d6', 'CLIP-ReID']];
-    ins.forEach(function (d, i) {
-      var y = 40 + i * 80;
-      el('text', { x: 0, y: y - 8, 'font-size': 13.5, 'font-weight': 700, fill: 'var(--ink)', text: d[0] }, svg);
-      el('text', { x: 0, y: y + 32, 'font-size': 11.5, fill: 'var(--ink-3)', text: d[3] }, svg);
-      el('rect', { x: 0, y: y, width: d[1] / 768 * 170, height: 16, fill: d[2], rx: 2 }, svg);
-      el('text', { x: d[1] / 768 * 170 + 6, y: y + 13, 'font-size': 12.5, fill: 'var(--ink-2)', class: 'num', text: d[1] + 'D' }, svg);
-      arrow(svg, 240, y + 8, 290, y + 8);
-      box(svg, 292, y - 6, 112, 28, '線性投影 →512', '#fff');
-      arrow(svg, 404, y + 8, 430, y + 8);
-      box(svg, 432, y - 6, 92, 28, 'LayerNorm', '#fff');
-      el('rect', { x: 540, y: y, width: 110, height: 16, fill: d[2], rx: 2, opacity: 0.85 }, svg);
-      el('text', { x: 595, y: y + 31, 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--ink-3)', class: 'num', text: '512D · 同尺度' }, svg);
-      arrow(svg, 652, y + 8, 712, 140);
-    });
-    box(svg, 714, 102, 120, 76, '', '#fff');
-    el('text', { x: 774, y: 132, 'text-anchor': 'middle', 'font-size': 14, 'font-weight': 700, fill: 'var(--ink)', text: '品質門控' }, svg);
-    el('text', { x: 774, y: 152, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--ink-3)', text: 'w = g(q, mask)' }, svg);
-    // 品質輸入
-    el('text', { x: 774, y: 222, 'text-anchor': 'middle', 'font-size': 12.5, fill: 'var(--ink-2)', text: '品質分數 q：姿態 .9 / 輪廓 .6 / 外觀 .8' }, svg);
-    el('text', { x: 774, y: 240, 'text-anchor': 'middle', 'font-size': 12.5, fill: 'var(--ink-2)', text: '缺失遮罩：臉 = 0（不參與）' }, svg);
-    arrow(svg, 774, 212, 774, 182);
-    arrow(svg, 834, 140, 870, 140);
-    el('rect', { x: 872, y: 132, width: 100, height: 16, fill: 'var(--ink)', rx: 2 }, svg);
-    el('text', { x: 922, y: 168, 'text-anchor': 'middle', 'font-size': 12.5, fill: 'var(--ink)', 'font-weight': 700, text: '身分嵌入 512D' }, svg);
-    el('text', { x: 0, y: 290, 'font-size': 12.5, fill: 'var(--ink-3)', text: '條長 ∝ 維度。直接相加 256 + 512 + 768 在數學上不成立；即使投影到同維度，分布與語意幾何仍不同。' }, svg);
-  }
+  // 第 4 章（評估協定）仍使用這兩個小工具
   function arrow(svg, x1, y1, x2, y2) {
     el('line', { x1: x1, y1: y1, x2: x2, y2: y2, stroke: 'var(--ink-3)', 'stroke-width': 1.4 }, svg);
     var a = Math.atan2(y2 - y1, x2 - x1);
@@ -274,4 +590,5 @@
     if (t) el('text', { x: x + w / 2, y: y + hh / 2 + 4.5, 'text-anchor': 'middle', 'font-size': 12.5, fill: 'var(--ink)', text: t }, svg);
   }
   global.svgArrow = arrow; global.svgBox = box;
+  global.MethodLab = { dists: dists, feats: feats, FAMS: FAMS, rankOf: rankOf };
 })(window);

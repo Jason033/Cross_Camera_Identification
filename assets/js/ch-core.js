@@ -130,7 +130,7 @@
 
   CH.problem = {
     init: function () {
-      // --- 圖 1.1 身分 × 服裝矩陣 ---
+      // --- 身分 × 服裝矩陣 ---
       var chips = $('#grid-ds');
       GRID_DS.forEach(function (d, i) {
         var b = U.h('button', { class: 'chip', 'aria-pressed': i === 2 ? 'true' : 'false', 'data-id': d.id }, d.n);
@@ -142,7 +142,7 @@
       });
       drawGrid(GRID_DS[2]);
 
-      // --- 圖 1.2 特徵空間 ---
+      // --- 特徵空間 ---
       var space = 'app';
       space = U.segGroup($('#space-sel'), 'data-space', function (v) { space = v; drawSpace(); });
       var uni = $('#uni');
