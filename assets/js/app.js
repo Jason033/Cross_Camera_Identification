@@ -2,10 +2,10 @@
    每章由一個或多個模組組成，第一次進入時才初始化；另負責自動圖號、章內目錄與名詞解釋。 */
 (function () {
   'use strict';
-  var ORDER = ['home', 'problem', 'methods', 'approach', 'plan', 'appendix', 'refs'];
+  var ORDER = ['home', 'problem', 'methods', 'others', 'approach', 'plan', 'appendix', 'refs'];
   var MODS = {
     home: ['home', 'intro', 'steps'], problem: ['problem', 'primer'], methods: ['fusion', 'cues', 'methods', 'openset', 'steps'],
-    approach: ['system', 'steps', 'server'], plan: ['roadmap', 'validation', 'camera'], appendix: ['datasets', 'methods', 'roadmap', 'qc', 'camera'], refs: ['refs']
+    others: ['others'], approach: ['system', 'steps', 'server'], plan: ['roadmap', 'validation', 'camera'], appendix: ['datasets', 'methods', 'roadmap', 'qc', 'camera'], refs: ['refs']
   };
   // 舊網址（舊版 13 章）導到新章節
   var ALIAS = { cues: 'methods', fusion: 'methods', openset: 'methods', system: 'approach', camera: 'plan', deploy: 'plan', validation: 'plan', datasets: 'appendix', qc: 'appendix', roadmap: 'plan' };
@@ -117,6 +117,7 @@
     var parts = (location.hash.replace(/^#\/?/, '') || 'home').split('?'), id = parts[0];
     if (ALIAS[id]) { location.replace('#/' + ALIAS[id]); return; }
     if (id !== current) show(id);
+    if (id === current && /o=/.test(parts[1] || '') && window.CH.others) window.CH.others.enter();
     var m = (parts[1] || '').match(/s=(\d)/);
     if (m) {
       var t = document.getElementById('step-' + m[1]);

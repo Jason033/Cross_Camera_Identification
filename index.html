@@ -17,8 +17,9 @@
     <li><a href="#/home"><span class="n">0</span>總覽</a></li>
     <li><a href="#/problem"><span class="n">1</span>問題定義</a></li>
     <li><a href="#/methods"><span class="n">2</span>方法總覽</a></li>
-    <li><a href="#/approach"><span class="n">3</span>我們的做法</a></li>
-    <li><a href="#/plan"><span class="n">4</span>執行計畫</a></li>
+    <li><a href="#/others"><span class="n">3</span>別人怎麼做</a></li>
+    <li><a href="#/approach"><span class="n">4</span>我們的做法</a></li>
+    <li><a href="#/plan"><span class="n">5</span>執行計畫</a></li>
     <li class="grp">參考</li>
     <li><a href="#/appendix"><span class="n">A</span>附錄</a></li>
     <li><a href="#/refs"><span class="n">R</span>參考文獻</a></li>
@@ -117,8 +118,9 @@
   <nav class="chmap" aria-label="章節地圖">
     <a href="#/problem"><span class="n">1</span><b>問題定義</b><span class="d">目標、用途、範圍與成功標準；營區場景 × 線索；ReID 怎麼評分</span></a>
     <a href="#/methods"><span class="n">2</span><b>方法總覽</b><span class="d">依系統七步：每一步有哪些方法、成績、授權、算力，我們選哪個</span></a>
-    <a href="#/approach"><span class="n">3</span><b>我們的做法</b><span class="d">第一版元件清單、系統要交出什麼、跑不跑得動、不做什麼與風險</span></a>
-    <a href="#/plan"><span class="n">4</span><b>執行計畫</b><span class="d">已知與未知；自建資料怎麼拍；十個實驗；六個月查核點</span></a>
+    <a href="#/others"><span class="n">3</span><b>別人怎麼做</b><span class="d">四種常見架構；NVIDIA、AI City、BRIAR、商用搜尋、同制服研究、監獄與門禁的做法</span></a>
+    <a href="#/approach"><span class="n">4</span><b>我們的做法</b><span class="d">第一版元件清單、系統要交出什麼、跑不跑得動、不做什麼與風險</span></a>
+    <a href="#/plan"><span class="n">5</span><b>執行計畫</b><span class="d">已知與未知；自建資料怎麼拍；十個實驗；六個月查核點</span></a>
     <a href="#/appendix"><span class="n">A</span><b>附錄</b><span class="d">資料集、55 個方法完整表、研究空缺、TRL 與月報範本</span></a>
   </nav>
 </section>
@@ -178,7 +180,7 @@
       <tr><td><b>未知人員</b></td><td>未知人員偵出率</td><td>名冊外的人被標成「未知」的比例</td><td>先量現況，再訂目標</td></tr>
     </tbody>
   </table></div>
-  <p class="small muted">建議起點是依文獻與工程經驗提出的討論基準（<span class="ev inferred"><i></i>合理推論</span>），不是已驗證的可達成值；第 4 章的實驗會量出現況。</p>
+  <p class="small muted">建議起點是依文獻與工程經驗提出的討論基準（<span class="ev inferred"><i></i>合理推論</span>），不是已驗證的可達成值；第 5 章的實驗會量出現況。</p>
 
   <h3>營區場景 × 可用線索</h3>
   <p>攝影機可能出現在營區任何地方。下表是每種場景下，各線索大概用不用得上（第一階段範圍內：白天、5 人以內）。點格子看原因。</p>
@@ -334,6 +336,7 @@
   </figure>
     <div class="step-cards" data-s="3" data-g="face"></div>
     <div class="step-cards" data-s="3" data-g="body"></div>
+    <div class="step-cards" data-s="3" data-g="tag"></div>
     <h3>各線索在系統中的角色</h3>
     <div class="tbl-wrap"><table class="tbl" id="cue-decision"></table></div>
     <div class="step-choice" data-s="3"></div>
@@ -410,10 +413,50 @@
   </section>
 </section>
 
+<!-- ======================= 3 別人怎麼做 ======================= -->
+<section class="chapter" id="ch-others" data-title="別人怎麼做">
+  <header class="ch-head">
+    <p class="ch-num">第 3 章</p>
+    <h1>別人怎麼做：現有系統、比賽與研究</h1>
+    <p class="thesis">第 2 章是一個一個的方法；這一章看別人怎麼把方法組成系統。先整理出四種常見的架構類型，再逐一拆解高相關的系統：它的流程每一步在做什麼、對應我們的第幾步、核心概念是什麼、我們可以借用什麼、哪裡不適合我們。</p>
+  </header>
+
+  <h2>四種常見架構</h2>
+  <p>現有系統大致可分成四類。每一類都只解決問題的一部分；本專案的設計是把 I（主幹）、III（多線索融合）、IV（檢查點錨定）組合起來，再用 II 的方式提供事後查詢。流程方塊右上角的圓圈數字是「對應我們的第幾步」，標「額外」的是我們七步裡沒有的步驟。</p>
+  <div class="patterns" id="patterns"></div>
+  <div class="combo">
+    <p class="combo-t"><b>本專案＝</b></p>
+    <p><span class="cp">I 追蹤後關聯</span> 當主幹，產生每個人的全域軌跡（第 1、2、5、6 步）<br>
+    ＋ <span class="cp">III 多生物特徵融合</span> 取代只靠外觀，處理同制服與換裝（第 3、4 步）<br>
+    ＋ <span class="cp">IV 檢查點錨定</span> 在營門、餐廳等必經點用臉、名牌、刷卡確認身分（第 7 步）<br>
+    ＋ <span class="cp">II 先建索引、再查詢</span> 的操作方式，提供「事後查詢特定人員」</p>
+  </div>
+
+  <h2>對照表：每個系統涵蓋了我們的哪幾步</h2>
+  <p>點系統名稱可跳到它的詳細說明。<i class="lvd f"></i> 有　<i class="lvd h"></i> 部分　<i class="lvd"></i> 沒有。</p>
+  <div class="tbl-wrap"><table class="tbl mx omx" id="oth-matrix"></table></div>
+  <p class="small muted">沒有任何一個現有系統同時涵蓋七步、又處理同制服與換裝。涵蓋程度為依公開資料的判斷（<span class="ev inferred"><i></i>合理推論</span>）；本專案那一列是設計目標，尚未驗證。</p>
+
+  <h2>完整的多攝影機系統與比賽</h2>
+  <div class="osys-list" id="oth-sys"></div>
+
+  <h2>商用影片搜尋與步態產品</h2>
+  <p>商用系統多為「索引後查詢」：對換衣的標準答案是加臉部辨識，同制服時以衣服為主的外觀與屬性搜尋幾乎失效。產品描述多來自廠商，準確度未經獨立驗證。</p>
+  <div class="osys-list" id="oth-com"></div>
+
+  <h2>外觀相同時的研究</h2>
+  <p>直接處理「同制服」或「外觀一樣」的研究很少，以下是本次找到的高相關者。</p>
+  <div class="osys-list" id="oth-res"></div>
+
+  <h2>穿制服人員與門禁</h2>
+  <p>軍人、受刑人、工人都穿制服；這些場域的做法有一個共同點：<b>不追衣服，改找制服上的個別記號，並在必經點確認身分</b>。</p>
+  <div class="osys-list" id="oth-uni"></div>
+</section>
+
 <!-- ======================= 3 我們的做法 ======================= -->
 <section class="chapter" id="ch-approach" data-title="我們的做法">
   <header class="ch-head">
-    <p class="ch-num">第 3 章</p>
+    <p class="ch-num">第 4 章</p>
     <h1>我們的做法：第一版系統用什麼</h1>
     <p class="thesis">把第 2 章每一步的選擇收成一張清單，再說明系統的整體邏輯、要交出什麼、需要什麼等級的伺服器、刻意不做什麼，以及主要風險。</p>
   </header>
@@ -498,7 +541,7 @@
 <!-- ======================= 4 執行計畫 ======================= -->
 <section class="chapter" id="ch-plan" data-title="執行計畫">
   <header class="ch-head">
-    <p class="ch-num">第 4 章</p>
+    <p class="ch-num">第 5 章</p>
     <h1>執行計畫：先驗證什麼、怎麼驗證</h1>
     <p class="thesis">公開資料集沒有一個像營區，所以第 2、3 章的選擇都要在自建資料上驗證。這一章說明目前已知與未知、資料怎麼拍怎麼切、用什麼方式評估、十個實驗與通過條件，以及六個月的查核點。</p>
   </header>
@@ -669,6 +712,7 @@
 <script src="assets/js/research.js"></script>
 <script src="assets/js/glossary.js"></script>
 <script src="assets/js/steps.js"></script>
+<script src="assets/js/others.js"></script>
 <script src="assets/js/geom.js"></script>
 <script src="assets/js/person.js"></script>
 <script src="assets/js/util.js"></script>
@@ -682,6 +726,7 @@
 <script src="assets/js/ch-intro.js"></script>
 <script src="assets/js/ch-steps.js"></script>
 <script src="assets/js/ch-server.js"></script>
+<script src="assets/js/ch-others.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>
