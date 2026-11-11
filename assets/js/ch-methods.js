@@ -12,7 +12,7 @@
       idea: '把裁切的人像切成小方塊，用 Transformer 學「這個人看起來長什麼樣」。',
       learns: '衣服顏色與紋理、髮型、鞋、配件。圖中的示意只用「區塊平均色」、沒有經過訓練，所以接近亂猜；用同制服資料微調的真實模型會學到鞋、體型、配件等細節，表現好得多。',
       needs: '單張影像即可', fails: ['換裝', '光線不同', '同制服（未微調時）'],
-      num: [['MSMT17 mAP（衣著各異的街景）', '73.4–80.8', 'proven'], ['Industrial-Gait 工作服＋安全帽，RGB Rank-1', '88.3（待核對）', 'inferred']],
+      num: [['MSMT17 mAP（衣著各異的街景）', '73.4–80.8', 'proven'], ['Industrial-Gait 工作服＋安全帽，RGB 跨視角準確率（DINOv3-S）', '83.3', 'proven']],
       score: 2, verdict: '同一套服裝之內（同一天、沒換裝）仍是有用的線索，微調後可抓鞋、配件等細節；換裝後失效，不能用來跨服裝連結。',
       lic: '寬鬆（MIT／Apache）', cost: '低' },
     { id: 'cal', n: '去衣服化', c: '#6b8fc4', reps: ['CAL', 'AIM', 'FSAM'],
@@ -554,7 +554,7 @@
       : '<p class="small muted" style="margin:0">點任一個點看細節。粗框圓點 = 建議起步；菱形 = 你們已有；顏色 = 授權。</p>';
   }
 
-  // 評估協定圖（第 4 章）仍使用這兩個小工具
+  // 評估協定圖（第 5 章）仍使用這兩個小工具
   function arrow(svg, x1, y1, x2, y2) {
     el('line', { x1: x1, y1: y1, x2: x2, y2: y2, stroke: 'var(--ink-3)', 'stroke-width': 1.4 }, svg);
     var a = Math.atan2(y2 - y1, x2 - x1);

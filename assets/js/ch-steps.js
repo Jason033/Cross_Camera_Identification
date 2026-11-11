@@ -1,4 +1,4 @@
-/* ch-steps.js — 依 steps.js 的資料，產生第 2 章的路線地圖、方法卡片與各步結論、第 3 章的第一版元件表、總覽的一頁摘要 */
+/* ch-steps.js — 依 steps.js 的資料，產生第 2 章的路線地圖、方法卡片與各步結論、第 4 章的第一版元件表、總覽的一頁摘要 */
 (function (global) {
   'use strict';
   var $ = U.$, R = global.R, S = global.STEPS, TAG = global.TAGS;
@@ -58,7 +58,7 @@
           var main = g.cards.filter(function (c) { return c.how; }), rest = g.cards.filter(function (c) { return !c.how; });
           box.innerHTML = (g.n ? '<h3>' + g.n + '</h3>' : '') + (g.lead ? '<p>' + g.lead + '</p>' : '') +
             main.map(wide).join('') +
-            (rest.length ? '<h4 class="rest-h">其他方法</h4><div class="mgrid">' + rest.map(small).join('') + '</div>' : '');
+            (rest.length ? (main.length ? '<h4 class="rest-h">其他方法</h4>' : '') + '<div class="mgrid">' + rest.map(small).join('') + '</div>' : '');
         });
         var ch = $('.step-choice[data-s="' + st.id + '"]');
         if (ch) {
@@ -70,7 +70,7 @@
             '<dl><dt>' + tag('try') + '</dt><dd>' + c.later + '</dd><dt>' + tag('skip') + '</dt><dd>' + c.not + '</dd></dl>';
         }
       });
-      // 第 3 章：第一版元件表
+      // 第 4 章：第一版元件表
       var t = $('#v1-table');
       if (t) t.innerHTML = '<thead><tr><th>步驟</th><th>第一版用什麼</th><th>授權</th><th>現況</th><th>算力</th><th>之後再加</th></tr></thead><tbody>' +
         S.map(function (st) {

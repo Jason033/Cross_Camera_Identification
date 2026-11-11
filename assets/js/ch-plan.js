@@ -1,4 +1,4 @@
-/* ch-plan.js — 第 3 章（身分四層、輸出、算力）與第 5 章（驗證與資料蒐集、品控與月報） */
+/* ch-plan.js — 第 4 章（身分四層、輸出、算力）與第 5 章（驗證與資料蒐集、品控與月報） */
 (function (global) {
   'use strict';
   var el = U.el, $ = U.$, R = global.R;
