@@ -470,3 +470,9 @@ table.us tr.u-n td.ul { color: var(--ink-3); }
 ul.pass { margin: 0 0 10px; padding-left: 20px; font-size: 14px; }
 ul.pass li { margin: 2px 0; }
 .tbl.rt th, .tbl.cfg th, .scope th { position: static; }
+.srv-read { margin-top: 8px; font-size: 14px; }
+.tbl.srv th { position: static; }
+.tbl.srv tr.ok td { background: #eef5ea; }
+.tbl.srv td { font-size: 13.5px; }
+ol.measure { font-size: 14.5px; line-height: 1.7; padding-left: 22px; max-width: 52em; }
+ol.measure li { margin-bottom: 4px; }
