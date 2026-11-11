@@ -350,3 +350,22 @@ details.more > summary:hover { background: #fff; border-radius: var(--radius-m);
 .ncard svg { width: 80px; height: 48px; }
 .ncard code { display: block; font-family: var(--num); font-size: 12px; color: var(--ink-2); margin: 2px 0; }
 .ncard span:last-child { color: var(--ink-3); font-size: 12.5px; }
+
+/* ---------------- 整合版：章內目錄、名詞、總覽 ---------------- */
+.ch-toc { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin: -8px 0 28px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: var(--radius-m); background: var(--sheet); }
+.ch-toc-l { font-size: 12.5px; color: var(--ink-3); font-weight: 700; margin-right: 4px; }
+.ch-toc button { border: 1px solid var(--rule); background: #fff; border-radius: 999px; padding: 3px 12px 3px 4px; font-size: 13.5px; cursor: pointer; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+.ch-toc button:hover { border-color: var(--ink); color: var(--ink); }
+.ch-toc .num, .h2-mark { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--olive); color: #fff; font-size: 12px; font-weight: 700; }
+.h2-mark { width: 30px; height: 30px; font-size: 15px; margin-right: 10px; vertical-align: 4px; font-family: var(--num); }
+.gl, .gl-demo { text-decoration: underline dotted var(--ink-3); text-underline-offset: 3px; text-decoration-thickness: 1.5px; cursor: help; }
+.gl:focus-visible { outline: 2px solid var(--c-app); }
+.gloss-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin: 12px 0; }
+.gcard { border: 1px solid var(--rule-2); background: #fff; border-radius: var(--radius-m); padding: 10px 12px; font-size: 13.5px; line-height: 1.6; }
+.gcard b { display: block; font-size: 14.5px; margin-bottom: 2px; }
+.gcard span { color: var(--ink-2); }
+.gloss-all { display: grid; grid-template-columns: 190px 1fr; gap: 8px 16px; margin: 4px 0; font-size: 14px; }
+.gloss-all dt { font-weight: 700; }
+.gloss-all dd { margin: 0; color: var(--ink-2); }
+@media (max-width: 820px) { .gloss-all { grid-template-columns: 1fr; gap: 2px; } .gloss-all dd { margin-bottom: 8px; } }
+.deep h3:first-of-type { margin-top: 6px; }

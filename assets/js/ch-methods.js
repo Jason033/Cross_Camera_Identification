@@ -1,4 +1,4 @@
-/* ch-methods.js — 第 3 章：方法解剖台、六類方法 × 攝影機條件、方法版圖 */
+/* ch-methods.js — 第 2 章（線索與方法）：方法解剖台、六類方法 × 攝影機條件、方法版圖 */
 (function (global) {
   'use strict';
   var R = global.R, el = U.el, $ = U.$;
@@ -15,7 +15,7 @@
       num: [['MSMT17 mAP（衣著各異的街景）', '73.4–80.8', 'proven']],
       score: 1, verdict: '全員同服時主要訊號消失。保留作弱證據，並用來抓鞋、帽、配件的細節。',
       lic: '寬鬆（MIT／Apache）', cost: '低' },
-    { id: 'cal', n: '去衣服化', c: '#6250d6', reps: ['CAL', 'AIM', 'FSAM'],
+    { id: 'cal', n: '去衣服化', c: '#6b8fc4', reps: ['CAL', 'AIM', 'FSAM'],
       idea: '另訓一個「衣服分類器」，再逼主模型的特徵騙過它，讓特徵不再帶衣服資訊。',
       learns: '同一人換了衣服，特徵仍要一樣。前提是訓練資料裡同一人有好幾套衣服。',
       needs: '單張影像＋衣服標籤', fails: ['全員同服（沒有衣服變化可學）'],
@@ -48,7 +48,7 @@
       learns: '每位專家各學一種線索；門控學「這段影片哪個線索比較可靠」。',
       needs: '影片', fails: ['算力（凍結 CLIP ViT-L/14）', '全部線索同時失效時救不回'],
       num: [['MEVID 真實跨日換衣 Rank-1', '20.1（HAMoBE；舊方法 < 6）', 'proven'], ['BRIAR 臉受限 TAR@0.1%FAR', '臉 30.7 → 三模態 65.0', 'proven']],
-      score: 3, verdict: '最接近「依情況選線索」的思路，是第 4 章的核心。弱伺服器需改成小型專家＋分數層融合。',
+      score: 3, verdict: '最接近「依情況選線索」的思路，是第 3 章的核心。弱伺服器需改成小型專家＋分數層融合。',
       lic: '未確認', cost: '高（大模型骨幹）' }
   ];
   var FAM = {}; FAMS.forEach(function (f) { FAM[f.id] = f; });
@@ -114,7 +114,7 @@
     var last = performance.now();
     function step(now) {
       A.raf = 0;
-      if (!A.playing || !document.getElementById('ch-methods').classList.contains('active')) return;
+      if (!A.playing || !document.getElementById('ch-cues').classList.contains('active')) return;
       A.t += Math.min(0.05, (now - last) / 1000); last = now;
       drawCells(true);
       A.raf = requestAnimationFrame(step);
@@ -246,9 +246,9 @@
   /* 去衣服化 */
   function sClothTag(ctx, W, H, row, t) {
     cropRGB(ctx, row, t);
-    VK.rr(ctx, 8, 116, 134, 40, 5); ctx.fillStyle = 'rgba(255,255,255,.93)'; ctx.fill(); ctx.strokeStyle = '#6250d6'; ctx.lineWidth = 1.4; ctx.stroke();
+    VK.rr(ctx, 8, 116, 134, 40, 5); ctx.fillStyle = 'rgba(255,255,255,.93)'; ctx.fill(); ctx.strokeStyle = '#6b8fc4'; ctx.lineWidth = 1.4; ctx.stroke();
     VK.label(ctx, 75, 132, '衣服標籤', { align: 'center', size: 11, color: '#6f7a71' });
-    VK.label(ctx, 75, 149, '迷彩服（第 1 套）', { align: 'center', size: 12.5, bold: true, color: '#6250d6' });
+    VK.label(ctx, 75, 149, '迷彩服（第 1 套）', { align: 'center', size: 12.5, bold: true, color: '#6b8fc4' });
     caption(ctx, '訓練時需要衣服標籤');
   }
   function sClothCls(ctx, W, H, row, t) {
@@ -258,10 +258,10 @@
       var y = 34 + i * 26;
       VK.label(ctx, 8, y + 13, c[0], { size: 11.5, color: '#48544b' });
       ctx.fillStyle = '#eef0eb'; ctx.fillRect(54, y + 2, 86, 14);
-      ctx.fillStyle = c[1] ? '#6250d6' : '#c5ccc2'; ctx.fillRect(54, y + 2, Math.max(2, 86 * c[1]), 14);
+      ctx.fillStyle = c[1] ? '#6b8fc4' : '#c5ccc2'; ctx.fillRect(54, y + 2, Math.max(2, 86 * c[1]), 14);
     });
-    VK.rr(ctx, 8, 118, 134, 50, 5); ctx.fillStyle = '#f3f1fb'; ctx.fill();
-    VK.label(ctx, 75, 138, '三列完全一樣', { align: 'center', size: 12, bold: true, color: '#6250d6' });
+    VK.rr(ctx, 8, 118, 134, 50, 5); ctx.fillStyle = '#eef3fa'; ctx.fill();
+    VK.label(ctx, 75, 138, '三列完全一樣', { align: 'center', size: 12, bold: true, color: '#6b8fc4' });
     VK.label(ctx, 75, 156, '沒有衣服差異可對抗', { align: 'center', size: 11.5, color: '#48544b' });
     caption(ctx, '對抗損失 ≈ 0', '#c93434');
   }
@@ -579,7 +579,7 @@
       : '<p class="small muted" style="margin:0">點任一個點看細節。粗框圓點 = 建議起步；菱形 = 你們已有；顏色 = 授權。</p>';
   }
 
-  // 第 5 章仍使用這兩個小工具
+  // 第 4 章（評估協定）仍使用這兩個小工具
   function arrow(svg, x1, y1, x2, y2) {
     el('line', { x1: x1, y1: y1, x2: x2, y2: y2, stroke: 'var(--ink-3)', 'stroke-width': 1.4 }, svg);
     var a = Math.atan2(y2 - y1, x2 - x1);

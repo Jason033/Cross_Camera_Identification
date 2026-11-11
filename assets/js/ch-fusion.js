@@ -1,22 +1,22 @@
-/* ch-fusion.js — 第 4 章：整體技術架構導覽、融合層級、品質門控、分數換證據、分群演算法選擇 */
+/* ch-fusion.js — 第 3 章（系統架構）：整體技術架構導覽、融合層級、品質門控、分數換證據、分群演算法選擇 */
 (function (global) {
   'use strict';
   var PM = global.PersonModel, el = U.el, $ = U.$, R = global.R;
   var CH = global.CH = global.CH || {};
   var P = global.PEOPLE;
   var C = { app: '#2a78d6', sil: '#1baf7a', skel: '#eb6834', face: '#6250d6', gait: '#d55181', body: '#9a7b12', ink: '#1c251f' };
-  var anim = { raf: 0, t: 0, last: 0 };
+  var anim = { raf: 0, t: 0, last: 0 }, ARCH = null;
 
   CH.fusion = {
-    init: function () { initArch(); initLevels(); initGate(); initNorm(); drawTree(); },
+    init: function () { ARCH = makeArch({ svg: '#arch', steps: '#arch-steps', tour: '#arch-tour', detail: '#arch-detail', here: 'system' }); initLevels(); initGate(); initNorm(); drawTree(); },
     enter: function () {
       if (U.reduceMotion || anim.raf) return;
       anim.last = performance.now();
       function step(now) {
         anim.raf = 0;
-        if (!document.getElementById('ch-fusion').classList.contains('active')) return;
+        if (!document.getElementById('ch-system').classList.contains('active')) return;
         var dt = Math.min(0.05, (now - anim.last) / 1000); anim.last = now; anim.t += dt;
-        tickArch(dt); tickLevels(); drawGateScene();
+        ARCH.tick(dt, anim.t); tickLevels(); drawGateScene();
         anim.raf = requestAnimationFrame(step);
       }
       anim.raf = requestAnimationFrame(step);
@@ -27,62 +27,79 @@
   function txt(p, x, y, s, o) { return el('text', Object.assign({ x: x, y: y, 'font-size': 12, fill: 'var(--ink)', text: s }, o || {}), p); }
   function evB(lv) { return { proven: '<span class="ev proven"><i></i>文獻證實</span>', inferred: '<span class="ev inferred"><i></i>合理推論</span>', open: '<span class="ev open"><i></i>待驗證</span>' }[lv]; }
 
-  /* ======================= 圖 4.1 整體技術架構 ======================= */
+  /* ======================= 整體技術架構（全站共用，總覽頁也用） ======================= */
   var ST = [
     { n: '多台攝影機', tok: '影格', grp: 0,
       one: '營區各處的攝影機錄下一整天的影片，夜間批次處理。',
-      io: '影片 → 每秒抽 2–5 幀', why: '同一個人會在不同攝影機、不同時間出現；角度、光線、距離都不同，所以同一人看起來可能像另一個人。', go: ['camera', '第 5 章 跨攝影機'], ev: 'proven' },
+      io: '影片 → 每秒抽 2–5 幀', why: '同一個人會在不同攝影機、不同時間出現；角度、光線、距離都不同，所以同一人看起來可能像另一個人。', ev: 'proven' },
     { n: '追蹤成片段', tok: '片段 #17', grp: 0,
       one: '偵測器框出每個人，追蹤器把同一台攝影機裡連續的框串成一段「片段」。片段內一定是同一人，之後都以片段為單位處理。',
-      io: '人框 → 片段（數秒到數十秒）', why: '單一幀的資訊太少，也算不出步態；片段可以累積多幀，並挑出畫質最好的幾幀。', go: ['system', '第 8 章 系統假想'], ev: 'proven' },
+      io: '人框 → 片段（數秒到數十秒）', why: '單一幀的資訊太少，也算不出步態；片段可以累積多幀，並挑出畫質最好的幾幀。', ev: 'proven' },
     { n: '三位專家＋品質', tok: '3 份特徵', grp: 1,
       one: '每段片段分別送進外觀、輪廓步態、骨架步態等專家，各得一個特徵；同時估計這段畫面對每種線索「可不可信」的品質分數 q。',
-      io: '片段 → {外觀, 輪廓, 骨架, 臉…} 特徵＋品質 q', why: '沒有一種線索在所有畫面都可靠（第 3 章圖 3.2）。品質 q 讓後面的步驟知道該信誰：解析度、遮擋、幀數、俯角都會影響。', go: ['methods', '第 3 章 方法'], ev: 'inferred' },
+      io: '片段 → {外觀, 輪廓, 骨架, 臉…} 特徵＋品質 q', why: '沒有一種線索在所有畫面都可靠（第 2 章的六類方法比較）。品質 q 讓後面的步驟知道該信誰：解析度、遮擋、幀數、俯角都會影響。', ev: 'inferred' },
     { n: '換成同一種證據', tok: '證據 +4.0', grp: 1,
       one: '兩段片段比對時，各專家給的相似度單位不同。先換算成「證據」：同一人時看到這個分數的機率，比上不同人時的機率（取對數）。各項證據可以直接相加；看不到的線索該項為 0。',
-      io: '各線索相似度＋品質 q → 一個總證據值（可換成「同一人的機率」）', why: '直接把 0.8 的外觀分數和 12 的步態距離相加沒有意義；換成證據後，每一項都代表「多支持同一人幾分」。', go: null, ev: 'proven' },
+      io: '各線索相似度＋品質 q → 一個總證據值（可換成「同一人的機率」）', why: '直接把 0.8 的外觀分數和 12 的步態距離相加沒有意義；換成證據後，每一項都代表「多支持同一人幾分」。', ev: 'proven' },
     { n: '時空約束', tok: '通過約束', grp: 2,
       one: '同一個人不可能同時在兩處，也不可能比最短步行時間更快地從一台攝影機走到另一台。違反的配對直接否決，不論長得多像。',
-      io: '攝影機位置＋時間戳 → 「不可能是同一人」的配對清單', why: '這條線索完全不看衣服，所以同制服時特別值錢。公開資料上只加時間與相機 ID，Rank-1 就從 91.2 升到 97.2（st-ReID）。', go: null, ev: 'proven' },
+      io: '攝影機位置＋時間戳 → 「不可能是同一人」的配對清單', why: '這條線索完全不看衣服，所以同制服時特別值錢。公開資料上只加時間與相機 ID，Rank-1 就從 91.2 升到 97.2（st-ReID）。', ev: 'proven' },
     { n: '約束式分群', tok: '匿名 #2', grp: 2,
       one: '把一天所有片段，由最像的一對開始逐步合併成群；違反約束的合併跳過。最後每一群就是一個「匿名的人」。',
-      io: '所有片段的兩兩證據＋約束 → 今日人數、每人的片段與軌跡', why: '這一步不需要資料庫，就能回答「今天出現過幾個不同的人、各自去過哪裡」。要同時報純度：人數數對不代表沒有把兩個人併在一起。', go: null, ev: 'inferred' },
+      io: '所有片段的兩兩證據＋約束 → 今日人數、每人的片段與軌跡', why: '這一步不需要資料庫，就能回答「今天出現過幾個不同的人、各自去過哪裡」。要同時報純度：人數數對不代表沒有把兩個人併在一起。', ev: 'inferred' },
     { n: '比對註冊庫', tok: '人員 C', grp: 3,
       one: '把整群（多段證據）拿去和註冊人員比對；分數不夠高、或第一名和第二名太接近，就標「未知」，不硬配。',
-      io: '匿名的人 → 已註冊身分，或「未知-#N」', why: '用整群比對比單段穩定；營區會有訪客與新進人員，系統必須能說「不認識」。', go: ['openset', '第 6 章 未知人員'], ev: 'inferred' }
+      io: '匿名的人 → 已註冊身分，或「未知-#N」', why: '用整群比對比單段穩定；營區會有訪客與新進人員，系統必須能說「不認識」。', ev: 'inferred' }
   ];
-  var GRP = [['感知', 'var(--ink-3)'], ['融合（本章上半）', C.app], ['分類（本章下半）', '#1baf7a'], ['識別', 'var(--ink)']];
-  var AR = { sel: 0, tour: !U.reduceMotion, tokT: 0, figs: [] };
+  // 每一步在哪一章詳細介紹，以及對應的系統階段（研究資料 R.STAGES，含演算法選項與評估指標）
+  var CHN = { cues: '第 2 章 線索與方法', system: '第 3 章 系統架構', deploy: '第 4 章 部署條件', plan: '第 5 章 驗證與推進' };
+  var WHERE = ['deploy', 'system', 'cues', 'system', 'system', 'system', 'system'];
+  var SIDS = [['s1'], ['s2'], ['s3'], ['s4'], ['s5'], ['s6', 's7'], ['s8', 's9']];
+  var GRP = [['感知', 'var(--ink-3)'], ['融合', C.app], ['分類', '#1baf7a'], ['識別', 'var(--ink)']];
+  var AR = null; // 目前操作中的架構圖實例（各站小圖畫進它）
   var BX = 4, BW = 122, GAP = 20, BY = 58, BH = 276;
   function bx(i) { return BX + i * (BW + GAP); }
+  function use(inst, fn) { var prev = AR; AR = inst; try { return fn(); } finally { AR = prev; } }
 
-  function initArch() {
-    var steps = $('#arch-steps');
-    ST.forEach(function (s, i) {
-      var b = U.h('button', { 'data-i': String(i), 'aria-pressed': i === 0 ? 'true' : 'false' }, '<span class="num">' + (i + 1) + '</span> ' + s.n);
-      b.addEventListener('click', function () { AR.tour = false; syncTourBtn(); selectSt(i, true); });
-      steps.appendChild(b);
+  /** 建立一張架構圖。o = { svg, steps, tour, detail, here }（選擇器；here = 所在章節） */
+  function makeArch(o) {
+    var inst = { o: o, sel: 0, tour: !U.reduceMotion, tokT: 0, figs: [] };
+    use(inst, function () {
+      if (o.steps) {
+        var steps = $(o.steps);
+        ST.forEach(function (s, i) {
+          var b = U.h('button', { 'data-i': String(i), 'aria-pressed': i === 0 ? 'true' : 'false' }, '<span class="num">' + (i + 1) + '</span> ' + s.n);
+          b.addEventListener('click', function () { use(inst, function () { AR.tour = false; syncTourBtn(); selectSt(i, true); }); });
+          steps.appendChild(b);
+        });
+      }
+      $(o.tour).addEventListener('click', function () { use(inst, function () { AR.tour = !AR.tour; syncTourBtn(); }); });
+      syncTourBtn();
+      drawArch(); selectSt(0, true);
     });
-    var tb = $('#arch-tour');
-    tb.addEventListener('click', function () { AR.tour = !AR.tour; syncTourBtn(); });
-    syncTourBtn();
-    drawArch(); selectSt(0, true);
+    inst.tick = function (dt, t) { use(inst, function () { tickArch(dt, t); }); };
+    return inst;
   }
-  function syncTourBtn() { var tb = $('#arch-tour'); tb.textContent = AR.tour ? '暫停導覽' : '自動導覽'; tb.setAttribute('aria-pressed', AR.tour ? 'true' : 'false'); }
+  function syncTourBtn() { var tb = $(AR.o.tour); tb.textContent = AR.tour ? '暫停導覽' : '自動導覽'; tb.setAttribute('aria-pressed', AR.tour ? 'true' : 'false'); }
   function selectSt(i, jump) {
     AR.sel = i;
     if (jump) { AR.tokT = i * 2.4 + 1.0; if (AR.tok) placeToken(); }
-    U.$$('#arch-steps button').forEach(function (b) { b.setAttribute('aria-pressed', +b.getAttribute('data-i') === i ? 'true' : 'false'); });
+    if (AR.o.steps) U.$$(AR.o.steps + ' button').forEach(function (b) { b.setAttribute('aria-pressed', +b.getAttribute('data-i') === i ? 'true' : 'false'); });
     AR.boxes.forEach(function (g, k) { g.setAttribute('opacity', k === i ? 1 : 0.38); });
     AR.frames.forEach(function (r, k) { r.setAttribute('stroke', k === i ? 'var(--ink)' : 'var(--rule)'); r.setAttribute('stroke-width', k === i ? 2.2 : 1); });
-    var s = ST[i];
-    $('#arch-detail').innerHTML = '<div class="arch-num num">' + (i + 1) + '</div><div><h3 style="margin:0 0 4px">' + s.n + '　' + evB(s.ev) + '</h3><p style="margin:0 0 8px">' + s.one + '</p><dl>' +
-      '<dt>輸入 → 輸出</dt><dd>' + s.io + '</dd><dt>為什麼需要</dt><dd>' + s.why + '</dd>' +
-      (s.go ? '<dt>延伸閱讀</dt><dd><a href="#/' + s.go[0] + '">' + s.go[1] + '</a></dd>' : '') + '</dl></div>';
+    var s = ST[i], stg = (R.STAGES || []).filter(function (x) { return SIDS[i].indexOf(x.id) >= 0; });
+    var more = '';
+    if (AR.o.here !== 'home' && stg.length) {
+      more = '<dt>演算法選項</dt><dd>' + stg.map(function (x) { return (stg.length > 1 ? '<b>' + x.n + '：</b>' : '') + x.alg; }).join('<br>') + '</dd>' +
+        '<dt>評估指標</dt><dd>' + stg.map(function (x) { return (stg.length > 1 ? '<b>' + x.n + '：</b>' : '') + x.m; }).join('<br>') + '</dd>';
+    }
+    var link = WHERE[i] !== AR.o.here ? '<dt>詳見</dt><dd><a href="#/' + WHERE[i] + '">' + CHN[WHERE[i]] + ' →</a></dd>' : '';
+    $(AR.o.detail).innerHTML = '<div class="arch-num num">' + (i + 1) + '</div><div><h3 style="margin:0 0 4px">' + s.n + '　' + evB(s.ev) + '</h3><p style="margin:0 0 8px">' + s.one + '</p><dl>' +
+      '<dt>輸入 → 輸出</dt><dd>' + s.io + '</dd><dt>為什麼需要</dt><dd>' + s.why + '</dd>' + more + link + '</dl></div>';
   }
 
   function drawArch() {
-    var svg = U.clear($('#arch'));
+    var svg = U.clear($(AR.o.svg)), inst = AR;
     AR.boxes = []; AR.frames = [];
     ST.forEach(function (s, i) {
       var x = bx(i), g = el('g', { tabindex: 0, role: 'button', 'aria-label': (i + 1) + ' ' + s.n, style: 'cursor:pointer' }, svg);
@@ -98,7 +115,7 @@
         var ay = BY + BH / 2;
         el('path', { d: 'M' + (x + BW + 4) + ' ' + ay + 'h' + (GAP - 9) + 'm-5 -4l5 4l-5 4', fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 1.6 }, svg);
       }
-      function go() { AR.tour = false; syncTourBtn(); selectSt(i, true); }
+      function go() { use(inst, function () { AR.tour = false; syncTourBtn(); selectSt(i, true); }); }
       g.addEventListener('click', go);
       g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
     });
@@ -124,7 +141,6 @@
     var move = 0.7, x;
     if (f < move && i > 0) { var k = f / move; k = k * k * (3 - 2 * k); x = U.lerp(bx(i - 1), bx(i), k) + BW / 2; }
     else x = bx(i) + BW / 2;
-    if (f < move && i === 0) x = bx(0) + BW / 2;
     var stI = (f < move * 0.5 && i > 0) ? i - 1 : i;
     AR.tok.setAttribute('transform', 'translate(' + x + ',420)');
     AR.tokT_.textContent = ST[stI].tok;
@@ -135,17 +151,18 @@
     if (stI >= 2 && stI <= 3) [C.app, C.sil, C.skel].forEach(function (c, k) { el('circle', { cx: -w / 2 + 2 + k * 9 - 8, cy: -14, r: 4, fill: c }, AR.tokDots); });
     return stI;
   }
-  function tickArch(dt) {
+  function tickArch(dt, t) {
     if (AR.tour) {
       AR.tokT += dt;
       var s = placeToken();
       if (s !== AR.sel) selectSt(s, false);
     }
     AR.figs.forEach(function (f) {
-      PM.renderSVG(f.g, PM.parts(f.p, VK.phase(f.p, anim.t), f.v, 'rgb'), {});
+      PM.renderSVG(f.g, PM.parts(f.p, VK.phase(f.p, t), f.v, 'rgb'), {});
     });
-    if (AR.clu) drawCluDots(anim.t);
+    if (AR.clu) drawCluDots(t);
   }
+  global.ArchViz = { make: makeArch };
 
   /* ---- 各站的小圖 ---- */
   var MINI = [
@@ -270,7 +287,7 @@
     AR.cluLab.textContent = k > 0.55 ? '→ 今日 3 個人' : '15 段片段';
   }
 
-  /* ======================= 圖 4.2 融合發生在哪一層 ======================= */
+  /* ======================= 融合發生在哪一層 ======================= */
   var LV = {
     feature: { n: '特徵層融合', col: 1, how: '把各專家的特徵向量接起來（或用交叉注意力互相混合），再訓練一個模型輸出身分。',
       plus: '資訊最完整，線索之間能互相補充細節（例：MMGaitFormer 讓骨架與輪廓互相查詢）。',
@@ -345,7 +362,7 @@
     });
   }
 
-  /* ======================= 圖 4.3 品質門控 ======================= */
+  /* ======================= 品質門控 ======================= */
   var MODS = [
     { k: 'app', n: '外觀', c: C.app, g: 0.83, i: 0.80 },
     { k: 'skel', n: '骨架', c: C.skel, g: 0.80, i: 0.55 },
@@ -440,7 +457,7 @@
     $('#gate-note').textContent = SCENES[GS.s].note;
   }
 
-  /* ======================= 圖 4.4 分數換成證據 ======================= */
+  /* ======================= 分數換成證據 ======================= */
   var NM = [
     { n: '臉部', c: C.face, unit: '餘弦相似度', lo: -0.2, hi: 1, hiGood: true, g: [0.55, 0.13], i: [0.22, 0.13], ex: 0.47, half: false },
     { n: '步態', c: C.gait, unit: '特徵距離', lo: 0, hi: 25, hiGood: false, g: [9, 2.8], i: [14, 3.2], ex: 10.5, half: false },
@@ -540,7 +557,7 @@
     }).join('');
   }
 
-  /* ======================= 圖 4.7 分群演算法怎麼選 ======================= */
+  /* ======================= 分群演算法怎麼選 ======================= */
   function drawTree() {
     var svg = U.clear($('#clu-tree'));
     function node(x, y, w, h, t, o) {
@@ -559,7 +576,7 @@
     txt(svg, 775, 186, '規模優勢用不上；需自有標註微調', { 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--ink-3)' });
     link(150, 156, 110, 214, '需要'); link(260, 156, 390, 214, '不需要');
     node(10, 214, 240, 66, '約束式平均連結凝聚|免訓練、最容易加約束', { fill: '#e3efe0', stroke: 'var(--good)', sw: 2.2 });
-    txt(svg, 130, 300, '★ 建議首選（圖 4.6 的演算法）', { 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700, fill: 'var(--good)' });
+    txt(svg, 130, 300, '★ 建議首選（上方實驗台的演算法）', { 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700, fill: 'var(--good)' });
     node(290, 214, 210, 66, 'HDBSCAN / Infomap|自動決定群數', { stroke: 'var(--ink-3)' });
     txt(svg, 395, 300, '離群點要另報為「低信心」', { 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--ink-3)' });
     el('line', { x1: 0, x2: 960, y1: 326, y2: 326, stroke: 'var(--rule)', 'stroke-dasharray': '4 4' }, svg);

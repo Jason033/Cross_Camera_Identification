@@ -241,7 +241,7 @@
 
   wrapInit('cues', function () { initFeas(); initCards(); drawBriar(); cueDecision(); });
 
-  /* ======================= 第 3 章：方法總表與比較 ======================= */
+  /* ======================= 第 2 章：方法總表與比較 ======================= */
   var mtFam = 'all', mtLic = 'all', mtQ = '';
   function initMT() {
     var fam = $('#mt-fam'), lic = $('#mt-lic');
@@ -285,7 +285,7 @@
   }
   wrapInit('methods', function () { initMT(); methodCharts(); });
 
-  /* ======================= 第 4 章：證據累加 ======================= */
+  /* ======================= 第 3 章：證據累加 ======================= */
   var LRM = [
     { k: 'face', n: '人臉', c: '#6250d6', g: [0.66, 0.12], i: [0.38, 0.12] },
     { k: 'app', n: '外觀（同制服）', c: '#2a78d6', g: [0.70, 0.08], i: [0.63, 0.08] },
@@ -377,7 +377,7 @@
     }
   }
 
-  /* ======================= 第 4 章：約束式分群 ======================= */
+  /* ======================= 第 3 章：約束式分群 ======================= */
   var CAMS = ['攝影機 1（營門）', '攝影機 2（中庭）', '攝影機 3（餐廳）'];
   var MINT = [[0, 3, 6], [3, 0, 4], [6, 4, 0]]; // 分鐘
   var CLU_COL = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948', '#7a8a3a', '#3fa0b5', '#a0522d', '#8e6bd6'];
@@ -482,7 +482,7 @@
     if (clu.step >= CR.snaps.length - 1) clu.step = 0;
     function next() {
       $('#clu-step').value = clu.step; drawClu();
-      if (clu.step >= CR.snaps.length - 1 || !document.getElementById('ch-fusion').classList.contains('active')) { stopPlay(); return; }
+      if (clu.step >= CR.snaps.length - 1 || !document.getElementById('ch-system').classList.contains('active')) { stopPlay(); return; }
       clu.step++;
       clu.raf = setTimeout(next, U.reduceMotion ? 50 : 650);
     }

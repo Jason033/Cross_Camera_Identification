@@ -1,4 +1,4 @@
-/* ch-deploy.js — 第 5–9 章：跨攝影機、未知人員、資料集、缺口與實驗、參考文獻 */
+/* ch-deploy.js — 第 4 章（攝影機、資料集、評估協定）、第 3 章的識別（未知人員）、第 5 章的證據板、參考文獻 */
 (function (global) {
   'use strict';
   var D = global.DATA, PM = global.PersonModel, el = U.el, $ = U.$;
@@ -46,7 +46,7 @@
       var last = performance.now();
       function step(now) {
         cam.raf = 0;
-        if (!document.getElementById('ch-camera').classList.contains('active')) return;
+        if (!document.getElementById('ch-deploy').classList.contains('active')) return;
         cam.t += Math.min(0.05, (now - last) / 1000); last = now;
         drawCams();
         cam.raf = requestAnimationFrame(step);
@@ -379,14 +379,7 @@
     U.$$('th button', t).forEach(function (b) { b.addEventListener('click', function () { var k = b.getAttribute('data-k'); dsSort = { k: k, dir: dsSort.k === k ? -dsSort.dir : -1 }; drawDsTable(); }); });
   }
 
-  /* ======================= 8 缺口與實驗 ======================= */
-  var PHASES = [
-    { id: 'A', n: '能跑的基準', d: '偵測 → 追蹤 → 軌跡層級 CLIP-ReID / TransReID → Top-K 檢索。先知道「純外觀能做到哪裡」。你現有的 YOLOv7 + FastReID / CLIP-ReID 就在這一層。' },
-    { id: 'B', n: '證明同制服真的失效', d: '不要先看 Market / MSMT。建立自己的「同制服、不同人」配對評估，並用 FGPR、ConstrID、Industrial-Gait 做外部驗證。對應實驗 E1。' },
-    { id: 'C', n: '只加一個結構線索', d: '先選 SkeletonGait / GPGait 或 GaitBase 其中一個，而不是同時加骨架＋輪廓＋臉＋SMPL。這樣才能回答「新增這個線索是否真的修正外觀的失效」。對應 E2、E3。' },
-    { id: 'D', n: '品質感知融合', d: '先做分數層融合證明互補性，再升級到投影 + 學習式門控。MMGaitFormer 提供交叉注意力方向，HAMoBE 提供雙輸入門控方向。對應 E4。' },
-    { id: 'E', n: '跨域 + 未知人員', d: '留一攝影機、跨資料集、遮擋與解析度分層、模態缺失、未知身分拒判。對應 E5–E8；最後才看工程成本 E9。' }
-  ];
+  /* ======================= 證據板與研究空缺（第 5 章） ======================= */
   var SHORT = { adaface: 'AdaFace', farsight: 'BRIAR 融合', gunel: 'Günel 2019', mevid: 'MEVID', clustercontrast: 'Cluster Contrast', cal: 'CAL', ltcc: 'LTCC', fgpr: 'FGPR', mmgaitformer: 'MMGaitFormer', skeletongait: 'SkeletonGait++', hamobe: 'HAMoBE', ramoe: 'RaMoE', opengait: 'OpenGait', gpgait: 'GPGait', fgpersonx: 'FG-PersonX', openworld: 'Open-World ReID' };
   CH.roadmap = {
     init: function () {
@@ -402,26 +395,6 @@
       $('#gap-matrix').innerHTML = h + '</tbody><caption class="small muted" style="caption-side:bottom;text-align:left;padding-top:8px">實心 = 原論文已測　空心 = 可研究　— = 不適用</caption>';
     }
   };
-  function drawPhases(sel) {
-    var svg = U.clear($('#phases'));
-    var w = 170, gap = 30;
-    PHASES.forEach(function (p, i) {
-      var x = i * (w + gap), on = p.id === sel;
-      var g = el('g', { tabindex: 0, role: 'button', 'aria-label': '階段 ' + p.id + ' ' + p.n, style: 'cursor:pointer' }, svg);
-      el('rect', { x: x + 1, y: 40, width: w, height: 92, rx: 8, fill: on ? 'var(--ink)' : '#fff', stroke: 'var(--ink)', 'stroke-width': 1.3 }, g);
-      el('text', { x: x + 16, y: 72, 'font-size': 22, 'font-weight': 700, fill: on ? '#fff' : 'var(--olive)', class: 'num', text: p.id }, g);
-      el('text', { x: x + 16, y: 104, 'font-size': 14, 'font-weight': 700, fill: on ? '#fff' : 'var(--ink)', text: p.n }, g);
-      if (i < PHASES.length - 1) global.svgArrow(svg, x + w + 4, 86, x + w + gap - 2, 86);
-      function go() { drawPhases(p.id); }
-      g.addEventListener('click', go);
-      g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
-    });
-    el('text', { x: 0, y: 22, 'font-size': 12.5, fill: 'var(--ink-3)', text: '依序進行，每一步都回答一個可被否證的問題（點選查看）' }, svg);
-    el('text', { x: 0, y: 170, 'font-size': 12.5, fill: 'var(--ink-3)', text: '目前位置：第一階段（文獻探索）已完成大部分 → 下一步從 A、B 開始' }, svg);
-    var p = PHASES.filter(function (x) { return x.id === sel; })[0];
-    $('#phase-detail').innerHTML = '<h3>階段 ' + p.id + '：' + p.n + '</h3><p style="margin:0">' + p.d + '</p>';
-  }
-
   /* ======================= 9 參考文獻 ======================= */
   CH.refs = {
     init: function () {

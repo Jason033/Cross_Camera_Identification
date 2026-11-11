@@ -1,4 +1,4 @@
-/* ch-plan.js — 第 8–10 章：系統假想、驗證與資料蒐集、品控與月報 */
+/* ch-plan.js — 第 3 章（身分四層、輸出、算力）與第 5 章（驗證與資料蒐集、品控與月報） */
 (function (global) {
   'use strict';
   var el = U.el, $ = U.$, R = global.R;
@@ -16,7 +16,7 @@
   /* ======================= 8 系統假想 ======================= */
   CH.system = {
     init: function () {
-      drawLayers(); drawPipe('s6'); initBudget(); initOut();
+      drawLayers(); initBudget(); initOut();
       table('stack-tbl', ['環節', '你現有的', '建議起步（授權較安全）', '備註'], R.STACK);
       table('fail-tbl', ['失敗方式', '成因', '對策'], R.FAILS);
     }
@@ -57,36 +57,6 @@
     });
     txt(svg, 0, 314, '數字為示意', { 'text-anchor': 'end', 'font-size': 11, fill: 'var(--ink-3)' });
   }
-  var LINES = { s1: '攝取與|偵測', s2: '單相機|追蹤', s3: 'Tracklet|特徵', s4: '成對分數|與校準', s5: '時空約束', s6: '同日分群|（分類）', s7: '跨日連結', s8: '識別|（比對資料庫）', s9: '軌跡與|報表' };
-  function drawPipe(sel) {
-    var svg = U.clear($('#sys-pipe'));
-    var w = 98, gap = 12;
-    R.STAGES.forEach(function (st, i) {
-      var x = i * (w + gap), on = st.id === sel;
-      var g = el('g', { tabindex: 0, role: 'button', 'aria-label': st.n, style: 'cursor:pointer' }, svg);
-      el('rect', { x: x + 1, y: 30, width: w, height: 104, rx: 8, fill: on ? 'var(--ink)' : '#fff', stroke: 'var(--ink)', 'stroke-width': 1.4, 'stroke-dasharray': st.lv === 'proven' ? null : st.lv === 'inferred' ? '7 3' : '2 3' }, g);
-      txt(g, x + 10, 54, String(i + 1), { 'font-size': 18, 'font-weight': 700, fill: on ? '#fff' : 'var(--olive)', class: 'num' });
-      var words = (LINES[st.id] || st.n).split('|');
-      words.forEach(function (wd, k) { txt(g, x + 10, 84 + k * 18, wd, { 'font-size': 13, 'font-weight': 700, fill: on ? '#fff' : 'var(--ink)' }); });
-      txt(g, x + 10, 124, st.run, { 'font-size': 11, fill: on ? '#dfe3d3' : 'var(--ink-3)' });
-      if (i < R.STAGES.length - 1) arrow(svg, x + w + 2, 82, x + w + gap, 82);
-      function go() { drawPipe(st.id); }
-      g.addEventListener('click', go);
-      g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
-    });
-    function brace(i0, i1, t, c) {
-      var x1 = i0 * (w + gap) + 6, x2 = i1 * (w + gap) + w - 4;
-      el('path', { d: 'M' + x1 + ' 146 v8 H' + x2 + ' v-8', fill: 'none', stroke: c, 'stroke-width': 1.6 }, svg);
-      txt(svg, (x1 + x2) / 2, 172, t, { 'text-anchor': 'middle', 'font-weight': 700, fill: c, 'font-size': 12.5 });
-    }
-    brace(0, 2, '感知與特徵', 'var(--ink-3)'); brace(3, 4, '證據', 'var(--ink-3)'); brace(5, 6, '分類', '#2a78d6'); brace(7, 7, '識別', 'var(--ink)'); brace(8, 8, '輸出', 'var(--ink-3)');
-    txt(svg, 0, 16, '框線：實線 = 已有文獻　長虛線 = 同制服情境為推論　短虛線 = 沒有直接證據', { 'font-size': 11.5, fill: 'var(--ink-3)' });
-    txt(svg, 0, 205, '夜間批次處理；每日一次輸出報表與人工覆核清單', { 'font-size': 11.5, fill: 'var(--ink-3)' });
-    var s = R.STAGES.filter(function (x) { return x.id === sel; })[0];
-    $('#sys-detail').innerHTML = '<h3 style="margin-top:0">' + s.n + '　' + evBadge(s.lv) + '</h3><dl>' +
-      '<dt>輸入 → 輸出</dt><dd>' + s.io + '</dd><dt>演算法選項</dt><dd>' + s.alg + '</dd><dt>評估指標</dt><dd>' + s.m + '</dd><dt>注意</dt><dd>' + s.note + '</dd></dl>';
-  }
-
   // ---- 算力試算 ----
   var bud = { cams: 10, hrs: 24, occ: 40, fps: 5, det: 38.9, dec: 4, crops: 1600, reid: 15, win: 10, proc: 1 };
   function initBudget() {
@@ -321,7 +291,7 @@
       txt(svg, (x0 + x - gap) / 2, 16, ph[0], { 'text-anchor': 'middle', 'font-weight': 700, 'font-size': 12.5, fill: 'var(--ink-2)' });
       if (pi < 2) { arrow(svg, x - gap + 2, 100, x + 14, 100); x += 18; }
     });
-    txt(svg, 0, 196, '對應第 10 章的六個月查核點：第 2 月 E1、第 3 月 E2–E3、第 4 月 E4–E5、第 5 月 E7、第 6 月 E9', { 'font-size': 12, fill: 'var(--ink-3)' });
+    txt(svg, 0, 196, '對應本章的六個月查核點：第 2 月 E1、第 3 月 E2–E3、第 4 月 E4–E5、第 5 月 E7、第 6 月 E9', { 'font-size': 12, fill: 'var(--ink-3)' });
     var e = R.EXPS.filter(function (z) { return z.id === sel; })[0];
     $('#val-exp-d').innerHTML = '<h3 style="margin-top:0">' + e.id + '：' + e.q + '</h3><dl><dt>基準</dt><dd>' + e.base + '</dd><dt>改變</dt><dd>' + e.mod + '</dd><dt>必看指標</dt><dd>' + e.m + '</dd><dt>通過／停止</dt><dd>' + e.go + '</dd></dl>';
   }
