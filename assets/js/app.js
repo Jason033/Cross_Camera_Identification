@@ -5,7 +5,7 @@
   var ORDER = ['home', 'problem', 'methods', 'approach', 'plan', 'appendix', 'refs'];
   var MODS = {
     home: ['home', 'intro', 'steps'], problem: ['problem', 'primer'], methods: ['fusion', 'cues', 'methods', 'openset', 'steps'],
-    approach: ['system', 'steps'], plan: ['roadmap', 'validation', 'camera'], appendix: ['datasets', 'methods', 'roadmap', 'qc', 'camera'], refs: ['refs']
+    approach: ['system', 'steps', 'server'], plan: ['roadmap', 'validation', 'camera'], appendix: ['datasets', 'methods', 'roadmap', 'qc', 'camera'], refs: ['refs']
   };
   // 舊網址（舊版 13 章）導到新章節
   var ALIAS = { cues: 'methods', fusion: 'methods', openset: 'methods', system: 'approach', camera: 'plan', deploy: 'plan', validation: 'plan', datasets: 'appendix', qc: 'appendix', roadmap: 'plan' };

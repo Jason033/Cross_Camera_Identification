@@ -415,7 +415,7 @@
   <header class="ch-head">
     <p class="ch-num">第 3 章</p>
     <h1>我們的做法：第一版系統用什麼</h1>
-    <p class="thesis">把第 2 章每一步的選擇收成一張清單，再說明系統的整體邏輯、要交出什麼、伺服器跑不跑得動、刻意不做什麼，以及主要風險。</p>
+    <p class="thesis">把第 2 章每一步的選擇收成一張清單，再說明系統的整體邏輯、要交出什麼、需要什麼等級的伺服器、刻意不做什麼，以及主要風險。</p>
   </header>
 
   <h2>第一版系統元件</h2>
@@ -445,14 +445,29 @@
   </figure>
 
   <h2>營區伺服器跑不跑得動</h2>
+  <p>以第一版流程（偵測 → 追蹤 → 姿態、外觀、步態、臉部特徵 → 融合與分群）為準，估算常見的六級伺服器各能支援幾台攝影機。拉動右側設定，看哪一級夠用、瓶頸在哪裡。</p>
   <figure class="plate">
-    <div class="plate-head"><div class="plate-title"><span class="fig"></span>營區伺服器夜間算力試算</div></div>
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>常見伺服器等級 × 第一版流程</div></div>
     <div class="plate-body cols cols-7-5">
-      <svg id="bud-svg" viewBox="0 0 600 320" role="img" aria-label="算力試算"></svg>
-      <div id="bud-ctrl"></div>
+      <div><div class="tbl-wrap"><svg id="srv-svg" viewBox="0 0 620 340" role="img" aria-label="各等級伺服器可支援的攝影機數" style="min-width:520px"></svg></div><div id="srv-read" class="srv-read"></div></div>
+      <div id="srv-ctrl"></div>
     </div>
-    <div class="plate-note">預設值：偵測器採 YOLO 類 nano 模型的 CPU ONNX 官方數字 38.9 ms/幀；解碼 4 ms/幀與 ReID 15 ms/張為假設。瓶頸通常是解碼與偵測，ReID 相對可忽略（<span class="ev inferred"><i></i>合理推論</span>）。<b>請用營區實際伺服器跑 10 分鐘影片，替換這些數字。</b></div>
+    <div class="plate-body" style="padding-top:0"><div class="tbl-wrap"><table class="tbl srv" id="srv-tbl"></table></div></div>
+    <div class="plate-note">估算方法：每個運算步驟的單位成本 × 每相機小時的工作量，依各等級的核心數（以 70% 效率計）、GPU 速度、硬體解碼能力換算成每晚可處理的相機小時；CPU 與 GPU、解碼器同時運作，取最慢的一項。<b>這是粗估，誤差可能到 2 倍</b>，用來比較等級與找瓶頸；單位成本與依據列在下方。代表型號為常見產品線，實際以單位採購規格為準。</div>
   </figure>
+  <details class="more"><summary>估算依據：每個運算步驟的單位成本與來源</summary><div class="more-body">
+    <div class="tbl-wrap"><table class="tbl" id="srv-basis"></table></div>
+    <p class="small muted">工作量假設：有人時段偵測 5 fps、沒人時 1 fps；影片全部解碼（壓縮影片無法任意跳幀）；有人比例 40% 時每相機小時約 200 段片段，每段取 8 張裁切算外觀、16 張算姿態；一半的片段做步態（回原始影片取 30 幀）；約 20% 的片段經過近距點位、每段 5 張臉。邊緣運算盒的 ARM CPU 以 x86 的一半速度計。</p>
+  </div></details>
+  <h3>採購或借用伺服器前，先實測這五個數字</h3>
+  <ol class="measure">
+    <li>拿一段營區實際錄影（10 分鐘、1080p），量<b>解碼</b>每幀耗時（CPU 軟體解碼與 GPU 硬體解碼各一次）。</li>
+    <li>量<b>偵測</b>每幀耗時（YOLOX-S，ONNX Runtime 或 OpenVINO；有 GPU 時用 TensorRT）。</li>
+    <li>量<b>外觀、姿態、步態</b>每張裁切或每段序列的耗時，以批次 16 或 32 跑。</li>
+    <li>數一數這 10 分鐘裡實際產生幾段<b>片段</b>，替換上面「每相機小時 200 段」的假設。</li>
+    <li>確認錄影主機的<b>匯出方式與頻寬</b>：每晚要搬的影片量（見上方儲存估算）是否來得及讀出。</li>
+  </ol>
+
 
   <h2>刻意不做什麼</h2>
   <ul class="not-list" id="not-list"></ul>
@@ -647,6 +662,7 @@
 <script src="assets/js/ch-plan.js"></script>
 <script src="assets/js/ch-intro.js"></script>
 <script src="assets/js/ch-steps.js"></script>
+<script src="assets/js/ch-server.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>
