@@ -148,14 +148,6 @@
       });
       drawGrid(GRID_DS[2]);
 
-      // --- 特徵空間 ---
-      var space = 'app';
-      space = U.segGroup($('#space-sel'), 'data-space', function (v) { space = v; drawSpace(); });
-      var uni = $('#uni');
-      uni.addEventListener('input', drawSpace);
-      function drawSpace() { $('#uni-out').textContent = (+uni.value).toFixed(2); renderSpace(space, +uni.value); }
-      drawSpace();
-
       // --- 表 ---
       var rows = [
         ['FGPR', '是：同組相同制服', '半受控多攝影機', 'proven', '直接證據'],
@@ -229,101 +221,6 @@
     PM.renderSVG(g, PM.parts(p, p.phase0 + 1.2, { yaw: 0.5, pitch: 0.1, scale: 40, x: cx, y: base }, 'rgb'), {});
   }
 
-  // ---- 特徵空間模擬 ----
-  var SPACE_PTS = (function () {
-    var r = U.rng(20261110), out = [];
-    var clothC = [[-0.62, 0.48], [0.58, 0.55], [0.05, -0.66], [-0.55, -0.42], [0.62, -0.30]];
-    var residual = [[0.10, 0.05], [-0.06, 0.09], [0.04, -0.10], [-0.09, -0.04], [0.07, -0.02]];
-    for (var i = 0; i < 5; i++) {
-      var ang = i / 5 * Math.PI * 2 + 0.4;
-      var gaitC = [Math.cos(ang) * 0.52, Math.sin(ang) * 0.52];
-      for (var k = 0; k < 10; k++) {
-        out.push({ id: i, cloth: clothC[i], res: residual[i], gaitC: gaitC,
-          na: [U.gauss(r) * 0.055, U.gauss(r) * 0.055], ng: [U.gauss(r) * 0.12, U.gauss(r) * 0.12] });
-      }
-    }
-    return out;
-  })();
-  function spaceCoords(space, u) {
-    return SPACE_PTS.map(function (p) {
-      var ax = U.lerp(p.cloth[0], 0, u) + p.res[0] * u + p.na[0];
-      var ay = U.lerp(p.cloth[1], 0, u) + p.res[1] * u + p.na[1];
-      var gx = p.gaitC[0] + p.ng[0], gy = p.gaitC[1] + p.ng[1];
-      if (space === 'app') return { id: p.id, v: [ax, ay] };
-      if (space === 'gait') return { id: p.id, v: [gx, gy] };
-      return { id: p.id, v: [ax, ay, gx * 0.85, gy * 0.85] };
-    });
-  }
-  function pca2(pts) {
-    var n = pts.length, d = pts[0].v.length, mean = [];
-    for (var j = 0; j < d; j++) { mean[j] = 0; pts.forEach(function (p) { mean[j] += p.v[j] / n; }); }
-    var X = pts.map(function (p) { return p.v.map(function (x, j) { return x - mean[j]; }); });
-    var C = []; for (var a = 0; a < d; a++) { C[a] = []; for (var b = 0; b < d; b++) { var s = 0; X.forEach(function (x) { s += x[a] * x[b]; }); C[a][b] = s / n; } }
-    function power(M) { var v = []; for (var i = 0; i < d; i++) v[i] = 1 / (i + 1); for (var it = 0; it < 80; it++) { var w = []; for (var i2 = 0; i2 < d; i2++) { w[i2] = 0; for (var k = 0; k < d; k++) w[i2] += M[i2][k] * v[k]; } var nn = Math.sqrt(w.reduce(function (s, x) { return s + x * x; }, 0)) || 1; v = w.map(function (x) { return x / nn; }); } var lam = 0; for (var i3 = 0; i3 < d; i3++) for (var k2 = 0; k2 < d; k2++) lam += v[i3] * M[i3][k2] * v[k2]; return { v: v, l: lam }; }
-    var e1 = power(C); var C2 = C.map(function (row, i) { return row.map(function (x, j) { return x - e1.l * e1.v[i] * e1.v[j]; }); }); var e2 = power(C2);
-    return X.map(function (x) { return [x.reduce(function (s, xi, i) { return s + xi * e1.v[i]; }, 0), x.reduce(function (s, xi, i) { return s + xi * e2.v[i]; }, 0)]; });
-  }
-  function rank1(pts) {
-    var ok = 0;
-    pts.forEach(function (p, i) {
-      var best = 1e9, bid = -1;
-      pts.forEach(function (q, j) { if (i === j) return; var s = 0; for (var k = 0; k < p.v.length; k++) s += (p.v[k] - q.v[k]) * (p.v[k] - q.v[k]); if (s < best) { best = s; bid = q.id; } });
-      if (bid === p.id) ok++;
-    });
-    return ok / pts.length;
-  }
-  function sepRatio(pts) {
-    var d = pts[0].v.length, C = [];
-    for (var i = 0; i < 5; i++) { C[i] = []; for (var k = 0; k < d; k++) C[i][k] = 0; }
-    pts.forEach(function (p) { for (var k = 0; k < d; k++) C[p.id][k] += p.v[k] / 10; });
-    var intra = 0; pts.forEach(function (p) { intra += Math.sqrt(p.v.reduce(function (s, x, k) { return s + (x - C[p.id][k]) * (x - C[p.id][k]); }, 0)) / pts.length; });
-    var inter = 0, c = 0; for (var a = 0; a < 5; a++) for (var b = a + 1; b < 5; b++) { inter += Math.sqrt(C[a].reduce(function (s, x, k) { return s + (x - C[b][k]) * (x - C[b][k]); }, 0)); c++; }
-    return (inter / c) / intra;
-  }
-  function shape(g, kind, x, y, r, fill) {
-    var a = { fill: fill, stroke: '#fff', 'stroke-width': 1.2 };
-    if (kind === 'circle') return el('circle', Object.assign({ cx: x, cy: y, r: r }, a), g);
-    if (kind === 'square') return el('rect', Object.assign({ x: x - r * 0.9, y: y - r * 0.9, width: r * 1.8, height: r * 1.8 }, a), g);
-    if (kind === 'triangle') return el('path', Object.assign({ d: 'M' + x + ' ' + (y - r * 1.15) + 'L' + (x + r * 1.05) + ' ' + (y + r * 0.75) + 'L' + (x - r * 1.05) + ' ' + (y + r * 0.75) + 'Z' }, a), g);
-    if (kind === 'diamond') return el('path', Object.assign({ d: 'M' + x + ' ' + (y - r * 1.2) + 'L' + (x + r * 1.2) + ' ' + y + 'L' + x + ' ' + (y + r * 1.2) + 'L' + (x - r * 1.2) + ' ' + y + 'Z' }, a), g);
-    return el('path', Object.assign({ d: 'M' + (x - r) + ' ' + (y - r * 0.35) + 'h' + r * 0.65 + 'v-' + r * 0.65 + 'h' + r * 0.7 + 'v' + r * 0.65 + 'h' + r * 0.65 + 'v' + r * 0.7 + 'h-' + r * 0.65 + 'v' + r * 0.65 + 'h-' + r * 0.7 + 'v-' + r * 0.65 + 'h-' + r * 0.65 + 'Z' }, a), g);
-  }
-  global.drawShape = shape;
-
-  function renderSpace(space, u) {
-    var svg = U.clear($('#space'));
-    var pts = spaceCoords(space, u);
-    var xy = space === 'fused' ? pca2(pts) : pts.map(function (p) { return p.v; });
-    var W = 520, H = 380, cx = W / 2, cy = 190, sc = 210;
-    sc = 180; if (space === 'fused') sc = 160;
-    el('rect', { x: 10, y: 10, width: W - 20, height: H - 50, fill: '#fff', stroke: 'var(--rule-2)' }, svg);
-    el('line', { x1: cx, x2: cx, y1: 18, y2: H - 48, stroke: 'var(--rule-2)' }, svg);
-    el('line', { x1: 18, x2: W - 18, y1: cy, y2: cy, stroke: 'var(--rule-2)' }, svg);
-    var g = el('g', {}, svg);
-    pts.forEach(function (p, i) {
-      var x = U.clamp(cx + xy[i][0] * sc, 18, W - 18), y = U.clamp(cy - xy[i][1] * sc, 18, H - 48);
-      var s = shape(g, ID_SHAPES[p.id], x, y, 6, ID_COLORS[p.id]);
-      s.setAttribute('tabindex', '-1');
-      U.tip(s, '<b>人員 ' + 'ABCDE'[p.id] + '</b> 的一段軌跡');
-    });
-    // 圖例
-    for (var i = 0; i < 5; i++) {
-      shape(svg, ID_SHAPES[i], 26 + i * 76, H - 18, 6, ID_COLORS[i]);
-      el('text', { x: 38 + i * 76, y: H - 13, 'font-size': 13, fill: 'var(--ink-2)', text: '人員 ' + 'ABCDE'[i] }, svg);
-    }
-    var lab = { app: '外觀嵌入（2 維示意）', gait: '步態嵌入（2 維示意）', fused: '外觀 ⊕ 步態（4 維，PCA 投影到 2 維）' }[space];
-    el('text', { x: 20, y: 30, 'font-size': 12.5, fill: 'var(--ink-3)', text: lab }, svg);
-    var r1 = rank1(pts), sr = sepRatio(pts);
-    $('#r1').textContent = U.pct(r1);
-    $('#sep').textContent = sr.toFixed(2);
-    var notes = {
-      app: u < 0.3 ? '衣服不同時，外觀群集彼此遠離——一般 ReID 的舒適區。' : u < 0.8 ? '制服越像，群集往中心擠。殘餘線索（鞋、髮型、配件）還撐著一點距離。' : '幾乎相同制服：外觀群集重疊，只剩殘餘線索。最近鄰開始配錯人。',
-      gait: '步態不受制服影響，所以拉動滑桿不會改變這張圖；但每群較散——步態估計本身雜訊較大，單獨使用也不完美。',
-      fused: '把兩個空間串接起來：外觀負責衣服不同時的區分，步態在同制服時接手。這是「互補」的幾何直覺，不代表實際模型一定如此。'
-    };
-    $('#space-note').textContent = notes[space];
-  }
-
   /* ======================= 2 身分線索 ======================= */
   var CUE_VIEW = { yaw: 0.5, pitch: 0.05, scale: 330, x: 230, y: 392 };
   var cueState = { id: 'skel', t: 0.6 };
@@ -338,10 +235,6 @@
         chips.appendChild(b);
       });
       selectCue(cueState.id);
-      // 步態對照
-      var m = U.segGroup($('#strip-mode'), 'data-m', drawStrip);
-      drawStrip(m);
-      drawCueHeat();
     }
   };
   function selectCue(id) {
@@ -360,7 +253,6 @@
     $('#cue-detail').innerHTML = '<h3>' + c.name + '</h3><p style="margin-top:0">' + c.what + '</p>' +
       '<dl><dt>主要失效</dt><dd>' + c.fail + '</dd><dt>互補對象</dt><dd>' + c.pair + '</dd></dl>' +
       '<div style="margin-top:14px;display:grid;gap:6px">' + bars + '</div><p class="small muted" style="margin-top:8px">長條越長＝對同制服情境越有利。</p>';
-    U.$$('#cue-heat .row').forEach(function (r) { r.setAttribute('opacity', r.getAttribute('data-id') === id ? 1 : 0.55); });
   }
 
   function drawCueFig(id) {
@@ -444,55 +336,4 @@
     }
   }
 
-  function drawStrip(m) {
-    var svg = U.clear($('#strip'));
-    var who = [PEOPLE[0], PEOPLE[1]];
-    who.forEach(function (p, r) {
-      var y = 150 + r * 190;
-      el('text', { x: 8, y: y - 90, 'font-size': 14, fill: 'var(--ink)', 'font-weight': 700, text: '人員 ' + p.id }, svg);
-      el('text', { x: 8, y: y - 72, 'font-size': 12.5, fill: 'var(--ink-3)', class: 'num', text: '腿長 ' + legRatio(p).toFixed(2) + 'H · 步頻 ×' + p.cadence.toFixed(2) }, svg);
-      el('line', { x1: 170, x2: 990, y1: y, y2: y, stroke: 'var(--rule-2)' }, svg);
-      var trace = [];
-      for (var i = 0; i < 8; i++) {
-        var t = i * 0.13, phi = 2 * Math.PI * 0.95 * p.cadence * t;
-        var x = 230 + i * 104;
-        var g = el('g', {}, svg);
-        PM.renderSVG(g, PM.parts(p, phi, { yaw: 0, pitch: 0, scale: 118, x: x, y: y }, m), {});
-        el('text', { x: x, y: y + 16, 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--ink-3)', class: 'num', text: 't=' + t.toFixed(2) + 's' }, svg);
-      }
-      // 腳踝前後位置曲線（連續）
-      for (var s = 0; s <= 140; s++) {
-        var tt = s / 140 * 0.91, ph = 2 * Math.PI * 0.95 * p.cadence * tt;
-        var J = PM.joints(p, ph);
-        trace.push((230 + tt / 0.13 * 104).toFixed(1) + ',' + (y + 44 - J.lAnkle[2] * 50).toFixed(1));
-      }
-      el('polyline', { points: trace.join(' '), fill: 'none', stroke: m === 'skel' ? 'var(--c-gait)' : 'var(--ink-3)', 'stroke-width': 1.8 }, svg);
-    });
-    el('text', { x: 990, y: 412, 'text-anchor': 'end', 'font-size': 12, fill: 'var(--ink-3)', text: '曲線：左腳踝前後位置隨時間變化（週期 = 步頻）' }, svg);
-  }
-
-  function drawCueHeat() {
-    var svg = $('#cue-heat');
-    var RAMP = ['#eef0e6', '#cfd6b4', '#a7b47c', '#76874a', '#4f5c30'];
-    var x0 = 150, y0 = 46, cw = 98, rh = 33;
-    D.CUE_PROPS.forEach(function (pp, j) {
-      var t = el('text', { x: x0 + j * cw + cw / 2, y: 26, 'text-anchor': 'middle', 'font-size': 13, fill: 'var(--ink)', 'font-weight': 700, text: pp.name }, svg);
-      el('text', { x: x0 + j * cw + cw / 2, y: 40, 'text-anchor': 'middle', 'font-size': 10.5, fill: 'var(--ink-3)', text: pp.good === 'low' ? '低較好' : '高較好' }, svg);
-    });
-    D.CUES.forEach(function (c, i) {
-      var row = el('g', { class: 'row', 'data-id': c.id, tabindex: 0, role: 'button', 'aria-label': c.name, style: 'cursor:pointer' }, svg);
-      el('circle', { cx: 14, cy: y0 + i * rh + rh / 2, r: 5, fill: c.hex }, row);
-      el('text', { x: 26, y: y0 + i * rh + rh / 2 + 5, 'font-size': 14, fill: 'var(--ink)', text: c.name }, row);
-      D.CUE_PROPS.forEach(function (pp, j) {
-        var v = c.props[pp.k], fav = pp.good === 'low' ? 4 - v : v;
-        var r = el('rect', { x: x0 + j * cw + 1, y: y0 + i * rh + 1, width: cw - 2, height: rh - 2, rx: 3, fill: RAMP[fav] }, row);
-        el('text', { x: x0 + j * cw + cw / 2, y: y0 + i * rh + rh / 2 + 5, 'text-anchor': 'middle', 'font-size': 12.5, fill: fav >= 3 ? '#fff' : 'var(--ink)', text: ['極低', '低', '中', '高', '極高'][v] }, row);
-        U.tip(r, '<b>' + c.name + ' · ' + pp.name + '</b>：' + ['極低', '低', '中', '高', '極高'][v] + '<br>' + pp.tip);
-      });
-      function go() { selectCue(c.id); document.getElementById('cue-fig').scrollIntoView({ behavior: U.reduceMotion ? 'auto' : 'smooth', block: 'center' }); }
-      row.addEventListener('click', go);
-      row.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
-    });
-    svg.setAttribute('viewBox', '0 0 ' + (x0 + cw * 7 + 4) + ' ' + (y0 + rh * D.CUES.length + 6));
-  }
 })(window);

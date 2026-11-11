@@ -1,136 +1,13 @@
-/* ch-deploy.js — 第 4 章（攝影機、資料集、評估協定）、第 3 章的識別（未知人員）、第 5 章的證據板、參考文獻 */
+/* ch-deploy.js — 評估協定與合成資料、身分比對決策流程、資料集、證據板與研究空缺、參考文獻 */
 (function (global) {
   'use strict';
   var D = global.DATA, PM = global.PersonModel, el = U.el, $ = U.$;
   var CH = global.CH = global.CH || {};
 
-  /* ======================= 5 跨攝影機 ======================= */
-  var FACTORS = [
-    { k: 'light', n: '光照／色偏' },
-    { k: 'outfit', n: '換裝（運動服）' },
-    { k: 'lowres', n: '遠距低解析' },
-    { k: 'occ', n: '遮擋' },
-    { k: 'blur', n: '動態模糊／壓縮' },
-    { k: 'short', n: '軌跡只有幾幀' }
-  ];
-  var HEALTH_CUES = [
-    { k: 'app', n: '外觀', c: '#2a78d6', base: 0.35 },
-    { k: 'face', n: '臉部', c: '#6250d6', base: 1 },
-    { k: 'skel', n: '骨架', c: '#eb6834', base: 1 },
-    { k: 'sil', n: '輪廓', c: '#1baf7a', base: 1 },
-    { k: 'gait', n: '步態', c: '#d55181', base: 1 },
-    { k: 'anthro', n: '人體比例', c: '#9a7b12', base: 1 }
-  ];
-  var PEN = {
-    light: { app: 0.45, face: 0.2, skel: 0.05, sil: 0.1, gait: 0.05, anthro: 0 },
-    outfit: { app: 0.85, face: 0, skel: 0.05, sil: 0.35, gait: 0.1, anthro: 0.2 },
-    lowres: { app: 0.25, face: 0.9, skel: 0.55, sil: 0.3, gait: 0.3, anthro: 0.5 },
-    occ: { app: 0.3, face: 0, skel: 0.5, sil: 0.5, gait: 0.45, anthro: 0.6 },
-    blur: { app: 0.15, face: 0.4, skel: 0.25, sil: 0.2, gait: 0.15, anthro: 0.2 },
-    short: { app: 0, face: 0, skel: 0.2, sil: 0.1, gait: 0.9, anthro: 0.05 }
-  };
-  var VIEW_PEN = { app: 0.25, face: 0.5, skel: 0.2, sil: 0.35, gait: 0.4, anthro: 0.25 };
-  var cam = { on: {}, yaw: 0, t: 0, raf: 0 };
-
+  /* ======================= 評估協定與合成資料 ======================= */
   CH.camera = {
-    init: function () {
-      var chips = $('#cam-factors');
-      FACTORS.forEach(function (f) {
-        var b = U.h('button', { class: 'chip', 'aria-pressed': 'false' }, f.n);
-        b.addEventListener('click', function () { cam.on[f.k] = !cam.on[f.k]; b.setAttribute('aria-pressed', !!cam.on[f.k]); drawCams(); drawHealth(); });
-        chips.appendChild(b);
-      });
-      $('#yaw').addEventListener('input', function (e) { cam.yaw = +e.target.value; $('#yaw-out').textContent = cam.yaw + '°'; drawCams(); drawHealth(); });
-      drawCams(); drawHealth(); drawProtocols(); drawSynth();
-    },
-    enter: function () {
-      if (U.reduceMotion || cam.raf) return;
-      var last = performance.now();
-      function step(now) {
-        cam.raf = 0;
-        if (!document.getElementById('ch-deploy').classList.contains('active')) return;
-        cam.t += Math.min(0.05, (now - last) / 1000); last = now;
-        drawCams();
-        cam.raf = requestAnimationFrame(step);
-      }
-      cam.raf = requestAnimationFrame(step);
-    },
-    leave: function () { cancelAnimationFrame(cam.raf); cam.raf = 0; }
+    init: function () { if ($('#protocols')) drawProtocols(); if ($('#synth')) drawSynth(); }
   };
-
-  var off = document.createElement('canvas');
-  function scene(ctx, w, h, yaw, opts) {
-    ctx.save();
-    ctx.fillStyle = '#d7dccf'; ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#c3c9b9'; ctx.fillRect(0, h * 0.72, w, h * 0.28);
-    ctx.strokeStyle = '#aab19f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, h * 0.72); ctx.lineTo(w, h * 0.72); ctx.stroke();
-    // 牆面線條（給視角感）
-    ctx.strokeStyle = '#c8cdbf'; ctx.lineWidth = 1;
-    for (var i = 1; i < 6; i++) { ctx.beginPath(); ctx.moveTo(i * w / 6, 0); ctx.lineTo(i * w / 6, h * 0.72); ctx.stroke(); }
-    var p = opts.outfit ? Object.assign({}, global.PEOPLE[2], { outfit: 'pt' }) : global.PEOPLE[2];
-    var phi = p.phase0 + 2 * Math.PI * 0.95 * p.cadence * cam.t;
-    var view = { yaw: yaw, pitch: 0.18, scale: h * 0.74, x: w * 0.5, y: h * 0.9 };
-    if (opts.blur && 'filter' in ctx) ctx.filter = 'blur(2px)';
-    PM.renderCanvas(ctx, PM.parts(p, phi, view, 'rgb'), {});
-    ctx.filter = 'none';
-    if (opts.occ) {
-      ctx.fillStyle = '#7d705a'; ctx.fillRect(w * 0.22, h * 0.58, w * 0.56, h * 0.4);
-      ctx.fillStyle = '#6a5f4b'; ctx.fillRect(w * 0.22, h * 0.58, w * 0.56, 6);
-    }
-    if (opts.light) {
-      ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = 'rgba(255,170,90,0.55)'; ctx.fillRect(0, 0, w, h);
-      ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = 'rgba(20,10,0,0.18)'; ctx.fillRect(0, 0, w, h);
-    }
-    ctx.restore();
-  }
-  function drawCams() {
-    var a = $('#cam-a'), b = $('#cam-b');
-    var ca = a.getContext('2d');
-    scene(ca, a.width, a.height, 0.5, {});
-    var cb = b.getContext('2d');
-    var yaw = 0.5 + cam.yaw * Math.PI / 180;
-    if (cam.on.lowres) {
-      off.width = 40; off.height = 30;
-      var co = off.getContext('2d');
-      co.save(); co.scale(40 / b.width, 30 / b.height);
-      scene(co, b.width, b.height, yaw, cam.on);
-      co.restore();
-      cb.imageSmoothingEnabled = false;
-      cb.clearRect(0, 0, b.width, b.height);
-      cb.drawImage(off, 0, 0, b.width, b.height);
-    } else {
-      scene(cb, b.width, b.height, yaw, cam.on);
-    }
-    if (cam.on.short) {
-      cb.fillStyle = 'rgba(28,37,31,.8)'; cb.fillRect(8, 8, 128, 24);
-      cb.fillStyle = '#fff'; cb.font = '13px sans-serif'; cb.fillText('只有 3 幀可用', 16, 25);
-    }
-  }
-  function health() {
-    return HEALTH_CUES.map(function (c) {
-      var v = c.base;
-      FACTORS.forEach(function (f) { if (cam.on[f.k]) v *= 1 - PEN[f.k][c.k]; });
-      var vd = Math.min(cam.yaw, 180 - cam.yaw * 0.5) / 90; // 0–1
-      v *= 1 - VIEW_PEN[c.k] * U.clamp(vd, 0, 1);
-      return { c: c, v: v };
-    });
-  }
-  function drawHealth() {
-    var svg = U.clear($('#cue-health'));
-    var L = 82, W = 270;
-    [0, 0.5, 1].forEach(function (t) {
-      el('line', { x1: L + t * W, x2: L + t * W, y1: 8, y2: 262, stroke: 'var(--rule-2)' }, svg);
-      el('text', { x: L + t * W, y: 278, 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--ink-3)', class: 'num', text: (t * 100) + '%' }, svg);
-    });
-    health().forEach(function (r, i) {
-      var y = 14 + i * 42;
-      el('text', { x: L - 10, y: y + 15, 'text-anchor': 'end', 'font-size': 13.5, fill: 'var(--ink)', text: r.c.n }, svg);
-      el('rect', { x: L, y: y, width: Math.max(2, r.v * W), height: 22, rx: 3, fill: r.c.c }, svg);
-      el('text', { x: L + r.v * W + 6, y: y + 16, 'font-size': 12.5, fill: 'var(--ink)', class: 'num', text: Math.round(r.v * 100) + '%' }, svg);
-      if (r.c.k === 'app') el('text', { x: L, y: y + 36, 'font-size': 11, fill: 'var(--ink-3)', text: '同制服下本來就只剩 35%' }, svg);
-    });
-    el('text', { x: 0, y: 296, 'font-size': 11.5, fill: 'var(--ink-3)', text: '可用程度 = 基準 × Π(1 − 各條件扣減)' }, svg);
-  }
 
   function tw(t) { var w = 26; for (var i = 0; i < t.length; i++) w += t.charCodeAt(i) > 255 ? 13 : 7.4; return w; }
   function drawProtocols() {
@@ -176,72 +53,9 @@
     });
   }
 
-  /* ======================= 6 未知人員 ======================= */
-  var os = { feat: 'app' };
-  CH.openset = {
-    init: function () {
-      os.feat = U.segGroup($('#os-feat'), 'data-f', function (v) { os.feat = v; drawOS(); });
-      $('#tau').addEventListener('input', drawOS);
-      $('#os-uni').addEventListener('input', drawOS);
-      drawOS(); drawFlow();
-    }
-  };
-  function osDists(u) {
-    if (os.feat === 'app') { var im = 0.28 + 0.30 * u; return { g: [0.74, 0.07], i: [im, 0.08], k: [Math.min(0.9, im + 0.1), 0.06] }; }
-    var im2 = 0.28 + 0.16 * u; return { g: [0.76, 0.06], i: [im2, 0.08], k: [im2 + 0.1, 0.06] };
-  }
-  function drawOS() {
-    var tau = +$('#tau').value, u = +$('#os-uni').value;
-    $('#tau-out').textContent = tau.toFixed(2); $('#os-uni-out').textContent = u.toFixed(2);
-    var d = osDists(u);
-    var svg = U.clear($('#os-svg'));
-    var L = 40, R = 585, T = 44, B = 290;
-    function X(v) { return L + v * (R - L); }
-    var ymax = 7;
-    function Y(v) { return B - v / ymax * (B - T); }
-    [0, 0.2, 0.4, 0.6, 0.8, 1].forEach(function (v) {
-      el('line', { x1: X(v), x2: X(v), y1: T, y2: B, stroke: 'var(--rule-2)' }, svg);
-      el('text', { x: X(v), y: B + 16, 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--ink-3)', class: 'num', text: v.toFixed(1) }, svg);
-    });
-    el('line', { x1: L, x2: R, y1: B, y2: B, stroke: 'var(--ink-3)' }, svg);
-    el('text', { x: (L + R) / 2, y: B + 36, 'text-anchor': 'middle', 'font-size': 12.5, fill: 'var(--ink-2)', text: '與 gallery 最佳候選的相似度' }, svg);
-    var curves = [
-      { key: 'i', n: '冒充者（不同人）', c: '#9aa39b', dash: '5 4' },
-      { key: 'k', n: '未知人員的最高分', c: '#c93434' },
-      { key: 'g', n: '本人', c: '#1c251f' }
-    ];
-    curves.forEach(function (cv) {
-      var m = d[cv.key][0], s = d[cv.key][1], pts = [], area = [];
-      for (var v = 0; v <= 1.0001; v += 0.005) {
-        var y = U.npdf(v, m, s);
-        pts.push(X(v).toFixed(1) + ',' + Y(Math.min(y, ymax)).toFixed(1));
-        if (v >= tau && (cv.key === 'g' || cv.key === 'k')) area.push([X(v), Y(Math.min(y, ymax))]);
-      }
-      if (area.length) {
-        var dd = 'M' + area[0][0] + ' ' + B + area.map(function (a) { return 'L' + a[0].toFixed(1) + ' ' + a[1].toFixed(1); }).join('') + 'L' + area[area.length - 1][0] + ' ' + B + 'Z';
-        el('path', { d: dd, fill: cv.c, opacity: cv.key === 'g' ? 0.12 : 0.22 }, svg);
-      }
-      el('polyline', { points: pts.join(' '), fill: 'none', stroke: cv.c, 'stroke-width': 2, 'stroke-dasharray': cv.dash || null }, svg);
-    });
-    // 閾值
-    el('line', { x1: X(tau), x2: X(tau), y1: T, y2: B, stroke: 'var(--ink)', 'stroke-width': 1.6 }, svg);
-    el('text', { x: X(tau) + (tau > 0.62 ? -6 : 6), 'text-anchor': tau > 0.62 ? 'end' : 'start', y: T + 12, 'font-size': 12.5, fill: 'var(--ink)', text: 'τ（高於才接受）' }, svg);
-    // 圖例
-    curves.forEach(function (cv, i) {
-      var x = L + 4 + i * 180;
-      el('line', { x1: x, x2: x + 22, y1: 12, y2: 12, stroke: cv.c, 'stroke-width': 2.4, 'stroke-dasharray': cv.dash || null }, svg);
-      el('text', { x: x + 28, y: 16, 'font-size': 12.5, fill: 'var(--ink-2)', text: cv.n }, svg);
-    });
-    var tar = 1 - U.ncdf(tau, d.g[0], d.g[1]), far = 1 - U.ncdf(tau, d.k[0], d.k[1]);
-    $('#tar').textContent = U.pct(tar); $('#far').textContent = U.pct(far);
-    $('#far').style.color = far > 0.2 ? 'var(--bad)' : 'var(--ink)';
-    var note;
-    if (far > 0.3 && tar > 0.8) note = '閾值太低：大部分已知人員會通過，但有相當比例的陌生人也會被當成某個已知人員。同制服把「未知人員最高分」推得更靠右。';
-    else if (tar < 0.6) note = '閾值太高：陌生人幾乎都被擋下，但已知人員也常被拒絕，需要人工確認的量會很大。';
-    else note = '這是一個取捨點。實務上會先固定可接受的誤認率（例如 FAR ≤ 1%），再看能保住多少已知人員（DIR@FAR）。';
-    if (os.feat === 'fused') note += ' 加入步態後，冒充者分布不再隨制服相似度大幅右移，同一個 τ 下兩個指標都改善——前提是步態品質可用（示意）。';
-    $('#os-note').textContent = note;
-  }
+  /* ======================= 身分比對的決策流程 ======================= */
+  CH.openset = { init: function () { if ($('#os-flow')) drawFlow(); } };
+
   function drawFlow() {
     var svg = $('#os-flow'), A = global.svgArrow;
     function node(x, y, w, t, sub, fill, color) {

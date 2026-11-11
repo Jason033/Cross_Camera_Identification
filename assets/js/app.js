@@ -2,13 +2,13 @@
    每章由一個或多個模組組成，第一次進入時才初始化；另負責自動圖號、章內目錄與名詞解釋。 */
 (function () {
   'use strict';
-  var ORDER = ['home', 'problem', 'cues', 'system', 'deploy', 'plan', 'refs'];
+  var ORDER = ['home', 'problem', 'methods', 'approach', 'plan', 'appendix', 'refs'];
   var MODS = {
-    home: ['home', 'intro'], problem: ['problem', 'primer'], cues: ['cues', 'methods'],
-    system: ['fusion', 'system', 'openset'], deploy: ['camera', 'datasets'], plan: ['roadmap', 'validation', 'qc'], refs: ['refs']
+    home: ['home', 'intro', 'steps'], problem: ['problem', 'primer'], methods: ['fusion', 'cues', 'methods', 'openset', 'steps'],
+    approach: ['system', 'steps'], plan: ['roadmap', 'validation', 'camera'], appendix: ['datasets', 'methods', 'roadmap', 'qc', 'camera'], refs: ['refs']
   };
   // 舊網址（舊版 13 章）導到新章節
-  var ALIAS = { methods: 'cues', fusion: 'system', openset: 'system', camera: 'deploy', datasets: 'deploy', validation: 'plan', qc: 'plan', roadmap: 'plan' };
+  var ALIAS = { cues: 'methods', fusion: 'methods', openset: 'methods', system: 'approach', camera: 'plan', deploy: 'plan', validation: 'plan', datasets: 'appendix', qc: 'appendix', roadmap: 'plan' };
   var inited = {}, current = null;
 
   function each(id, fn) { (MODS[id] || []).forEach(function (k) { var m = window.CH[k]; if (m) fn(m, k); }); }
@@ -20,10 +20,11 @@
     U.$$('#toc a').forEach(function (a) {
       if (a.getAttribute('href') === '#/' + id) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
-    if (!inited[id]) {
-      each(id, function (m, k) { try { m.init(); } catch (e) { console.error('模組初始化失敗：' + k, e); } });
-      inited[id] = true;
-    }
+    each(id, function (m, k) {
+      if (inited[k]) return;
+      inited[k] = true;
+      try { m.init(); } catch (e) { console.error('模組初始化失敗：' + k, e); }
+    });
     each(id, function (m) { if (m.enter) m.enter(); });
     current = id;
     var sec = document.getElementById('ch-' + id);
@@ -48,7 +49,7 @@
       U.$$('#ch-' + k + ' .plate-title .fig').forEach(function (f) {
         if (f.textContent.trim() && f.textContent.indexOf('圖') < 0) return; // 例如「範本」
         if (ci === 0) { f.textContent = ''; return; }
-        f.textContent = '圖 ' + ci + '.' + (++n);
+        f.textContent = '圖 ' + (k === 'appendix' ? 'A' : ci) + '.' + (++n);
       });
     });
   }
@@ -62,10 +63,13 @@
       var nav = U.h('nav', { class: 'ch-toc', 'aria-label': '本章內容' });
       nav.appendChild(U.h('span', { class: 'ch-toc-l' }, '本章內容'));
       hs.forEach(function (h, i) {
-        var b = U.h('button', { type: 'button' }, '<span class="num">' + String.fromCharCode(65 + i) + '</span>' + h.textContent.replace(/（第 [^）]*步）/, ''));
-        b.addEventListener('click', function () { h.scrollIntoView({ behavior: U.reduceMotion ? 'auto' : 'smooth', block: 'start' }); });
-        nav.appendChild(b);
-        h.insertAdjacentHTML('afterbegin', '<span class="h2-mark num">' + String.fromCharCode(65 + i) + '</span>');
+        var t = h.textContent, circ = /^[①-⑦]/.test(t);
+        // 已有步驟編號（①–⑦）的標題就沿用它，不再加字母
+        var lab = circ ? t.charAt(0) : String.fromCharCode(65 + i), rest = circ ? t.slice(1).trim() : t;
+        var btn = U.h('button', { type: 'button' }, '<span class="num">' + lab + '</span>' + rest);
+        btn.addEventListener('click', function () { h.scrollIntoView({ behavior: U.reduceMotion ? 'auto' : 'smooth', block: 'start' }); });
+        nav.appendChild(btn);
+        if (!circ) h.insertAdjacentHTML('afterbegin', '<span class="h2-mark num">' + lab + '</span>');
       });
       head.parentNode.insertBefore(nav, head.nextSibling);
     });
@@ -109,7 +113,17 @@
     });
   }
 
-  function route() { var id = (location.hash.replace(/^#\/?/, '') || 'home').split('?')[0]; if (ALIAS[id]) { location.replace('#/' + ALIAS[id]); return; } show(id); }
+  function route() {
+    var parts = (location.hash.replace(/^#\/?/, '') || 'home').split('?'), id = parts[0];
+    if (ALIAS[id]) { location.replace('#/' + ALIAS[id]); return; }
+    if (id !== current) show(id);
+    var m = (parts[1] || '').match(/s=(\d)/);
+    if (m) {
+      var t = document.getElementById('step-' + m[1]);
+      // 剛切換章節時版面還在排，先跳一次、稍後再對齊一次
+      if (t) { setTimeout(function () { t.scrollIntoView({ block: 'start' }); }, 30); setTimeout(function () { t.scrollIntoView({ block: 'start' }); }, 400); }
+    }
+  }
   numberFigures(); chapterTOC(); glossify();
   window.addEventListener('hashchange', route);
   route();

@@ -387,3 +387,52 @@ details.more > summary:hover { background: #fff; border-radius: var(--radius-m);
 .lvd { display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 1.6px solid var(--ink-2); vertical-align: -1px; }
 .lvd.f { background: var(--ink-2); }
 .lvd.h { background: linear-gradient(90deg, var(--ink-2) 50%, transparent 50%); }
+
+/* ---------------- 方法總覽：步驟與方法卡片 ---------------- */
+.tag-legend { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin: -10px 0 18px; }
+.mtag { display: inline-block; font-size: 12px; font-weight: 700; color: var(--c); border: 1.5px solid var(--c); border-radius: 999px; padding: 0 8px; line-height: 1.6; white-space: nowrap; background: #fff; }
+.step { margin-top: 56px; padding-top: 6px; border-top: 2px solid var(--ink); scroll-margin-top: 16px; }
+.step > h2 { margin-top: 14px; }
+.step-q { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin: 6px 0 18px; }
+@media (max-width: 820px) { .step-q { grid-template-columns: minmax(0, 1fr); } }
+.sq { background: var(--sheet); border: 1px solid var(--rule); border-radius: var(--radius-m); padding: 10px 14px; }
+.sq span { font-size: 12.5px; font-weight: 700; color: var(--olive); }
+.sq p { margin: 2px 0 0; font-size: 14.5px; max-width: none; }
+.step-cards { margin: 18px 0 8px; }
+.step-cards > h3 { margin-top: 26px; }
+.mgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-top: 10px; }
+.mcard { background: #fff; border: 1px solid var(--rule); border-radius: var(--radius-m); padding: 12px 14px; font-size: 13.5px; line-height: 1.6; display: flex; flex-direction: column; border-top: 4px solid var(--rule); }
+.mcard.t-use { border-top-color: #0c8a0c; }
+.mcard.t-base { border-top-color: #2a78d6; }
+.mcard.t-try { border-top-color: #b97e00; }
+.mcard.t-ref { border-top-color: #9aa39a; }
+.mcard.t-skip { border-top-color: #c93434; opacity: .9; }
+.mcard header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.mcard header b { font-size: 15px; }
+.mcard header b a { color: var(--ink); text-decoration-color: var(--rule); }
+.mcard header .mtag { margin-left: auto; }
+.mv { font-size: 12px; color: var(--ink-3); font-family: var(--num); }
+.mi { margin: 6px 0; color: var(--ink); }
+.mf { display: grid; grid-template-columns: 34px 1fr; gap: 2px 8px; margin: 0 0 6px; font-size: 12.5px; color: var(--ink-2); }
+.mf dt { color: var(--ink-3); }
+.mf dd { margin: 0; }
+.mfit { margin: 4px 0 8px; padding: 6px 8px; background: var(--paper); border-radius: 4px; font-size: 13px; }
+.mimpl { margin-top: auto; border-top: 1px dashed var(--rule); padding-top: 6px; }
+.mimpl summary { cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--ink-2); }
+.mimpl dl { display: grid; grid-template-columns: 82px 1fr; gap: 4px 8px; margin: 8px 0 0; font-size: 12.5px; }
+.mimpl dt { color: var(--ink-3); }
+.mimpl dd { margin: 0; word-break: break-word; }
+.step-choice { margin: 22px 0 6px; border: 2px solid var(--ink); border-radius: var(--radius-m); background: #fff; padding: 12px 16px; }
+.step-choice h3 { margin: 0 0 8px; }
+.step-choice dl { display: grid; grid-template-columns: 96px 1fr; gap: 8px 12px; margin: 0; font-size: 14px; }
+.step-choice dd { margin: 0; }
+@media (max-width: 820px) { .step-choice dl { grid-template-columns: 1fr; gap: 2px; } .step-choice dd { margin-bottom: 8px; } }
+.home-v1 { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; margin: 10px 0 8px; }
+.hv { display: grid; grid-template-columns: 26px 1fr; gap: 0 8px; padding: 10px 12px; background: #fff; border: 1px solid var(--rule); border-radius: var(--radius-m); color: var(--ink); text-decoration: none; font-size: 13.5px; line-height: 1.5; }
+.hv:hover { border-color: var(--ink); }
+.hv .num { grid-row: span 2; font-size: 18px; color: var(--olive); font-weight: 700; }
+.hv span:last-child { color: var(--ink-2); }
+.not-list { padding-left: 20px; font-size: 14.5px; line-height: 1.7; }
+.not-list li { margin-bottom: 6px; }
+.jump { font-weight: 700; }
+#ch-msmt, #ch-gait, #ch-mevid, #ch-uda { display: block; max-width: 620px; }
