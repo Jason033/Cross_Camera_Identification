@@ -283,28 +283,7 @@
     el('text', { x: x0 + 79 / 100 * w, y: 26, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--olive)', text: '有標註 77–81' }, s2);
     hbar(s2, R.CH_UDA.map(function (r) { return [r[0], r[1]]; }), { x: 0, y: 30, labelW: x0, w: w, rowH: 30, max: 100 });
   }
-  function fixNums() {
-    // 第 3.3 圖第三格改為 MEVID
-    var svg = $('#nums'); if (!svg) return;
-    var gs = svg.querySelectorAll(':scope > g');
-    if (gs.length >= 3) {
-      var g = gs[2]; U.clear(g);
-      var x0 = 10 + 2 * (290 + 15), Lx = x0 + 60, W = 290 - 110;
-      el('text', { x: x0, y: 22, 'font-size': 14, 'font-weight': 700, fill: 'var(--ink)', text: 'HAMoBE · MEVID 真實跨日換衣' }, g);
-      el('text', { x: x0, y: 40, 'font-size': 12, fill: 'var(--bad)', text: '同方法 CCVID 換衣 R1 87.6' }, g);
-      [0, 50, 100].forEach(function (v) {
-        el('line', { x1: Lx + v / 100 * W, x2: Lx + v / 100 * W, y1: 52, y2: 144, stroke: 'var(--rule-2)' }, g);
-        el('text', { x: Lx + v / 100 * W, y: 160, 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--ink-3)', class: 'num', text: v + '%' }, g);
-      });
-      [['Rank-1', 20.1], ['mAP', 15.1]].forEach(function (b, j) {
-        var yy = 60 + j * 46;
-        el('text', { x: Lx - 8, y: yy + 18, 'text-anchor': 'end', 'font-size': 13, fill: 'var(--ink-2)', text: b[0] }, g);
-        el('rect', { x: Lx, y: yy, width: b[1] / 100 * W, height: 26, rx: 3, fill: 'var(--bad)' }, g);
-        el('text', { x: Lx + b[1] / 100 * W + 6, y: yy + 18, 'font-size': 14, fill: 'var(--ink)', class: 'num', text: b[1].toFixed(1) }, g);
-      });
-    }
-  }
-  wrapInit('methods', function () { fixNums(); initMT(); methodCharts(); });
+  wrapInit('methods', function () { initMT(); methodCharts(); });
 
   /* ======================= 第 4 章：證據累加 ======================= */
   var LRM = [
@@ -420,12 +399,14 @@
     for (var i = 0; i < out.length; i++) { z[i] = []; for (var j = 0; j < out.length; j++) z[i][j] = j < i ? z[j][i] : U.gauss(r); }
     return { list: out, z: z };
   })();
-  var clu = { tau: 0.45, sep: 0.16, cl: true };
+  var clu = { tau: 0.45, sep: 0.16, cl: true, step: -1, raf: 0 };
   function cannot(a, b) {
     if (a.t0 < b.t1 && b.t0 < a.t1) return true;
     var first = a.t1 <= b.t0 ? a : b, second = first === a ? b : a;
     return (second.t0 - first.t1) < MINT[first.cam][second.cam];
   }
+  function whyNot(a, b) { return (a.t0 < b.t1 && b.t0 < a.t1) ? '同一時間出現在兩處' : '換攝影機的速度比最短步行時間還快'; }
+  /** 平均連結凝聚分群，並記錄每一步（供播放） */
   function runCluster() {
     var T = TRK.list, n = T.length, S = [], CL = [];
     for (var i = 0; i < n; i++) { S[i] = []; CL[i] = []; for (var j = 0; j < n; j++) {
@@ -434,22 +415,35 @@
       CL[i][j] = i !== j && cannot(T[i], T[j]);
     } }
     var C = []; for (var k = 0; k < n; k++) C.push([k]);
+    var colOf = {}, nextCol = 0, hist = [];
+    function key(c) { return Math.min.apply(null, c); }
+    function snap() { return C.map(function (c) { return { m: c.slice(), col: c.length > 1 ? colOf[key(c)] : -1 }; }); }
+    var snaps = [snap()];
     for (;;) {
-      var best = -1, bi = -1, bj = -1;
+      var best = -1, bi = -1, bj = -1, blk = null;
       for (var a = 0; a < C.length; a++) for (var b = a + 1; b < C.length; b++) {
-        var blocked = false, sum = 0;
-        for (var x = 0; x < C[a].length && !blocked; x++) for (var y = 0; y < C[b].length; y++) {
-          if (clu.cl && CL[C[a][x]][C[b][y]]) { blocked = true; break; }
+        var bad = null, sum = 0;
+        for (var x = 0; x < C[a].length; x++) for (var y = 0; y < C[b].length; y++) {
+          if (!bad && CL[C[a][x]][C[b][y]]) bad = [C[a][x], C[b][y]];
           sum += S[C[a][x]][C[b][y]];
         }
-        if (blocked) continue;
         var avg = sum / (C[a].length * C[b].length);
+        if (bad && clu.cl) { if (avg >= clu.tau && (!blk || avg > blk.avg)) blk = { i: bad[0], j: bad[1], avg: avg }; continue; }
         if (avg > best) { best = avg; bi = a; bj = b; }
       }
-      if (bi < 0 || best < clu.tau) break;
+      if (bi < 0 || best < clu.tau) { hist.push({ stop: true, best: best, blk: blk && blk.avg > best ? blk : null }); break; }
+      // 連線：兩群之間最像的一對
+      var pi = C[bi][0], pj = C[bj][0], ps = -1;
+      C[bi].forEach(function (x) { C[bj].forEach(function (y) { if (S[x][y] > ps) { ps = S[x][y]; pi = x; pj = y; } }); });
+      var ka = key(C[bi]), kb = key(C[bj]), kn = Math.min(ka, kb);
+      var col = colOf[ka] !== undefined && C[bi].length > 1 ? colOf[ka] : colOf[kb] !== undefined && C[bj].length > 1 ? colOf[kb] : nextCol++;
+      if (C[bi].length > 1 && C[bj].length > 1) col = colOf[kn];
       C[bi] = C[bi].concat(C[bj]); C.splice(bj, 1);
+      colOf[kn] = col;
+      hist.push({ i: pi, j: pj, avg: best, blk: blk && blk.avg > best ? blk : null });
+      snaps.push(snap());
     }
-    return C;
+    return { C: C, hist: hist, snaps: snaps };
   }
   function metrics(C) {
     var T = TRK.list, n = T.length, lab = [];
@@ -466,19 +460,37 @@
     for (var p = 0; p < 6; p++) { var cs = {}; T.forEach(function (t, i) { if (t.p === p) cs[lab[i]] = 1; }); frag += Object.keys(cs).length - 1; }
     return { k: C.length, P: P, R: Rr, F: 2 * P * Rr / (P + Rr), merged: merged, frag: frag, lab: lab };
   }
+  var CR = null;
+  function recompute() { CR = runCluster(); clu.step = CR.snaps.length - 1; var s = $('#clu-step'); s.max = clu.step; s.value = clu.step; }
   function initClu() {
     var box = $('#clu-ctrl');
     var c1 = U.h('div'), c2 = U.h('div'), c3 = U.h('div');
     box.appendChild(c1); box.appendChild(c2); box.appendChild(c3);
-    sliderRow(c1, 'clu-tau', '合併門檻 τ（越高越不敢合併）', 0.35, 0.75, 0.01, clu.tau, function (v) { return v.toFixed(2); }, function (v) { clu.tau = v; drawClu(); });
-    sliderRow(c1, 'clu-sep', '線索可分性（同制服下很低）', 0.04, 0.4, 0.01, clu.sep, function (v) { return v.toFixed(2); }, function (v) { clu.sep = v; drawClu(); });
-    c2.innerHTML = '<label class="chk"><input type="checkbox" id="clu-cl" checked> 使用時空約束（cannot-link）</label><p class="small muted" style="margin:4px 0 0">同時出現在兩處、或兩台攝影機間移動得比最短步行時間還快的軌跡，禁止併成同一人。</p>';
-    $('#clu-cl').addEventListener('change', function (e) { clu.cl = e.target.checked; drawClu(); });
+    sliderRow(c1, 'clu-tau', '合併門檻 τ（越高越不敢合併）', 0.35, 0.75, 0.01, clu.tau, function (v) { return v.toFixed(2); }, function (v) { clu.tau = v; stopPlay(); recompute(); drawClu(); });
+    sliderRow(c1, 'clu-sep', '線索可分性（同制服下很低）', 0.04, 0.4, 0.01, clu.sep, function (v) { return v.toFixed(2); }, function (v) { clu.sep = v; stopPlay(); recompute(); drawClu(); });
+    c2.innerHTML = '<label class="chk"><input type="checkbox" id="clu-cl" checked> 使用時空約束</label><p class="small muted" style="margin:4px 0 0">同時出現在兩處、或兩台攝影機間移動得比最短步行時間還快的片段，禁止併成同一人。</p>';
+    $('#clu-cl').addEventListener('change', function (e) { clu.cl = e.target.checked; stopPlay(); recompute(); drawClu(); });
     c3.id = 'clu-stats';
-    drawClu();
+    $('#clu-step').addEventListener('input', function (e) { stopPlay(); clu.step = +e.target.value; drawClu(); });
+    $('#clu-play').addEventListener('click', function () { if (clu.raf) { stopPlay(); return; } play(); });
+    $('#clu-end').addEventListener('click', function () { stopPlay(); clu.step = CR.snaps.length - 1; $('#clu-step').value = clu.step; drawClu(); });
+    recompute(); drawClu();
+  }
+  function stopPlay() { if (clu.raf) clearTimeout(clu.raf); clu.raf = 0; var b = $('#clu-play'); if (b) b.textContent = '▶ 播放合併過程'; }
+  function play() {
+    var b = $('#clu-play'); b.textContent = '❚❚ 暫停';
+    if (clu.step >= CR.snaps.length - 1) clu.step = 0;
+    function next() {
+      $('#clu-step').value = clu.step; drawClu();
+      if (clu.step >= CR.snaps.length - 1 || !document.getElementById('ch-fusion').classList.contains('active')) { stopPlay(); return; }
+      clu.step++;
+      clu.raf = setTimeout(next, U.reduceMotion ? 50 : 650);
+    }
+    next();
   }
   function drawClu() {
-    var C = runCluster(), M = metrics(C), T = TRK.list;
+    var snap = CR.snaps[clu.step], C = snap.map(function (s) { return s.m; }), M = metrics(C), T = TRK.list;
+    var colOfT = []; snap.forEach(function (s) { s.m.forEach(function (i) { colOfT[i] = s.col; }); });
     var svg = U.clear($('#clu-svg'));
     var L = 140, W = 820;
     function X(t) { return L + t / 240 * W; }
@@ -491,22 +503,44 @@
       el('text', { x: X(h * 60), y: 316, 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--ink-3)', class: 'num', text: (8 + h) + ':00' }, svg);
       el('line', { x1: X(h * 60), x2: X(h * 60), y1: 26, y2: 302, stroke: 'var(--rule-2)' }, svg);
     }
-    // 同一攝影機內避免重疊：分配子列
-    var laneEnd = [[], [], []];
+    var laneEnd = [[], [], []], pos = [];
     T.forEach(function (t, i) {
       var lanes = laneEnd[t.cam], sub = 0;
       while (lanes[sub] !== undefined && lanes[sub] > t.t0 - 1) sub++;
       lanes[sub] = t.t1;
-      var y = 30 + t.cam * 90 + 6 + (sub % 2) * 32;
-      var col = CLU_COL[M.lab[i] % CLU_COL.length];
+      var y = 30 + t.cam * 90 + 6 + (sub % 2) * 32, w = Math.max(14, X(t.t1) - X(t.t0));
+      pos[i] = [X(t.t0) + w / 2, y];
+      var col = colOfT[i] < 0 ? '#b8bfb5' : CLU_COL[colOfT[i] % CLU_COL.length];
       var g = el('g', {}, svg);
-      el('rect', { x: X(t.t0), y: y, width: Math.max(14, X(t.t1) - X(t.t0)), height: 26, rx: 4, fill: col }, g);
-      el('text', { x: X(t.t0) + Math.max(14, X(t.t1) - X(t.t0)) / 2, y: y + 17, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700, fill: '#fff', text: 'ABCDEF'[t.p] }, g);
+      el('rect', { x: X(t.t0), y: y, width: w, height: 26, rx: 4, fill: col }, g);
+      el('text', { x: X(t.t0) + w / 2, y: y + 17, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700, fill: '#fff', text: 'ABCDEF'[t.p] }, g);
       U.tip(g, '真實身分 <b>' + 'ABCDEF'[t.p] + '</b>；系統分到匿名 ID <b>#' + (M.lab[i] + 1) + '</b><br>' + CAMS[t.cam] + '，' + fmtT(t.t0) + '–' + fmtT(t.t1));
     });
-    el('text', { x: L, y: 16, 'font-size': 12.5, fill: 'var(--ink-3)', text: '條內字母 = 真實身分；顏色 = 系統分出的匿名 ID（同色同 ID）' }, svg);
+    function arc(i, j, stroke, dash, w) {
+      var a = pos[i], b = pos[j], mx = (a[0] + b[0]) / 2, my = Math.min(a[1], b[1]) - 22 - Math.abs(a[0] - b[0]) * 0.06;
+      el('path', { d: 'M' + a[0] + ' ' + a[1] + ' Q' + mx + ' ' + my + ' ' + b[0] + ' ' + b[1], fill: 'none', stroke: stroke, 'stroke-width': w, 'stroke-dasharray': dash }, svg);
+      return [mx, (a[1] + b[1]) / 2 / 2 + my / 2];
+    }
+    var ev = clu.step > 0 ? CR.hist[clu.step - 1] : null, last = clu.step === CR.snaps.length - 1, stop = CR.hist[CR.hist.length - 1];
+    var msg = '';
+    if (ev) {
+      arc(ev.i, ev.j, 'var(--ink)', null, 2.4);
+      msg = '第 ' + clu.step + ' 步：平均證據 ' + ev.avg.toFixed(2) + ' 最高的兩群合併（黑線）。';
+    } else msg = '開始：每段片段各自一群（灰色）。每一步把「平均證據最高」的兩群合併。';
+    var blk = ev ? ev.blk : (last ? stop.blk : null);
+    if (last && stop.stop) { msg += (ev ? ' ' : '') + '停止：剩下最像的一對只有 ' + (stop.best > 0 ? stop.best.toFixed(2) : '—') + '，低於門檻 τ = ' + clu.tau.toFixed(2) + '。'; blk = stop.blk || blk; }
+    var blkStep = clu.step;
+    if (!blk && last) { for (var hi = CR.hist.length - 1; hi >= 0; hi--) if (CR.hist[hi].blk) { blk = CR.hist[hi].blk; blkStep = hi + 1; break; } }
+    if (blk) {
+      var m = arc(blk.i, blk.j, 'var(--bad)', '5 4', 2);
+      el('text', { x: m[0], y: m[1] + 4, 'text-anchor': 'middle', 'font-size': 14, 'font-weight': 700, fill: 'var(--bad)', text: '✕', 'paint-order': 'stroke', stroke: '#fff', 'stroke-width': 3 }, svg);
+      msg += ' <span style="color:var(--bad);font-weight:700">紅虛線' + (blkStep !== clu.step ? '（第 ' + blkStep + ' 步）' : '') + '：這一對的證據 ' + blk.avg.toFixed(2) + ' 比當步合併的還高，但兩段' + whyNot(T[blk.i], T[blk.j]) + '，被約束擋下。</span>';
+    }
+    $('#clu-msg').innerHTML = msg;
+    $('#clu-step-o').textContent = clu.step + ' / ' + (CR.snaps.length - 1);
+    el('text', { x: L, y: 16, 'font-size': 12.5, fill: 'var(--ink-3)', text: '條內字母 = 真實身分；顏色 = 系統分出的匿名 ID（同色同 ID；灰色 = 尚未併入任何群）' }, svg);
     var ok = M.k === 6;
-    $('#clu-stats').innerHTML = '<div class="stat-row"><div><div class="stat num" style="color:' + (ok ? 'var(--good)' : 'var(--bad)') + '">' + M.k + '</div><div class="stat-l">系統數到的人數（真實 6）</div></div>' +
+    $('#clu-stats').innerHTML = '<div class="stat-row"><div><div class="stat num" style="color:' + (last ? (ok ? 'var(--good)' : 'var(--bad)') : 'var(--ink)') + '">' + M.k + '</div><div class="stat-l">目前的群數（真實 6 人）</div></div>' +
       '<div><div class="stat num">' + M.F.toFixed(2) + '</div><div class="stat-l">BCubed F</div></div></div>' +
       '<div class="kv"><span class="k">誤併的群（混到兩人以上）</span><span class="num" style="color:' + (M.merged ? 'var(--bad)' : 'var(--ink)') + '">' + M.merged + '</span><span class="k">同一人被拆開的次數</span><span class="num">' + M.frag + '</span></div>';
   }
