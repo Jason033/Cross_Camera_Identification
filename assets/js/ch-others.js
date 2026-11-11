@@ -13,7 +13,8 @@
 
   function flow(list) {
     return '<ol class="pflow">' + list.map(function (f) {
-      return '<li class="ps' + f[2] + '"><span class="sb" title="對應我們的：' + STEPN[f[2]] + '">' + NUM[f[2]] + '</span><b>' + f[0] + '</b>' + (f[1] ? '<span>' + f[1] + '</span>' : '') + '</li>';
+      var xs = /^x_/.test(f[3] || '');
+      return '<li class="ps' + f[2] + (xs ? ' xs' : '') + '"><span class="sb" title="對應我們的：' + STEPN[f[2]] + '">' + NUM[f[2]] + '</span>' + (xs ? '<span class="xstar" title="它和別人不同的地方">★ 特色</span>' : '') + '<b>' + f[0] + '</b>' + (f[1] ? '<span>' + f[1] + '</span>' : '') + '</li>';
     }).join('') + '</ol>';
   }
   function play(k, id) { return '<button type="button" class="fp-btn" data-fp="' + k + ':' + id + '" title="用動畫逐步說明這個流程"><i></i>動畫說明</button>'; }
@@ -75,7 +76,7 @@
             '<header><b>' + s.n + '</b>' + (s.pattern ? '<span class="otag">架構' + PR[s.pattern] + '：' + PN[s.pattern] + '</span>' : '<span class="otag">單一方法研究</span>') + EV[s.ev] + play('sys', s.id) + '</header>' +
             '<p class="small muted" style="margin:0">' + s.who + '</p>' +
             '<p class="ogoal"><b>要解決：</b>' + s.goal + '</p>' +
-            '<h4>流程（圓圈數字＝對應我們的第幾步；「額外」＝我們的七步沒有）</h4>' + flow(s.flow) +
+            '<h4>流程（圓圈數字＝對應我們的第幾步；「額外」＝我們的七步沒有；★＝它和別人不同的地方）</h4>' + flow(s.flow) +
             '<p class="okey"><b>核心概念：</b>' + s.key + '</p>' +
             '<div class="obg"><div><h4>我們可以借用</h4><ul>' + s.borrow.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul></div>' +
             '<div><h4>不適合我們之處</h4><ul>' + s.gap.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul></div></div>' +
