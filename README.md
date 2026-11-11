@@ -51,7 +51,7 @@ assets/js/steps.js    第 2 章的內容：七步的候選方法、判定與實�
 assets/js/ch-steps.js 依 steps.js 產生方法卡片、第一版元件表與總覽摘要
 assets/js/others.js   第 3 章的內容：架構類型與各系統的流程、可借用與不適合之處（改內容主要改這裡）
 assets/js/ch-others.js 依 others.js 產生第 3 章的架構卡、對照表與系統卡片
-assets/js/flowplay.js 第 3 章每張卡片的「動畫說明」播放器：依流程逐步播放圖解（場景依步驟文字自動選，也可在 others.js 指定）
+assets/js/flowplay.js 第 3 章每張卡片的「動畫說明」播放器：共通步驟用共用場景快速帶過；各系統的特色步驟（others.js 中以 x_ 開頭的場景）用專屬圖解放慢說明
 assets/js/ch-server.js 伺服器等級與算力估算（單位成本與依據寫在檔案開頭）
 assets/js/glossary.js 名詞表（總覽頁與內文的名詞解釋）
 assets/js/research.js 第二輪研究：方法總表、證據卡、系統、驗證、品控資料
