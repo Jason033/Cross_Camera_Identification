@@ -100,6 +100,20 @@
   ];
   var JOINT_NAMES = ['head', 'neck', 'lSho', 'rSho', 'lElb', 'rElb', 'lWri', 'rWri', 'pelvis', 'lHip', 'rHip', 'lKnee', 'rKnee', 'lAnkle', 'rAnkle'];
 
+  /* ---------- 服裝（國軍常見服裝的示意，配色為近似值）----------
+     top / pants：'camo' = 數位迷彩；sleeve：long 長袖 / rolled 捲袖 / short 短袖；legs：long / shorts；
+     head：cap 小帽 / helmet 鋼盔 / none 短髮；bulk：上身厚度；jacket：外套蓋過腰 */
+  var SKIN = '#c99b78', HAIR = '#1d1b18', HELMET = '#4a5236';
+  var OUTFITS = {
+    camo: { n: '迷彩服＋小帽', top: 'camo', pants: 'camo', boot: '#1f1d1a', head: 'cap', sleeve: 'long', legs: 'long', bulk: 1 },
+    helmet: { n: '迷彩服＋鋼盔', top: 'camo', pants: 'camo', boot: '#1f1d1a', head: 'helmet', sleeve: 'long', legs: 'long', bulk: 1.03 },
+    summer: { n: '夏季捲袖', top: 'camo', pants: 'camo', boot: '#1f1d1a', head: 'cap', sleeve: 'rolled', legs: 'long', bulk: 1 },
+    winter: { n: '冬季外套', top: '#3f4a2f', pants: 'camo', boot: '#1f1d1a', head: 'cap', sleeve: 'long', legs: 'long', bulk: 1.2, jacket: true },
+    casualA: { n: '便服 1', top: '#a8473a', pants: '#2d3a5e', boot: '#d9d6cc', head: 'none', sleeve: 'short', legs: 'long', bulk: 0.97 },
+    casualB: { n: '便服 2', top: '#d9d4c6', pants: '#5b5850', boot: '#3a3631', head: 'none', sleeve: 'long', legs: 'long', bulk: 1 },
+    pt: { n: '運動服', top: '#4d6b3a', pants: '#1f2124', boot: '#cfd0c8', head: 'none', sleeve: 'short', legs: 'shorts', bulk: 0.94 }
+  };
+
   /**
    * 產生可繪製的「身體零件」清單（已投影、依深度排序）。
    * mode: 'rgb' | 'sil' | 'skel'
@@ -117,7 +131,7 @@
     function seg(a, b, w, fill, kind, zbias) {
       out.push({ t: 'line', a: P[a], b: P[b], w: w, c: fill, kind: kind, z: (P[a][2] + P[b][2]) / 2 + (zbias || 0) });
     }
-    var U = global.UNIFORM || { top: '#4f5c30', topDark: '#3c4723', pants: '#4a5530', pantsDark: '#353e22', boot: '#24221d', skin: '#c99b78', cap: '#3f4a26' };
+    var O = OUTFITS[p.outfit || 'camo'] || OUTFITS.camo;
 
     if (mode === 'skel') {
       BONES.forEach(function (b) {
@@ -131,32 +145,130 @@
     }
 
     var sil = mode === 'sil';
-    var limbW = H * 0.062, legW = H * 0.078, torsoW = H * 0.19;
+    var bulk = O.bulk || 1;
+    var limbW = H * 0.062 * (1 + (bulk - 1) * 0.8), legW = H * 0.078, torsoW = H * 0.19 * bulk;
+    var bareArm = H * 0.05, bareLeg = H * 0.058;
     // 後側肢體（深度較遠）顏色加深，讓 RGB 圖看得出前後
-    function col(front, back, depth) { return sil ? null : (depth > 0 ? back : front); }
+    function col(c, depth) { if (sil) return null; if (c === 'camo') return depth > 0 ? 'P:camoD' : 'P:camo'; return depth > 0 ? shade(c) : c; }
+    function mid(a, b, t) { return [P[a][0] + (P[b][0] - P[a][0]) * t, P[a][1] + (P[b][1] - P[a][1]) * t, P[a][2] + (P[b][2] - P[a][2]) * t]; }
+    function segP(a, b, w, fill, kind, zb) { out.push({ t: 'line', a: a, b: b, w: w, c: fill, kind: kind, z: (a[2] + b[2]) / 2 + (zb || 0) }); }
     var lDepth = P.lHip[2] - P.rHip[2];
+    var skin = sil ? null : SKIN;
 
     ['l', 'r'].forEach(function (sd) {
       var dz = sd === 'l' ? lDepth : -lDepth;
-      var pc = col(U.pants, U.pantsDark, dz), tc = col(U.top, U.topDark, dz);
-      seg(sd + 'Hip', sd + 'Knee', legW, pc, 'leg');
-      seg(sd + 'Knee', sd + 'Ankle', legW * 0.85, pc, 'leg');
-      seg(sd + 'Ankle', sd + 'Toe', legW * 0.7, sil ? null : U.boot, 'boot', 0.0005);
-      seg(sd + 'Sho', sd + 'Elb', limbW, tc, 'arm');
-      seg(sd + 'Elb', sd + 'Wri', limbW * 0.9, tc, 'arm');
-      out.push({ t: 'dot', p: P[sd + 'Wri'], r: limbW * 0.42, c: sil ? null : U.skin, z: P[sd + 'Wri'][2] + 0.0001 });
+      var hip = sd + 'Hip', knee = sd + 'Knee', ank = sd + 'Ankle', toe = sd + 'Toe', sho = sd + 'Sho', elb = sd + 'Elb', wri = sd + 'Wri';
+      // 腿
+      if (O.legs === 'shorts') {
+        seg(hip, knee, bareLeg, skin, 'leg');
+        seg(knee, ank, bareLeg * 0.85, skin, 'leg');
+        segP(P[hip], mid(hip, knee, 0.5), legW * 1.08, col(O.pants, dz), 'leg', 0.0003);
+      } else {
+        seg(hip, knee, legW, col(O.pants, dz), 'leg');
+        seg(knee, ank, legW * 0.85, col(O.pants, dz), 'leg');
+      }
+      seg(ank, toe, legW * 0.7, sil ? null : (dz > 0 ? shade(O.boot) : O.boot), 'boot', 0.0005);
+      // 手臂
+      if (O.sleeve === 'short') {
+        seg(sho, elb, bareArm, skin, 'arm');
+        seg(elb, wri, bareArm * 0.9, skin, 'arm');
+        segP(P[sho], mid(sho, elb, 0.45), limbW * 1.05, col(O.top, dz), 'arm', 0.0003);
+      } else if (O.sleeve === 'rolled') {
+        seg(sho, elb, limbW, col(O.top, dz), 'arm');
+        seg(elb, wri, bareArm * 0.9, skin, 'arm');
+        segP(mid(elb, wri, 0), mid(elb, wri, 0.18), limbW * 1.08, col(O.top, dz), 'arm', 0.0003);
+      } else {
+        seg(sho, elb, limbW, col(O.top, dz), 'arm');
+        seg(elb, wri, limbW * 0.9, col(O.top, dz), 'arm');
+      }
+      out.push({ t: 'dot', p: P[wri], r: limbW * 0.42 * (O.sleeve === 'long' ? 1 : 0.85), c: skin, z: P[wri][2] + 0.0001 });
     });
-    // 軀幹：肩到髖的四邊形
+    // 軀幹：肩到髖
     var cx = (P.lSho[0] + P.rSho[0]) / 2;
-    var torsoPoly = [P.lSho, P.rSho, P.rHip, P.lHip];
-    var tw = Math.max(torsoW * 0.62, Math.abs(P.lSho[0] - P.rSho[0]));
-    out.push({ t: 'torso', a: P.neck, b: P.pelvis, w: tw, poly: torsoPoly, c: sil ? null : U.top, z: P.neck[2], cx: cx });
-    out.push({ t: 'line', a: P.pelvis, b: [P.pelvis[0], P.pelvis[1] - H * 0.02, P.pelvis[2]], w: tw * 0.95, c: sil ? null : U.pants, kind: 'hip', z: P.pelvis[2] });
-    // 頭與帽
-    out.push({ t: 'head', p: P.head, r: J.headR * s, c: sil ? null : U.skin, cap: sil ? null : U.cap, z: P.head[2] + 0.002 });
+    var tw = Math.max(torsoW * 0.62, Math.abs(P.lSho[0] - P.rSho[0]) * bulk);
+    out.push({ t: 'torso', a: P.neck, b: P.pelvis, w: tw, c: col(O.top, -1), z: P.neck[2], cx: cx });
+    var hemLen = O.jacket ? H * 0.075 : H * 0.02;
+    out.push({ t: 'line', a: P.pelvis, b: [P.pelvis[0], P.pelvis[1] - hemLen, P.pelvis[2]], w: tw * 0.95, c: O.jacket ? col(O.top, -1) : col(O.pants, -1), kind: 'hip', z: P.pelvis[2] });
+    // 頭與帽：cap 小帽、helmet 鋼盔、none 只有短髮
+    out.push({ t: 'head', p: P.head, r: J.headR * s, c: skin, wear: O.head, wearC: sil ? null : (O.head === 'helmet' ? HELMET : O.head === 'cap' ? 'P:camo' : HAIR), z: P.head[2] + 0.002 });
     return out.sort(byZ);
   }
   function byZ(a, b) { return a.z - b.z; }
+  function shade(hex) {
+    if (!hex || hex.charAt(0) !== '#') return hex;
+    var n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    return 'rgb(' + Math.round(r * 0.78) + ',' + Math.round(g * 0.78) + ',' + Math.round(b * 0.78) + ')';
+  }
+
+  /* ---------- 國軍數位迷彩（示意配色）---------- */
+  var CAMO_COLS = ['#5d6b3b', '#7a8350', '#3f4a2c', '#6a5a3c', '#2c2e24'];
+  var CAMO_MAP = (function () { // 8×8 格，以固定種子產生成塊的像素迷彩
+    var s = 12345, m = [];
+    function r() { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }
+    for (var y = 0; y < 8; y++) { m[y] = []; for (var x = 0; x < 8; x++) m[y][x] = Math.floor(r() * 5); }
+    for (var k = 0; k < 2; k++) for (var y2 = 0; y2 < 8; y2++) for (var x2 = 0; x2 < 8; x2++) if (r() < 0.45) m[y2][x2] = m[y2][(x2 + 7) % 8];
+    return m;
+  })();
+  function cellSize(o) { return Math.max(1, Math.min(6, Math.round((o.w || 10) / 9))); }
+  var defsSvg = null, made = {};
+  function svgPattern(cs, dark) {
+    var id = (dark ? 'camoD-' : 'camo-') + cs;
+    if (made[id]) return id;
+    if (!defsSvg) {
+      defsSvg = document.createElementNS(NS, 'svg');
+      defsSvg.setAttribute('width', '0'); defsSvg.setAttribute('height', '0'); defsSvg.setAttribute('aria-hidden', 'true');
+      defsSvg.style.position = 'absolute';
+      defsSvg.appendChild(document.createElementNS(NS, 'defs'));
+      document.body.appendChild(defsSvg);
+    }
+    var pat = document.createElementNS(NS, 'pattern');
+    pat.setAttribute('id', id); pat.setAttribute('patternUnits', 'userSpaceOnUse');
+    pat.setAttribute('width', 8 * cs); pat.setAttribute('height', 8 * cs);
+    var html = '';
+    for (var y = 0; y < 8; y++) for (var x = 0; x < 8; x++) html += '<rect x="' + x * cs + '" y="' + y * cs + '" width="' + (cs + 0.6) + '" height="' + (cs + 0.6) + '" shape-rendering="crispEdges" fill="' + (dark ? shade(CAMO_COLS[CAMO_MAP[y][x]]) : CAMO_COLS[CAMO_MAP[y][x]]) + '"/>';
+    pat.innerHTML = html;
+    defsSvg.firstChild.appendChild(pat);
+    made[id] = true;
+    return id;
+  }
+  function svgFill(c, o) { if (c && c.indexOf('P:') === 0) return 'url(#' + svgPattern(cellSize(o), c === 'P:camoD') + ')'; return c; }
+  function canvasFill(ctx, c, o) {
+    if (!c || c.indexOf('P:') !== 0) return c;
+    var cs = cellSize(o), dark = c === 'P:camoD', key = cs + (dark ? 'd' : '');
+    ctx.__camo = ctx.__camo || {};
+    if (!ctx.__camo[key]) {
+      var t = document.createElement('canvas'); t.width = t.height = 8 * cs;
+      var tc = t.getContext('2d');
+      for (var y = 0; y < 8; y++) for (var x = 0; x < 8; x++) { tc.fillStyle = dark ? shade(CAMO_COLS[CAMO_MAP[y][x]]) : CAMO_COLS[CAMO_MAP[y][x]]; tc.fillRect(x * cs, y * cs, cs, cs); }
+      ctx.__camo[key] = ctx.createPattern(t, 'repeat');
+    }
+    return ctx.__camo[key];
+  }
+
+  /* ---------- 頭部：帽、盔、短髮 ---------- */
+  function headSVG(o, silC, op) {
+    var x = o.p[0], y = o.p[1], r = o.r, a = op ? ' opacity="' + op + '"' : '';
+    var h = '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + f(r) + '" fill="' + (o.c || silC) + '"' + a + '/>';
+    var wc = svgFill(o.wearC, { w: r * 2 }) || silC;
+    if (o.wear === 'helmet') {
+      h += '<path d="M' + f(x - r * 1.28) + ' ' + f(y + r * 0.1) + ' A' + f(r * 1.28) + ' ' + f(r * 1.25) + ' 0 0 1 ' + f(x + r * 1.28) + ' ' + f(y + r * 0.1) + ' L' + f(x + r * 1.42) + ' ' + f(y + r * 0.28) + ' L' + f(x - r * 1.42) + ' ' + f(y + r * 0.28) + 'Z" fill="' + wc + '"' + a + '/>';
+    } else if (o.wear === 'cap') {
+      h += '<path d="M' + f(x - r * 1.04) + ' ' + f(y - r * 0.12) + ' A' + f(r * 1.04) + ' ' + f(r * 1.04) + ' 0 0 1 ' + f(x + r * 1.04) + ' ' + f(y - r * 0.12) + ' L' + f(x + r * 1.55) + ' ' + f(y - r * 0.05) + ' L' + f(x - r * 1.04) + ' ' + f(y - r * 0.05) + 'Z" fill="' + wc + '"' + a + '/>';
+    } else {
+      h += '<path d="M' + f(x - r) + ' ' + f(y - r * 0.05) + ' A' + f(r) + ' ' + f(r) + ' 0 0 1 ' + f(x + r) + ' ' + f(y - r * 0.05) + ' Q' + f(x) + ' ' + f(y - r * 0.55) + ' ' + f(x - r) + ' ' + f(y - r * 0.05) + 'Z" fill="' + wc + '"' + a + '/>';
+    }
+    return h;
+  }
+  function headCanvas(ctx, o, silC) {
+    var x = o.p[0], y = o.p[1], r = o.r;
+    ctx.fillStyle = o.c || silC; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = canvasFill(ctx, o.wearC, { w: r * 2 }) || silC;
+    ctx.beginPath();
+    if (o.wear === 'helmet') { ctx.ellipse(x, y + r * 0.1, r * 1.28, r * 1.25, 0, Math.PI, 0); ctx.lineTo(x + r * 1.42, y + r * 0.28); ctx.lineTo(x - r * 1.42, y + r * 0.28); }
+    else if (o.wear === 'cap') { ctx.arc(x, y - r * 0.12, r * 1.04, Math.PI, 0); ctx.lineTo(x + r * 1.55, y - r * 0.05); ctx.lineTo(x - r * 1.04, y - r * 0.05); }
+    else { ctx.arc(x, y - r * 0.05, r, Math.PI, 0); ctx.quadraticCurveTo(x, y - r * 0.55, x - r, y - r * 0.05); }
+    ctx.fill();
+  }
 
   // ---------- SVG 繪製 ----------
   var NS = 'http://www.w3.org/2000/svg';
@@ -164,27 +276,22 @@
     style = style || {};
     var silC = style.silColor || '#1c251f';
     var boneC = style.boneColor || '#eb6834';
+    var op = style.opacity ? ' opacity="' + style.opacity + '"' : '';
     var html = '';
     list.forEach(function (o) {
       if (o.t === 'line') {
-        var c = o.kind === 'bone' ? boneC : (o.c || silC);
-        html += '<line x1="' + f(o.a[0]) + '" y1="' + f(o.a[1]) + '" x2="' + f(o.b[0]) + '" y2="' + f(o.b[1]) + '" stroke="' + c + '" stroke-width="' + f(o.w) + '" stroke-linecap="round"' + (style.opacity ? ' opacity="' + style.opacity + '"' : '') + '/>';
+        var c = o.kind === 'bone' ? boneC : (svgFill(o.c, o) || silC);
+        html += '<line x1="' + f(o.a[0]) + '" y1="' + f(o.a[1]) + '" x2="' + f(o.b[0]) + '" y2="' + f(o.b[1]) + '" stroke="' + c + '" stroke-width="' + f(o.w) + '" stroke-linecap="round"' + op + '/>';
       } else if (o.t === 'torso') {
-        var c2 = o.c || silC;
-        html += '<line x1="' + f(o.a[0]) + '" y1="' + f(o.a[1] + o.w * 0.12) + '" x2="' + f(o.b[0]) + '" y2="' + f(o.b[1] - o.w * 0.05) + '" stroke="' + c2 + '" stroke-width="' + f(o.w) + '" stroke-linecap="round"' + (style.opacity ? ' opacity="' + style.opacity + '"' : '') + '/>';
+        var c2 = svgFill(o.c, o) || silC;
+        html += '<line x1="' + f(o.a[0]) + '" y1="' + f(o.a[1] + o.w * 0.12) + '" x2="' + f(o.b[0]) + '" y2="' + f(o.b[1] - o.w * 0.05) + '" stroke="' + c2 + '" stroke-width="' + f(o.w) + '" stroke-linecap="round"' + op + '/>';
       } else if (o.t === 'dot') {
-        html += '<circle cx="' + f(o.p[0]) + '" cy="' + f(o.p[1]) + '" r="' + f(o.r) + '" fill="' + (o.c || silC) + '"' + (style.opacity ? ' opacity="' + style.opacity + '"' : '') + '/>';
+        html += '<circle cx="' + f(o.p[0]) + '" cy="' + f(o.p[1]) + '" r="' + f(o.r) + '" fill="' + (o.c || silC) + '"' + op + '/>';
       } else if (o.t === 'joint') {
         html += '<circle cx="' + f(o.p[0]) + '" cy="' + f(o.p[1]) + '" r="' + f(o.r) + '" fill="#fff" stroke="' + boneC + '" stroke-width="1.6"/>';
       } else if (o.t === 'head') {
-        if (o.hollow) {
-          html += '<circle cx="' + f(o.p[0]) + '" cy="' + f(o.p[1]) + '" r="' + f(o.r) + '" fill="none" stroke="' + boneC + '" stroke-width="1.6"/>';
-        } else {
-          html += '<circle cx="' + f(o.p[0]) + '" cy="' + f(o.p[1]) + '" r="' + f(o.r) + '" fill="' + (o.c || silC) + '"' + (style.opacity ? ' opacity="' + style.opacity + '"' : '') + '/>';
-          // 帽子：上半圓 + 帽簷
-          var capC = o.cap || silC;
-          html += '<path d="M' + f(o.p[0] - o.r * 1.04) + ' ' + f(o.p[1] - o.r * 0.12) + ' A' + f(o.r * 1.04) + ' ' + f(o.r * 1.04) + ' 0 0 1 ' + f(o.p[0] + o.r * 1.04) + ' ' + f(o.p[1] - o.r * 0.12) + ' L' + f(o.p[0] + o.r * 1.55) + ' ' + f(o.p[1] - o.r * 0.05) + ' L' + f(o.p[0] - o.r * 1.04) + ' ' + f(o.p[1] - o.r * 0.05) + 'Z" fill="' + capC + '"' + (style.opacity ? ' opacity="' + style.opacity + '"' : '') + '/>';
-        }
+        if (o.hollow) html += '<circle cx="' + f(o.p[0]) + '" cy="' + f(o.p[1]) + '" r="' + f(o.r) + '" fill="none" stroke="' + boneC + '" stroke-width="1.6"/>';
+        else html += headSVG(o, silC, style.opacity);
       }
     });
     g.innerHTML = html;
@@ -198,7 +305,7 @@
     ctx.lineCap = 'round';
     list.forEach(function (o) {
       if (o.t === 'line' || o.t === 'torso') {
-        ctx.strokeStyle = o.kind === 'bone' ? (style.boneColor || '#eb6834') : (o.c || silC);
+        ctx.strokeStyle = o.kind === 'bone' ? (style.boneColor || '#eb6834') : (canvasFill(ctx, o.c, o) || silC);
         ctx.lineWidth = o.w;
         ctx.beginPath();
         if (o.t === 'torso') { ctx.moveTo(o.a[0], o.a[1] + o.w * 0.12); ctx.lineTo(o.b[0], o.b[1] - o.w * 0.05); }
@@ -208,16 +315,13 @@
         ctx.fillStyle = o.t === 'joint' ? '#fff' : (o.c || silC);
         ctx.beginPath(); ctx.arc(o.p[0], o.p[1], o.r, 0, Math.PI * 2); ctx.fill();
       } else if (o.t === 'head') {
-        ctx.fillStyle = o.c || silC;
-        ctx.beginPath(); ctx.arc(o.p[0], o.p[1], o.r, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = o.cap || silC;
-        ctx.beginPath(); ctx.arc(o.p[0], o.p[1] - o.r * 0.12, o.r * 1.04, Math.PI, 0); ctx.lineTo(o.p[0] + o.r * 1.55, o.p[1] - o.r * 0.05); ctx.lineTo(o.p[0] - o.r * 1.04, o.p[1] - o.r * 0.05); ctx.fill();
+        headCanvas(ctx, o, silC);
       }
     });
   }
 
   global.PersonModel = {
     BASE: BASE, makePerson: makePerson, joints: joints, project: project,
-    parts: parts, renderSVG: renderSVG, renderCanvas: renderCanvas, NS: NS
+    parts: parts, renderSVG: renderSVG, renderCanvas: renderCanvas, NS: NS, OUTFITS: OUTFITS
   };
 })(window);
