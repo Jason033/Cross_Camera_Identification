@@ -174,52 +174,6 @@
 
   /* ---------- 證據卡 ---------- */
   var ccCur = 'face';
-  function initCards() {
-    var chips = $('#cc-chips');
-    R.CUECARDS.forEach(function (c) {
-      var b = U.h('button', { class: 'chip', 'aria-pressed': c.id === ccCur ? 'true' : 'false', 'data-id': c.id }, c.n);
-      b.addEventListener('click', function () { ccCur = c.id; U.$$('button', chips).forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); drawCard(); });
-      chips.appendChild(b);
-    });
-    drawCard();
-  }
-  function drawCard() {
-    var c = R.CUECARDS.filter(function (x) { return x.id === ccCur; })[0];
-    $('#cc-body').innerHTML = '<h3 style="margin-top:0">' + c.n + '</h3><p style="margin:0 0 8px"><b>判定：</b>' + c.verdict + '　' + evBadge(c.lv) + '</p>' +
-      '<dl><dt>怎麼運作</dt><dd>' + c.how + '</dd>' +
-      '<dt>運作條件</dt><dd>' + c.req.map(function (r) { return '<b>' + r[0] + '</b>：' + r[1]; }).join('<br>') + '</dd>' +
-      '<dt>關鍵證據</dt><dd><ul style="margin:0;padding-left:18px">' + c.ev.map(function (e) { return '<li>' + e + '</li>'; }).join('') + '</ul></dd>' +
-      '<dt>在營區會怎麼失效</dt><dd>' + c.fail + '</dd>' +
-      '<dt>程式與授權</dt><dd>' + c.lic + '</dd>' +
-      '<dt>出處</dt><dd>' + linkList(c.src) + '</dd></dl>';
-    var svg = U.clear($('#cc-chart')), note = '';
-    var o = { x: 0, labelW: 170, w: 200, rowH: 26 };
-    if (c.id === 'face') {
-      var y = hbar(svg, R.CH_ADAFACE.map(function (r) { return [r[0], r[1], r[0].indexOf('監視 → 監視') === 0 ? 'bad' : '']; }), Object.assign({}, o, { title: 'AdaFace（IJB-S）Rank-1 %', max: 100 }));
-      hbar(svg, R.CH_IPD.map(function (r) { return ['兩眼間距 ' + r[0] + ' px', r[1], r[0] <= 5 ? 'bad' : '']; }), Object.assign({}, o, { y: y, title: 'ArcFace 受控 1:1 準確率 %', max: 100 }));
-      note = '上：arXiv 2204.00964；下：arXiv 2503.20108（樣本小、1:1，不能外推到 1:N）。';
-    } else if (c.id === 'gait') {
-      var y2 = hbar(svg, R.CH_BRIAR.map(function (r) { return [r.n, r.b, r.n === '步態' ? 'pick' : r.n === '臉' ? 'bad' : '']; }), Object.assign({}, o, { title: 'BRIAR 臉受限：TAR@0.1%FAR %', max: 100 }));
-      hbar(svg, [['DeepGaitV2', 25.7, 'bad'], ['CVVNet', 34.3, 'bad']], Object.assign({}, o, { y: y2, title: '低角度訓練 → 高角度測試 Rank-1 %', max: 100 }));
-      note = '上：arXiv 2505.04616；下：DroneGait，arXiv 2505.01837。';
-    } else if (c.id === 'height') {
-      hbar(svg, [['學習式估計（IMDB）', 5.56], ['猜性別平均身高', 5.91, 'bad'], ['學習式（實驗室）', 8.53]], Object.assign({}, o, { title: '身高估計平均絕對誤差（cm，越低越好）', max: 10, ticks: [0, 5, 10] }));
-      note = 'Günel 等，ICCVW 2019。最佳模型只比猜平均好 0.35 cm。';
-    } else if (c.id === 'body') {
-      hbar(svg, R.CH_BRIAR.slice(0, 3).map(function (r) { return [r.n, r.a, r.n === '體型' ? 'bad' : '']; }), Object.assign({}, o, { title: 'BRIAR 臉可見：TAR@0.1%FAR %', max: 100 }));
-      note = '體型是三者中最弱的單一線索。arXiv 2505.04616。';
-    } else if (c.id === 'resid') {
-      hbar(svg, [['PCB 同衣', 86.88], ['PCB 跨衣', 22.86, 'bad']], Object.assign({}, o, { title: 'PRCC：衣服一變，RGB 外觀 Rank-1 %', max: 100 }));
-      note = 'arXiv 2002.02295。同制服是比換衣更極端的情況：外觀資訊被壓平。';
-    } else if (c.id === 'st') {
-      var yy = 0;
-      R.CH_ST.forEach(function (r) { yy = hbar(svg, [['只用外觀', r.a], ['+ 時空約束', r.b, 'pick']], Object.assign({}, o, { y: yy, title: r.n + ' Rank-1 %', max: 100 })); });
-      note = 'st-ReID，arXiv 1812.03282。';
-    }
-    svg.setAttribute('viewBox', '0 0 440 ' + Math.max(200, svg.getBBox ? (svg.getBBox().height + 10) : 330));
-    $('#cc-chart-note').textContent = note;
-  }
-
   function drawBriar() {
     var svg = $('#briar');
     hbar(svg, R.CH_BRIAR.map(function (r) { return [r.n, r.a, r.n === '三者融合' ? 'pick' : '']; }), { x: 0, labelW: 90, w: 300, rowH: 34, max: 100, title: '臉可見' });
@@ -239,7 +193,7 @@
       rows.map(function (r) { return '<tr><td><b>' + r[0] + '</b></td><td>' + r[1] + '</td><td>' + r[2] + '</td><td class="num">' + r[3] + '</td></tr>'; }).join('') + '</tbody>';
   }
 
-  wrapInit('cues', function () { initFeas(); initCards(); drawBriar(); cueDecision(); });
+  wrapInit('cues', function () { if ($('#feas-chart')) initFeas(); if ($('#briar')) drawBriar(); if ($('#cue-decision')) cueDecision(); });
 
   /* ======================= 第 2 章：方法總表與比較 ======================= */
   var mtFam = 'all', mtLic = 'all', mtQ = '';
@@ -283,99 +237,7 @@
     el('text', { x: x0 + 79 / 100 * w, y: 26, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--olive)', text: '有標註 77–81' }, s2);
     hbar(s2, R.CH_UDA.map(function (r) { return [r[0], r[1]]; }), { x: 0, y: 30, labelW: x0, w: w, rowH: 30, max: 100 });
   }
-  wrapInit('methods', function () { initMT(); methodCharts(); });
-
-  /* ======================= 第 3 章：證據累加 ======================= */
-  var LRM = [
-    { k: 'face', n: '人臉', c: '#6250d6', g: [0.66, 0.12], i: [0.38, 0.12] },
-    { k: 'app', n: '外觀（同制服）', c: '#2a78d6', g: [0.70, 0.08], i: [0.63, 0.08] },
-    { k: 'gait', n: '步態', c: '#d55181', g: [0.66, 0.10], i: [0.46, 0.10] },
-    { k: 'hgt', n: '身高相近度', c: '#9a7b12', g: [0.80, 0.10], i: [0.65, 0.14] }
-  ];
-  var lr = { on: { face: true, app: true, gait: true, hgt: true }, s: { face: 0.70, app: 0.70, gait: 0.62, hgt: 0.78 }, dt: 150, minT: 60 };
-  var PRESETS = {
-    same: { name: '本人、看得到臉', on: { face: true, app: true, gait: true, hgt: true }, s: { face: 0.70, app: 0.70, gait: 0.62, hgt: 0.78 }, dt: 150 },
-    back: { name: '本人、背面', on: { face: false, app: true, gait: true, hgt: true }, s: { face: 0.5, app: 0.69, gait: 0.64, hgt: 0.80 }, dt: 140 },
-    other: { name: '同制服的另一人', on: { face: false, app: true, gait: true, hgt: true }, s: { face: 0.5, app: 0.68, gait: 0.47, hgt: 0.70 }, dt: 200 },
-    imposs: { name: '轉移太快', on: { face: false, app: true, gait: true, hgt: true }, s: { face: 0.5, app: 0.72, gait: 0.66, hgt: 0.82 }, dt: 25 }
-  };
-  function logN(x, m, s) { return -0.5 * Math.pow((x - m) / s, 2) - Math.log(s); }
-  function initLR() {
-    var box = $('#lr-ctrl');
-    var seg = U.h('div', { class: 'seg', role: 'group', 'aria-label': '情境', style: 'margin-bottom:10px' });
-    Object.keys(PRESETS).forEach(function (k, i) {
-      var b = U.h('button', { 'aria-pressed': i === 0 ? 'true' : 'false' }, PRESETS[k].name);
-      b.addEventListener('click', function () {
-        U.$$('button', seg).forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
-        var p = PRESETS[k]; lr.on = Object.assign({}, p.on); lr.s = Object.assign({}, p.s); lr.dt = p.dt; syncLR(); drawLR();
-      });
-      seg.appendChild(b);
-    });
-    box.appendChild(seg);
-    LRM.forEach(function (m) {
-      var d = U.h('div', { style: 'margin-bottom:4px' });
-      d.innerHTML = '<label class="chk"><input type="checkbox" id="lr-on-' + m.k + '"> <span class="sw-dot" style="--c:' + m.c + '"></span> ' + m.n + ' 看得到</label>';
-      box.appendChild(d);
-      sliderRow(box, 'lr-s-' + m.k, '　相似度 s', 0, 1, 0.01, lr.s[m.k], function (v) { return v.toFixed(2); }, function (v) { lr.s[m.k] = v; drawLR(); });
-      $('#lr-on-' + m.k).addEventListener('change', function (e) { lr.on[m.k] = e.target.checked; drawLR(); });
-    });
-    sliderRow(box, 'lr-dt', '兩段軌跡間隔（秒）', 0, 600, 5, lr.dt, function (v) { return v + ' s'; }, function (v) { lr.dt = v; drawLR(); });
-    box.appendChild(U.h('p', { class: 'small muted', style: 'margin:0' }, '兩台攝影機之間最短步行時間設為 ' + lr.minT + ' 秒。'));
-    syncLR(); drawLR();
-  }
-  function syncLR() {
-    LRM.forEach(function (m) { $('#lr-on-' + m.k).checked = !!lr.on[m.k]; var s = $('#lr-s-' + m.k); s.value = lr.s[m.k]; $('#lr-s-' + m.k + '-o').textContent = lr.s[m.k].toFixed(2); });
-    $('#lr-dt').value = lr.dt; $('#lr-dt-o').textContent = lr.dt + ' s';
-  }
-  function drawLR() {
-    var svg = U.clear($('#lr-svg'));
-    var terms = LRM.map(function (m) {
-      if (!lr.on[m.k]) return { n: m.n, v: 0, c: m.c, miss: true };
-      var v = logN(lr.s[m.k], m.g[0], m.g[1]) - logN(lr.s[m.k], m.i[0], m.i[1]);
-      return { n: m.n, v: U.clamp(v, -6, 6), c: m.c };
-    });
-    var veto = lr.dt < lr.minT;
-    var stv = veto ? -Infinity : U.clamp(Math.log(Math.max(1e-6, U.npdf(lr.dt, 150, 70)) / (1 / 600)), -3, 3);
-    terms.push({ n: '時空（轉移時間）', v: stv, c: '#1c251f', veto: veto });
-    var L = 150, R0 = 520, lo = -8, hi = 8;
-    function X(v) { return L + (U.clamp(v, lo, hi) - lo) / (hi - lo) * (R0 - L); }
-    el('text', { x: 0, y: 16, 'font-size': 13, 'font-weight': 700, fill: 'var(--ink)', text: '各項證據（對數似然比）逐項累加' }, svg);
-    [-8, -4, 0, 4, 8].forEach(function (t) {
-      el('line', { x1: X(t), x2: X(t), y1: 28, y2: 330, stroke: t === 0 ? 'var(--ink-3)' : 'var(--rule-2)' }, svg);
-      el('text', { x: X(t), y: 344, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-3)', class: 'num', text: (t > 0 ? '+' : '') + t }, svg);
-    });
-    el('text', { x: X(-8), y: 362, 'font-size': 11.5, fill: 'var(--bad)', text: '← 偏向不同人' }, svg);
-    el('text', { x: X(8), y: 362, 'text-anchor': 'end', 'font-size': 11.5, fill: 'var(--good)', text: '偏向同一人 →' }, svg);
-    var cum = 0, y = 40, rh = 42;
-    terms.forEach(function (t) {
-      el('text', { x: L - 10, y: y + 18, 'text-anchor': 'end', 'font-size': 12.5, fill: 'var(--ink)', text: t.n }, svg);
-      if (t.miss) {
-        el('text', { x: X(cum) + 6, y: y + 18, 'font-size': 12, fill: 'var(--ink-3)', text: '看不到 → 該項為 0，不影響總分' }, svg);
-      } else if (t.veto) {
-        el('line', { x1: X(cum), x2: X(lo), y1: y + 13, y2: y + 13, stroke: 'var(--bad)', 'stroke-width': 4, 'marker-end': '' }, svg);
-        el('text', { x: X(lo) + 4, y: y + 32, 'font-size': 12, fill: 'var(--bad)', 'font-weight': 700, text: '短於最短步行時間 → 否決（−∞）' }, svg);
-        cum = -Infinity;
-      } else if (isFinite(cum)) {
-        var a = X(cum), b = X(cum + t.v);
-        el('line', { x1: a, x2: a, y1: y - 2, y2: y + 28, stroke: 'var(--rule)', 'stroke-dasharray': '2 2' }, svg);
-        el('rect', { x: Math.min(a, b), y: y + 4, width: Math.max(1.5, Math.abs(b - a)), height: 18, rx: 3, fill: t.c, opacity: t.v >= 0 ? 0.9 : 0.55 }, svg);
-        el('text', { x: Math.max(a, b) + 5, y: y + 18, 'font-size': 12, fill: 'var(--ink)', class: 'num', text: (t.v >= 0 ? '+' : '') + t.v.toFixed(2) }, svg);
-        cum += t.v;
-      } else {
-        el('text', { x: X(lo) + 4, y: y + 18, 'font-size': 12, fill: 'var(--ink-3)', text: '（已否決）' }, svg);
-      }
-      y += rh;
-    });
-    el('line', { x1: L - 140, x2: R0, y1: y - 6, y2: y - 6, stroke: 'var(--ink)' }, svg);
-    el('text', { x: L - 10, y: y + 18, 'text-anchor': 'end', 'font-size': 13.5, 'font-weight': 700, fill: 'var(--ink)', text: '總證據' }, svg);
-    if (isFinite(cum)) {
-      el('rect', { x: Math.min(X(0), X(cum)), y: y + 4, width: Math.max(2, Math.abs(X(cum) - X(0))), height: 20, rx: 3, fill: cum >= 0 ? 'var(--good)' : 'var(--bad)' }, svg);
-      var p = 1 / (1 + Math.exp(-cum));
-      el('text', { x: Math.max(X(0), X(cum)) + 6, y: y + 19, 'font-size': 13, 'font-weight': 700, fill: 'var(--ink)', class: 'num', text: (cum >= 0 ? '+' : '') + cum.toFixed(2) + '　P(同人) ≈ ' + Math.round(p * 100) + '%' }, svg);
-    } else {
-      el('text', { x: X(lo) + 4, y: y + 19, 'font-size': 13, 'font-weight': 700, fill: 'var(--bad)', text: '不可能是同一人' }, svg);
-    }
-  }
+  wrapInit('methods', function () { if ($('#mt-table')) initMT(); if ($('#ch-msmt')) methodCharts(); });
 
   /* ======================= 第 3 章：約束式分群 ======================= */
   var CAMS = ['攝影機 1（營門）', '攝影機 2（集合場）', '攝影機 3（餐廳）'];
@@ -482,7 +344,7 @@
     if (clu.step >= CR.snaps.length - 1) clu.step = 0;
     function next() {
       $('#clu-step').value = clu.step; drawClu();
-      if (clu.step >= CR.snaps.length - 1 || !document.getElementById('ch-system').classList.contains('active')) { stopPlay(); return; }
+      if (clu.step >= CR.snaps.length - 1 || !document.getElementById('ch-methods').classList.contains('active')) { stopPlay(); return; }
       clu.step++;
       clu.raf = setTimeout(next, U.reduceMotion ? 50 : 650);
     }
@@ -546,15 +408,11 @@
   }
   function fmtT(t) { var m = Math.round(t), h = 8 + Math.floor(m / 60); return h + ':' + ('0' + (m % 60)).slice(-2); }
 
-  function fusionTables() {
-    $('#norm-tbl').innerHTML = '<thead><tr><th>方法</th><th>公式</th><th>特性</th></tr></thead><tbody>' +
-      R.NORM.map(function (r) { return '<tr><td><b>' + r[0] + '</b></td><td style="font-family:var(--num)">' + r[1] + '</td><td>' + r[2] + '</td></tr>'; }).join('') + '</tbody>';
-    $('#clu-algs').innerHTML = '<thead><tr><th>演算法</th><th>適用規模</th><th>特點與證據</th><th>對本專案</th><th>證據</th></tr></thead><tbody>' +
-      R.CLUSTER_ALGS.map(function (r) { return '<tr><td><b>' + r[0] + '</b></td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td><td>' + evBadge(r[4]) + '</td></tr>'; }).join('') + '</tbody>';
+  function stChart() {
     var svg = $('#st-chart');
     R.CH_ST.forEach(function (r, i) {
       hbar(svg, [['只用外觀', r.a], ['+ 時空約束', r.b, 'pick']], { x: i * 450, labelW: 100, w: 280, rowH: 32, max: 100, title: r.n + ' Rank-1 %' });
     });
   }
-  wrapInit('fusion', function () { fusionTables(); initLR(); initClu(); });
+  wrapInit('fusion', function () { if ($('#st-chart')) stChart(); if ($('#clu-svg')) initClu(); });
 })(window);

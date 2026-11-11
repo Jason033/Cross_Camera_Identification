@@ -1,4 +1,4 @@
-/* ch-methods.js — 第 2 章（線索與方法）：方法解剖台、六類方法 × 攝影機條件、方法版圖 */
+/* ch-methods.js — 方法解剖台（第 2 章）、方法版圖（附錄） */
 (function (global) {
   'use strict';
   var R = global.R, el = U.el, $ = U.$;
@@ -48,7 +48,7 @@
       learns: '每位專家各學一種線索；門控學「這段影片哪個線索比較可靠」。',
       needs: '影片', fails: ['算力（凍結 CLIP ViT-L/14）', '全部線索同時失效時救不回'],
       num: [['MEVID 真實跨日換衣 Rank-1', '20.1（HAMoBE；舊方法 < 6）', 'proven'], ['BRIAR 臉受限 TAR@0.1%FAR', '臉 30.7 → 三模態 65.0', 'proven']],
-      score: 3, verdict: '最接近「依情況選線索」的思路，是第 3 章的核心。弱伺服器需改成小型專家＋分數層融合。',
+      score: 3, verdict: '最接近「依情況選線索」的思路，是本章第 4 步（融合）的參考。弱伺服器需改成小型專家＋分數層融合。',
       lic: '未確認', cost: '高（大模型骨幹）' }
   ];
   var FAM = {}; FAMS.forEach(function (f) { FAM[f.id] = f; });
@@ -103,7 +103,7 @@
 
   CH.methods = {
     init: function () {
-      buildFamTabs(); buildCtrls(); buildGrid(); drawAll(); drawMatrix(); initLandscape();
+      buildFamTabs(); buildCtrls(); buildGrid(); drawAll(); if ($('#land')) initLandscape();
       var btn = $('#ana-play');
       function sync() { btn.textContent = A.playing ? '暫停' : '播放'; btn.setAttribute('aria-pressed', A.playing ? 'true' : 'false'); }
       btn.addEventListener('click', function () { A.playing = !A.playing; sync(); if (A.playing) loop(); });
@@ -117,7 +117,7 @@
     var last = performance.now();
     function step(now) {
       A.raf = 0;
-      if (!A.playing || !document.getElementById('ch-cues').classList.contains('active')) return;
+      if (!A.playing || !document.getElementById('ch-methods').classList.contains('active')) return;
       A.t += Math.min(0.05, (now - last) / 1000); last = now;
       drawCells(true);
       A.raf = requestAnimationFrame(step);
@@ -136,12 +136,12 @@
   function setFam(v) {
     A.fam = v;
     U.$$('#ana-fam button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-f') === v ? 'true' : 'false'); });
-    buildGrid(); drawAll(); drawMatrix();
+    buildGrid(); drawAll();
   }
   function setCond(v) {
     A.cond = v;
     U.$$('#ana-cond button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-c') === v ? 'true' : 'false'); });
-    buildGrid(); drawAll(); drawMatrix();
+    buildGrid(); drawAll();
   }
   function buildCtrls() {
     var c = $('#ana-cond');
@@ -500,35 +500,6 @@
       '</dl>';
   }
 
-  /* ---------- 六類方法 × 三種條件 ---------- */
-  function drawMatrix() {
-    var svg = U.clear($('#ana-matrix'));
-    var L = 128, cw = 118, rh = 40, T = 46;
-    CONDS.forEach(function (k, j) {
-      el('text', { x: L + j * cw + cw / 2, y: 18, 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 700, fill: 'var(--ink)', text: VK.CAM2[k].n }, svg);
-    });
-    el('text', { x: L + 2 * cw, y: 36, 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--ink-3)', text: '每欄都是「攝影機 2 角度不同」，再各加一個條件' }, svg);
-    FAMS.forEach(function (f, i) {
-      var y = T + i * rh;
-      var on = f.id === A.fam;
-      el('rect', { x: 0, y: y, width: L + 3 * cw, height: rh - 4, rx: 4, fill: on ? '#fff' : 'transparent', stroke: on ? 'var(--ink)' : 'none' }, svg);
-      el('circle', { cx: 10, cy: y + rh / 2 - 2, r: 5, fill: f.c }, svg);
-      el('text', { x: 22, y: y + rh / 2 + 3, 'font-size': 13, 'font-weight': on ? 700 : 400, fill: 'var(--ink)', text: f.n }, svg);
-      CONDS.forEach(function (k, j) {
-        var ok = 0, rs = [];
-        P.forEach(function (_, qi) { var d = dists(f.id, qi, k), r = rankOf(d, qi); rs.push(r === 1); if (r === 1) ok++; });
-        var x = L + j * cw, g = el('g', { tabindex: 0, role: 'button', 'aria-label': f.n + '，' + VK.CAM2[k].n + '，' + ok + ' / 5 人排第一', style: 'cursor:pointer' }, svg);
-        var sel = on && k === A.cond;
-        el('rect', { x: x + 6, y: y + 3, width: cw - 12, height: rh - 10, rx: 4, fill: ok >= 4 ? '#dbeedb' : ok >= 3 ? '#f4ead0' : '#f6dcdc', stroke: sel ? 'var(--ink)' : 'none', 'stroke-width': 2 }, g);
-        rs.forEach(function (b, q) { el('circle', { cx: x + 18 + q * 11.5, cy: y + rh / 2 - 2, r: 4, fill: b ? 'var(--good)' : '#fff', stroke: b ? 'var(--good)' : 'var(--bad)', 'stroke-width': 1.4 }, g); });
-        el('text', { x: x + cw - 12, y: y + rh / 2 + 3, 'text-anchor': 'end', 'font-size': 12.5, 'font-weight': 700, class: 'num', fill: ok >= 4 ? 'var(--good)' : ok >= 3 ? 'var(--warn)' : 'var(--bad)', text: ok + ' / 5' }, g);
-        function go() { A.fam = f.id; A.cond = k; U.$$('#ana-cond button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-c') === k ? 'true' : 'false'); }); setFam(f.id); }
-        g.addEventListener('click', go);
-        g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
-      });
-    });
-  }
-
   /* ======================= 方法版圖（55 個方法） ======================= */
   var LANES = ['det', 'st', 'app', 'vid', 'part', 'cc', 'uni', 'gait', 'mm', 'face', 'uda', 'life'];
   var PICK = ['st-ReID', 'PersonViT ViT-S/16', 'SOLIDER Swin-S', 'DeepGaitV2-P3D', 'Cluster Contrast', 'ByteTrack', 'CLIP3DReID', 'MagFace', 'YOLOX-S'];
@@ -583,7 +554,7 @@
       : '<p class="small muted" style="margin:0">點任一個點看細節。粗框圓點 = 建議起步；菱形 = 你們已有；顏色 = 授權。</p>';
   }
 
-  // 第 4 章（評估協定）仍使用這兩個小工具
+  // 評估協定圖（第 4 章）仍使用這兩個小工具
   function arrow(svg, x1, y1, x2, y2) {
     el('line', { x1: x1, y1: y1, x2: x2, y2: y2, stroke: 'var(--ink-3)', 'stroke-width': 1.4 }, svg);
     var a = Math.atan2(y2 - y1, x2 - x1);

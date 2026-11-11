@@ -16,9 +16,8 @@
   /* ======================= 8 系統假想 ======================= */
   CH.system = {
     init: function () {
-      drawLayers(); initBudget(); initOut();
-      table('stack-tbl', ['環節', '你現有的', '建議起步（授權較安全）', '備註'], R.STACK);
-      table('fail-tbl', ['失敗方式', '成因', '對策'], R.FAILS);
+      if ($('#sys-layers')) drawLayers(); if ($('#bud-svg')) initBudget(); if ($('#out-map')) initOut();
+      if ($('#fail-tbl')) table('fail-tbl', ['失敗方式', '成因', '對策'], R.FAILS);
     }
   };
   function drawLayers() {
