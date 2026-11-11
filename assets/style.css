@@ -476,3 +476,15 @@ ul.pass li { margin: 2px 0; }
 .tbl.srv td { font-size: 13.5px; }
 ol.measure { font-size: 14.5px; line-height: 1.7; padding-left: 22px; max-width: 52em; }
 ol.measure li { margin-bottom: 4px; }
+.my-box { border-top: 1px solid var(--rule-2); background: #fff; }
+.my-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; margin-top: 8px; }
+@media (max-width: 820px) { .my-grid { grid-template-columns: minmax(0, 1fr); } }
+.my-f { display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.my-f b { font-size: 13.5px; }
+.my-f input, .my-f select { border: 1px solid var(--rule); border-radius: var(--radius-s); padding: 4px 8px; background: #fff; font-size: 14px; font-family: var(--num); }
+.my-f span { font-size: 12px; color: var(--ink-3); line-height: 1.45; }
+.my-res { display: flex; flex-wrap: wrap; gap: 18px; }
+.my-bar { display: grid; grid-template-columns: 64px 1fr 64px; gap: 8px; align-items: center; font-size: 13px; margin: 4px 0; }
+.my-bar i { display: block; height: 12px; border-radius: 3px; }
+.my-bar em { font-style: normal; text-align: right; }
+.my-warn { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--bad); }
