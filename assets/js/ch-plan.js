@@ -114,7 +114,7 @@
   }
 
   // ---- 輸出示意 ----
-  var PLACES = { gate: [70, 300, '營門'], yard: [260, 200, '中庭'], mess: [440, 290, '餐廳'], dorm: [120, 90, '寢室'], office: [420, 90, '辦公室'] };
+  var PLACES = { gate: [70, 300, '營門'], yard: [260, 200, '集合場'], mess: [440, 290, '餐廳'], dorm: [120, 90, '寢室'], office: [420, 90, '連部'] };
   var CAMS = [['C1', 124, 318], ['C2', 314, 218], ['C3', 494, 308], ['C4', 174, 108], ['C5', 474, 108]];
   var PEOPLE = [
     { n: '已註冊 A-0231', known: true, conf: 0.94, path: [['dorm', '06:42', 'C4', .9], ['yard', '06:55', 'C2', .8], ['mess', '07:10', 'C3', .92], ['yard', '07:48', 'C2', .7], ['office', '08:05', 'C5', .88], ['mess', '12:02', 'C3', .9], ['office', '12:50', 'C5', .86]] },
@@ -223,10 +223,10 @@
   function drawCov() {
     var svg = $('#val-cov');
     txt(svg, 0, 16, '變因矩陣：每人每日跑「基準 + 隨機 2 項」', { 'font-weight': 700, 'font-size': 13 });
-    var cov = ['帽子（戴／脫）', '口罩（有／無）', '手持物或背包', '走路速度（慢／快／小跑）', '外套、袖口捲起'];
+    var cov = ['改戴鋼盔', '換運動服（同一天內）', '冬季外套／夏季捲袖', '手持物或背包', '走路速度（慢／快）'];
     var pick = [[0, 2], [1, 3], [0, 4], [2, 3], [1, 4]];
     for (var d = 0; d < 5; d++) txt(svg, 210 + d * 52, 40, '第' + (d + 1) + '次', { 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-3)' });
-    txt(svg, 190, 70, '基準（正常行走）', { 'text-anchor': 'end', 'font-size': 12 });
+    txt(svg, 190, 70, '基準（迷彩服＋小帽）', { 'text-anchor': 'end', 'font-size': 12 });
     for (var d0 = 0; d0 < 5; d0++) el('circle', { cx: 210 + d0 * 52, cy: 66, r: 8, fill: 'var(--ink)' }, svg);
     cov.forEach(function (c, i) {
       var y = 100 + i * 30;
@@ -271,8 +271,8 @@
   }
   function drawExp(sel) {
     var svg = U.clear($('#val-exp'));
-    var phases = [['基準', ['E1', 'E2']], ['單一線索', ['E3', 'E4', 'E5']], ['融合與系統', ['E6', 'E7', 'E8', 'E9']]];
-    var x = 0, w = 93, gap = 10;
+    var phases = [['基準', ['E1', 'E2']], ['單一線索', ['E3', 'E4', 'E5']], ['融合與系統', ['E6', 'E10', 'E7', 'E8', 'E9']]];
+    var x = 0, w = 84, gap = 10;
     phases.forEach(function (ph, pi) {
       var x0 = x;
       ph[1].forEach(function (id) {
@@ -291,7 +291,7 @@
       txt(svg, (x0 + x - gap) / 2, 16, ph[0], { 'text-anchor': 'middle', 'font-weight': 700, 'font-size': 12.5, fill: 'var(--ink-2)' });
       if (pi < 2) { arrow(svg, x - gap + 2, 100, x + 14, 100); x += 18; }
     });
-    txt(svg, 0, 196, '對應本章的六個月查核點：第 2 月 E1、第 3 月 E2–E3、第 4 月 E4–E5、第 5 月 E7、第 6 月 E9', { 'font-size': 12, fill: 'var(--ink-3)' });
+    txt(svg, 0, 196, '對應本章的六個月查核點：第 2 月 E1、第 3 月 E2–E3、第 4 月 E4–E5、第 5 月 E10 與 E7、第 6 月 E9', { 'font-size': 12, fill: 'var(--ink-3)' });
     var e = R.EXPS.filter(function (z) { return z.id === sel; })[0];
     $('#val-exp-d').innerHTML = '<h3 style="margin-top:0">' + e.id + '：' + e.q + '</h3><dl><dt>基準</dt><dd>' + e.base + '</dd><dt>改變</dt><dd>' + e.mod + '</dd><dt>必看指標</dt><dd>' + e.m + '</dd><dt>通過／停止</dt><dd>' + e.go + '</dd></dl>';
   }

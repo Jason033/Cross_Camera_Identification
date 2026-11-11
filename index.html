@@ -15,7 +15,7 @@
     <small>技術探索地圖 · 第一階段研究</small></a>
   <ol class="toc" id="toc">
     <li><a href="#/home"><span class="n">0</span>總覽</a></li>
-    <li><a href="#/problem"><span class="n">1</span>問題</a></li>
+    <li><a href="#/problem"><span class="n">1</span>問題定義</a></li>
     <li class="grp">技術</li>
     <li><a href="#/cues"><span class="n">2</span>線索與方法</a></li>
     <li><a href="#/system"><span class="n">3</span>系統架構</a></li>
@@ -53,7 +53,7 @@
 <section class="chapter" id="ch-home" data-title="總覽">
   <div class="hero">
     <h1>當每個人都穿著同一套制服，<br class="br-wide">還能靠什麼認出誰是誰？</h1>
-    <p class="thesis">五位穿同款迷彩服的人。在攝影機眼中他們幾乎一樣；換一個「鏡頭」看，身形比例與走路方式就分開了。這就是同制服跨攝影機辨識要解的問題。</p>
+    <p class="thesis">五位穿同款國軍迷彩服的人。在攝影機眼中他們幾乎一樣；換一個「鏡頭」看，身形比例與走路方式就分開了。同一天裡他們還會換上鋼盔、冬季外套或運動服——系統要分得開不同人，也要連得起換了裝的同一人。</p>
   </div>
 
   <figure class="plate" aria-label="同制服人員與不同身分線索">
@@ -66,20 +66,31 @@
         <button data-lens="gait"><span class="sw" style="background:var(--c-gait)"></span>步態軌跡</button>
       </div>
       <button class="btn ghost" id="lineup-play" aria-pressed="true">暫停</button>
+      <div class="seg seg-sm" id="outfit-sel" role="group" aria-label="服裝" style="flex-basis:100%">
+        <button data-o="camo" aria-pressed="true">迷彩服＋小帽</button>
+        <button data-o="helmet">鋼盔</button>
+        <button data-o="summer">夏季捲袖</button>
+        <button data-o="winter">冬季外套</button>
+        <button data-o="pt">運動服</button>
+        <button data-o="mix">同一天各穿不同</button>
+      </div>
     </div>
     <div class="plate-body lineup-wrap">
       <svg class="lineup-svg" id="lineup" viewBox="0 0 1000 410" role="img" aria-label="五位穿同款制服、正在行走的人員"></svg>
       <p class="lens-caption" id="lens-caption"></p>
     </div>
-    <div class="plate-note">人物由程序化步行模型產生：五人的身高、腿長比例、肩寬、步幅、擺臂與步頻各不相同。<b>這是示意，不是實測資料。</b></div>
+    <div class="plate-note">人物由程序化步行模型產生：五人的身高、腿長比例、肩寬、步幅、擺臂與步頻各不相同；服裝依國軍常見樣式繪製，配色為近似值。<b>這是示意，不是實測資料。</b></div>
   </figure>
 
   <h2>三句話的研究結論</h2>
   <ul class="findings">
-    <li><span class="ev proven"><i></i>文獻證實</span><p>「同制服」不是「換衣服」。換衣研究問的是同一人換了衣服還認不認得；同制服問的是<b>不同人穿一樣的衣服時，怎麼分辨他們</b>。常用的換衣資料集不測這件事，直接證據只有 FGPR。</p></li>
-    <li><span class="ev inferred"><i></i>合理推論</span><p>衣服要當成「不可靠的線索」，而不是丟掉。系統要依每段畫面的條件，動態決定相信骨架、輪廓、步態、體型或外觀，再用「同一人不可能同時在兩處」這類物理約束把關。</p></li>
-    <li><span class="ev open"><i></i>待驗證</span><p>這套「多線索＋品質門控＋約束式分群」在真實營區監視器上是否勝過單一線索，沒有論文直接證明——這是下一階段用自建資料要回答的問題。</p></li>
+    <li><span class="ev proven"><i></i>文獻證實</span><p>本專案同時有兩個難題：<b>同制服</b>（不同人穿一樣，要分開）與<b>換裝</b>（同一人換了迷彩服、運動服，要連起來）。公開研究多半只做其中一個；直接研究「不同人同制服」的只有 FGPR 等少數。</p></li>
+    <li><span class="ev inferred"><i></i>合理推論</span><p>沒有一種線索在所有營區場景都可靠。外觀只適合在「同一套服裝之內」連結；跨服裝要靠臉（近距點位）、體型、步態與時空約束，再依每段畫面的條件調整權重。門禁刷卡可當輔助，但可能被代刷，不能當答案。</p></li>
+    <li><span class="ev open"><i></i>待驗證</span><p>這套做法能否在一般路邊監視器、白天、5 人以內的情境下，把每個人的路徑連對、換裝前後也連得起來，沒有論文直接證明——這是下一階段用自建資料與營區試錄要回答的問題。</p></li>
   </ul>
+
+  <h2>目標：國軍版的「天眼」</h2>
+  <p>利用營區既有的一般光學監視器，自動重建「誰、在什麼時間、經過哪些地點」：每天產出每個人的移動路徑、可事後查詢特定人員、並標出名冊外的人。完整的目標、範圍與成功標準見<a href="#/problem">第 1 章</a>。</p>
 
   <h2>整個系統，一張圖</h2>
   <p>全站都圍繞這張架構圖：一段影片從攝影機進來，經過七個步驟，變成「這是人員 C」或「不認識的人」。點任一步，會說明它在做什麼，以及在哪一章詳細介紹。</p>
@@ -102,21 +113,81 @@
 
   <h2>閱讀路線</h2>
   <nav class="chmap" aria-label="章節地圖">
-    <a href="#/problem"><span class="n">1</span><b>問題</b><span class="d">ReID 怎麼認人、怎麼評分；同制服和換衣服差在哪；為什麼外觀會失效</span></a>
+    <a href="#/problem"><span class="n">1</span><b>問題定義</b><span class="d">目標、用途、範圍與成功標準；營區場景 × 線索；ReID 怎麼評分；同制服加換裝為何難</span></a>
     <a href="#/cues"><span class="n">2</span><b>線索與方法</b><span class="d">衣服之外還剩哪些線索；同兩人送進六類方法，每一步資料長什麼樣</span></a>
     <a href="#/system"><span class="n">3</span><b>系統架構</b><span class="d">七個步驟逐一展開：融合、分群、識別，以及系統要交出的成果</span></a>
     <a href="#/deploy"><span class="n">4</span><b>部署條件</b><span class="d">攝影機條件打壞哪些線索；哪些資料集像營區；部署前要跑的測試</span></a>
-    <a href="#/plan"><span class="n">5</span><b>驗證與推進</b><span class="d">已知與未知；自建資料怎麼拍；九個實驗；TRL、查核點與月報</span></a>
+    <a href="#/plan"><span class="n">5</span><b>驗證與推進</b><span class="d">已知與未知；自建資料怎麼拍；十個實驗；TRL、查核點與月報</span></a>
   </nav>
 </section>
 
 <!-- ======================= 1 問題 ======================= -->
-<section class="chapter" id="ch-problem" data-title="問題">
+<section class="chapter" id="ch-problem" data-title="問題定義">
   <header class="ch-head">
     <p class="ch-num">第 1 章</p>
-    <h1>先把問題問對：同制服 ≠ 換衣服</h1>
-    <p class="thesis">這一章先說明人員再辨識（ReID）系統怎麼認人、怎麼評分，再說明為什麼「全員同制服」會讓一般方法失效，以及它和常見的「換衣」研究差在哪。</p>
+    <h1>問題定義：我們要做出什麼</h1>
+    <p class="thesis">這一章先把目標與範圍定下來：系統要回答什麼問題、在哪些情況下要能用、怎樣才算成功。接著說明人員再辨識（ReID）怎麼認人、怎麼評分，以及為什麼「全員同制服、同一天又會換裝」讓一般方法失效。</p>
   </header>
+
+  <h2>專案目標與範圍</h2>
+  <div class="goal">
+    <p class="goal-k">目標</p>
+    <p class="goal-t">利用營區既有的一般光學監視器，自動重建「<b>誰</b>、在<b>什麼時間</b>、經過<b>哪些地點</b>」，讓營區能看出人員的移動路徑——國軍版的「天眼」。</p>
+    <p class="goal-s">這是新技術研發：營區已有門禁刷卡，但刷卡只記錄「卡在哪裡被刷過」，不知道人實際走到哪、也可能被代刷。系統要補上的是刷卡之外、全營區範圍的人員路徑。</p>
+  </div>
+
+  <div class="usecases">
+    <div class="uc"><span class="uc-n num">1</span><b>重建每人移動路徑</b><span>每天自動產出每個人的時間軸與平面圖路徑，看不清的段落標「無法判定」而不是硬猜。</span></div>
+    <div class="uc"><span class="uc-n num">2</span><b>事後查詢特定人員</b><span>指定一個人與時段，找出他出現在哪些攝影機、哪些時間，並附上每段的信心度。</span></div>
+    <div class="uc"><span class="uc-n num">3</span><b>未知人員提示</b><span>出現不在名冊上的人（訪客、外來者）時標示出來，不硬配成某位官兵。</span></div>
+  </div>
+
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>第一階段範圍</div></div>
+    <div class="plate-body">
+      <div class="tbl-wrap"><table class="tbl scope">
+        <thead><tr><th>面向</th><th>納入</th><th>暫不納入</th></tr></thead>
+        <tbody>
+          <tr><td><b>人數</b></td><td>同一畫面 5 人以內的小團體，各自或結伴行走</td><td>部隊集合、整隊行進</td></tr>
+          <tr><td><b>服裝</b></td><td>迷彩服＋小帽、鋼盔、夏季捲袖、冬季外套、運動服；<b>同一天內會換裝，系統要連得起來</b></td><td>—</td></tr>
+          <tr><td><b>身分</b></td><td>對應到人員名冊；門禁刷卡當<b>輔助證據</b></td><td>只靠刷卡判定身分（卡可能被代刷）</td></tr>
+          <tr><td><b>攝影機</b></td><td>傳統光學攝影機；配置未知，以常見路邊監視器為參考（約 1080p、架高 3–4 m、俯角 15–35°）</td><td>為單一營區客製、依賴攝影機校正或重疊視野</td></tr>
+          <tr><td><b>場景</b></td><td>營區任何地點：營門、道路、走廊與寢室外、餐廳與中山室、集合場、操場</td><td>—</td></tr>
+          <tr><td><b>光線天候</b></td><td>白天與一般照明；夜間、雨天看不清時允許「無法判定」</td><td>要求夜間、雨天也準確</td></tr>
+          <tr><td><b>處理方式</b></td><td>每日影片批次處理，營區伺服器算力有限</td><td>即時警報</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="plate-note">範圍依專案目前的設定整理，屬<span class="ev inferred"><i></i>合理推論</span>；正式範圍以長官核定為準。</div>
+  </figure>
+
+  <h3>門禁刷卡在系統裡的角色</h3>
+  <p>刷卡紀錄很有價值——它告訴系統「某張卡在某時某地被刷過」——但它是一個<b>待驗證的主張</b>，不是答案。系統的做法是：把刷卡當成一條證據，和影像的臉、體型、步態證據一起比對；兩者一致就加強信心，<b>不一致時以影像為準並列入待查</b>（可能是代刷或冒用）。所以系統的影像辨識能力必須能獨立成立，刷卡只是加分。</p>
+
+  <h3>怎樣才算成功（建議的評估方式，目標值待討論）</h3>
+  <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>用途</th><th>評估指標</th><th>說明</th><th>第一階段建議起點</th></tr></thead>
+    <tbody>
+      <tr><td><b>路徑重建</b></td><td>跨攝影機連結正確率</td><td>相鄰兩段片段被連成同一人時，真的是同一人的比例</td><td>白天、5 人情境 ≥ 90%（待討論）</td></tr>
+      <tr><td></td><td>路徑完整度</td><td>一個人當天實際經過的攝影機中，被正確串進他路徑的比例</td><td>≥ 70%，其餘標「無法判定」（待討論）</td></tr>
+      <tr><td></td><td>換裝連結率</td><td>同一人換裝前後的兩段路徑，被連成同一人的比例</td><td>先量現況，再訂目標</td></tr>
+      <tr><td><b>事後查詢</b></td><td>Rank-1、mAP</td><td>查詢某人時，系統找回的片段是否正確、是否找得全</td><td>先量現況，再訂目標</td></tr>
+      <tr><td><b>身分對應</b></td><td>誤認率（FPIR）優先</td><td>把 A 認成 B、把陌生人認成某位官兵，比「認不出來」嚴重</td><td>先壓到 ≤ 1%，再看漏認率（待討論）</td></tr>
+      <tr><td><b>未知人員</b></td><td>未知人員偵出率</td><td>名冊外的人被標成「未知」的比例</td><td>先量現況，再訂目標</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">建議起點是依文獻與工程經驗提出的討論基準（<span class="ev inferred"><i></i>合理推論</span>），不是已驗證的可達成值；第 5 章的實驗會量出現況。</p>
+
+  <h3>營區場景 × 可用線索</h3>
+  <p>攝影機可能出現在營區任何地方。下表是每種場景下，各線索大概用不用得上（第一階段範圍內：白天、5 人以內）。點格子看原因。</p>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>營區場景 × 身分線索</div></div>
+    <div class="plate-body cols cols-7-5">
+      <div class="tbl-wrap"><svg id="scene-mx" viewBox="0 0 640 400" role="img" aria-label="營區場景與身分線索的可用程度" style="min-width:560px"></svg></div>
+      <div id="scene-d" class="detail"></div>
+    </div>
+    <div class="plate-note"><i class="lvd f"></i> 可用　<i class="lvd h"></i> 有限　<i class="lvd"></i> 幾乎用不上。依攝影機幾何、各線索的必要條件與文獻整理，屬<span class="ev inferred"><i></i>合理推論</span>；實際程度要用營區試錄資料量測。換裝通常發生在場景之間（例如寢室換運動服 → 操場），所以跨場景的連結要靠不受衣服影響的線索：臉、體型、步態與時空。</div>
+  </figure>
 
   <h2>ReID 系統怎麼「認人」、怎麼評分</h2>
   <p>給系統一段某人的畫面（查詢），它會把資料庫裡的每段畫面依「像不像」排序。評分看的是：<b>本人有沒有排在第一</b>（Rank-1），以及<b>所有屬於本人的畫面是不是都排在前面</b>（mAP）。切換三種排序，看兩個指標怎麼變。</p>
@@ -136,8 +207,8 @@
     <div class="plate-note">人物由程序化模型產生；排序為示意。真實系統的「資料庫」可能有上千段畫面，同一人通常有很多段——所以 mAP 比 Rank-1 更能反映「找得全不全」。</div>
   </figure>
 
-  <h2>同制服和換衣服，是兩個方向相反的問題</h2>
-  <p>兩者都說「衣服不可靠」，但難點相反。選錯問題，就會選錯資料集與方法。</p>
+  <h2>同制服＋換裝：兩個方向相反的難題同時存在</h2>
+  <p>兩者都說「衣服不可靠」，但難點相反：同制服要<b>把穿一樣的不同人分開</b>，換裝要<b>把換了衣服的同一人連起來</b>。本專案兩個都要，而公開研究多半只做其中一個。</p>
   <figure class="plate">
     <div class="plate-head">
       <div class="plate-title"><span class="fig"></span>身分 × 服裝矩陣：每個資料集到底測了哪些格子</div>
@@ -229,7 +300,7 @@
         <div class="ana-ctl"><span>查詢的人</span><div class="seg" id="ana-q" role="group" aria-label="查詢的人"></div></div>
         <button class="btn ghost" id="ana-play" aria-pressed="true">暫停</button>
       </div>
-      <p class="ana-how">由左到右是方法的運算步驟；由上到下是三段影片：<b>查詢</b>（攝影機 1 拍到的人）、<b>本人</b>（同一人在攝影機 2）、<b>最像的冒充者</b>（攝影機 2 裡，穿同款制服、被這個方法判得最像的另一人）。</p>
+      <p class="ana-how">由左到右是方法的運算步驟；由上到下是三段影片：<b>查詢</b>（攝影機 1 拍到的人）、<b>本人</b>（同一人在攝影機 2）、<b>最像的冒充者</b>（攝影機 2 裡，穿同款服裝、被這個方法判得最像的另一人）。兩台攝影機都以常見路邊監視器的俯角（約 20–26°）繪製；選「角度＋換裝」時，攝影機 2 裡的五個人都換成運動服。</p>
       <div class="ana-scroll"><div class="ana-grid" id="ana-grid"></div></div>
       <div class="cols cols-5-7 ana-bottom">
         <svg id="ana-rank" viewBox="0 0 440 270" role="img" aria-label="攝影機 2 五個人與查詢者的距離排名"></svg>
@@ -243,15 +314,15 @@
   <figure class="plate">
     <div class="plate-head"><div class="plate-title"><span class="fig"></span>六類方法 × 三種攝影機條件</div></div>
     <div class="plate-body cols cols-7-5">
-      <div class="tbl-wrap"><svg id="ana-matrix" viewBox="0 0 580 290" role="img" aria-label="六類方法在三種攝影機條件下的排名結果" style="min-width:520px"></svg></div>
+      <div class="tbl-wrap"><svg id="ana-matrix" viewBox="0 0 600 290" role="img" aria-label="六類方法在三種攝影機條件下的排名結果" style="min-width:520px"></svg></div>
       <ol class="readout">
-        <li><b>外觀與去衣服化，三種條件都接近亂猜。</b>衣服一樣時，人與人之間剩下的差異，比換一台攝影機造成的差異還小。</li>
-        <li><b>步態與體型在一般條件下分得開多數人</b>，因為它們看的是身體與動作，不是衣服。</li>
-        <li><b>遠距低解析時，每一種單一線索都會掉。</b>剪影變粗、關節亂跳、體型估不準。</li>
-        <li><b>融合不是把分數加起來就好</b>：要依畫面情況調整各線索的權重，這是第 3 章的主題。</li>
+        <li><b>沒有一種單一線索在所有條件下都可靠。</b>攝影機改成路邊監視器的俯角後，輪廓與骨架步態也只對 2–3 人——與文獻「高俯角下步態大幅退化」一致。</li>
+        <li><b>外觀在示意中接近亂猜</b>，因為示意只用顏色統計；真實模型用同制服資料微調後，在同一套服裝之內仍有用，但換裝後失效。</li>
+        <li><b>換裝是最難的條件</b>，連融合都掉下來。這是本專案和一般「同制服」研究最不一樣的地方，也是要優先驗證的地方。</li>
+        <li><b>依畫面情況調整權重的融合最穩定</b>：各線索的死角不同，合起來才補得起來（第 3 章）。</li>
       </ol>
     </div>
-    <div class="plate-note">與上方解剖台相同的玩具模型，只有五個人，<b>用來看趨勢，不是評測結果</b>。真實的同制服效果需要用營區自己的資料量測（第 5 章的 E1、E4、E5、E6）。</div>
+    <div class="plate-note">與上方解剖台相同的玩具模型，只有五個人，<b>用來看趨勢，不是評測結果</b>。真實的同制服效果需要用營區自己的資料量測（第 5 章的 E1、E4、E5、E6、E10）。</div>
   </figure>
 
   <h2>55 個方法放在同一張版圖上</h2>
@@ -622,7 +693,7 @@
   <header class="ch-head">
     <p class="ch-num">第 5 章</p>
     <h1>用自己的資料驗證，把進度講清楚</h1>
-    <p class="thesis">公開資料集沒有一個像營區，所以每個技術選擇都要在自建資料上驗證。這一章依序說明：目前已知與未知、資料怎麼拍怎麼切、九個實驗與通過條件，以及如何用 TRL、查核點與月報管理進度。</p>
+    <p class="thesis">公開資料集沒有一個像營區，所以每個技術選擇都要在自建資料上驗證。這一章依序說明：目前已知與未知、資料怎麼拍怎麼切、十個實驗與通過條件，以及如何用 TRL、查核點與月報管理進度。</p>
   </header>
 
   <h2>已知、推論、未知</h2>
@@ -658,10 +729,10 @@
   <h3>每個功能用什麼指標</h3>
   <div class="tbl-wrap"><table class="tbl" id="val-metrics"></table></div>
 
-  <h2>九個實驗與通過條件</h2>
-  <p>每個實驗只回答一個可以被否證的問題。全站提到的 E1–E9 都指這九個實驗。</p>
+  <h2>十個實驗與通過條件</h2>
+  <p>每個實驗只回答一個可以被否證的問題。全站提到的 E1–E10 都指這十個實驗；E10（換裝連結）是依本專案範圍新增的。</p>
   <figure class="plate">
-    <div class="plate-head"><div class="plate-title"><span class="fig"></span>九個實驗，每個都回答一個可被否證的問題（點選查看）</div></div>
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>十個實驗，每個都回答一個可被否證的問題（點選查看）</div></div>
     <div class="plate-body"><svg id="val-exp" viewBox="0 0 980 230" role="img" aria-label="實驗順序"></svg><div id="val-exp-d" class="detail" style="margin-top:10px"></div></div>
   </figure>
 

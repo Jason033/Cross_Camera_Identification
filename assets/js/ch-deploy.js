@@ -7,6 +7,7 @@
   /* ======================= 5 跨攝影機 ======================= */
   var FACTORS = [
     { k: 'light', n: '光照／色偏' },
+    { k: 'outfit', n: '換裝（運動服）' },
     { k: 'lowres', n: '遠距低解析' },
     { k: 'occ', n: '遮擋' },
     { k: 'blur', n: '動態模糊／壓縮' },
@@ -22,6 +23,7 @@
   ];
   var PEN = {
     light: { app: 0.45, face: 0.2, skel: 0.05, sil: 0.1, gait: 0.05, anthro: 0 },
+    outfit: { app: 0.85, face: 0, skel: 0.05, sil: 0.35, gait: 0.1, anthro: 0.2 },
     lowres: { app: 0.25, face: 0.9, skel: 0.55, sil: 0.3, gait: 0.3, anthro: 0.5 },
     occ: { app: 0.3, face: 0, skel: 0.5, sil: 0.5, gait: 0.45, anthro: 0.6 },
     blur: { app: 0.15, face: 0.4, skel: 0.25, sil: 0.2, gait: 0.15, anthro: 0.2 },
@@ -65,7 +67,7 @@
     // 牆面線條（給視角感）
     ctx.strokeStyle = '#c8cdbf'; ctx.lineWidth = 1;
     for (var i = 1; i < 6; i++) { ctx.beginPath(); ctx.moveTo(i * w / 6, 0); ctx.lineTo(i * w / 6, h * 0.72); ctx.stroke(); }
-    var p = global.PEOPLE[2];
+    var p = opts.outfit ? Object.assign({}, global.PEOPLE[2], { outfit: 'pt' }) : global.PEOPLE[2];
     var phi = p.phase0 + 2 * Math.PI * 0.95 * p.cadence * cam.t;
     var view = { yaw: yaw, pitch: 0.18, scale: h * 0.74, x: w * 0.5, y: h * 0.9 };
     if (opts.blur && 'filter' in ctx) ctx.filter = 'blur(2px)';

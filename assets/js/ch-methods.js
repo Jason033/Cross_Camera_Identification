@@ -10,17 +10,17 @@
   var FAMS = [
     { id: 'app', n: '外觀 ReID', c: '#2a78d6', reps: ['TransReID', 'CLIP-ReID', 'SOLIDER', 'PersonViT'],
       idea: '把裁切的人像切成小方塊，用 Transformer 學「這個人看起來長什麼樣」。',
-      learns: '衣服顏色與紋理、髮型、鞋、配件。換句話說，主要學的是衣服。',
-      needs: '單張影像即可', fails: ['同制服', '色偏燈光'],
-      num: [['MSMT17 mAP（衣著各異的街景）', '73.4–80.8', 'proven']],
-      score: 1, verdict: '全員同服時主要訊號消失。保留作弱證據，並用來抓鞋、帽、配件的細節。',
+      learns: '衣服顏色與紋理、髮型、鞋、配件。圖中的示意只用「區塊平均色」、沒有經過訓練，所以接近亂猜；用同制服資料微調的真實模型會學到鞋、體型、配件等細節，表現好得多。',
+      needs: '單張影像即可', fails: ['換裝', '光線不同', '同制服（未微調時）'],
+      num: [['MSMT17 mAP（衣著各異的街景）', '73.4–80.8', 'proven'], ['Industrial-Gait 工作服＋安全帽，RGB Rank-1', '88.3（待核對）', 'inferred']],
+      score: 2, verdict: '同一套服裝之內（同一天、沒換裝）仍是有用的線索，微調後可抓鞋、配件等細節；換裝後失效，不能用來跨服裝連結。',
       lic: '寬鬆（MIT／Apache）', cost: '低' },
     { id: 'cal', n: '去衣服化', c: '#6b8fc4', reps: ['CAL', 'AIM', 'FSAM'],
       idea: '另訓一個「衣服分類器」，再逼主模型的特徵騙過它，讓特徵不再帶衣服資訊。',
-      learns: '同一人換了衣服，特徵仍要一樣。前提是訓練資料裡同一人有好幾套衣服。',
-      needs: '單張影像＋衣服標籤', fails: ['全員同服（沒有衣服變化可學）'],
+      learns: '同一人換了衣服，特徵仍要一樣。前提是訓練資料裡同一人有好幾套衣服。圖中以「壓低衣服顏色、保留體型輪廓」示意。',
+      needs: '單張影像＋衣服標籤（同一人多套服裝的訓練資料）', fails: ['全員同服時分不開不同人', '訓練資料沒有換裝'],
       num: [['PRCC 換衣 Rank-1', '55.2（CAL）', 'proven'], ['MEVID 真實跨日換衣 Rank-1', '3.5（CAL）', 'proven']],
-      score: 2, verdict: '解決的是「同人換衣」，不是「不同人同衣」。全員同服時沒有可對抗的衣著變化，效益存疑。',
+      score: 3, verdict: '本專案有同一天換裝的需求，這類方法處理的正是「換裝後連得起同一人」那一半；但對「同服裝時分開不同人」幫助有限。需要在營區收集同一人穿多套服裝的訓練資料。',
       lic: '寬鬆（CAL：Apache）', cost: '低' },
     { id: 'sil', n: '輪廓步態', c: '#1baf7a', reps: ['GaitBase', 'DeepGaitV2', 'SwinGait'],
       idea: '把每幀的人切成黑白剪影，疊起來看身形與走路時形狀的變化。',
@@ -52,14 +52,15 @@
       lic: '未確認', cost: '高（大模型骨幹）' }
   ];
   var FAM = {}; FAMS.forEach(function (f) { FAM[f.id] = f; });
-  var CONDS = ['view', 'tint', 'low'];
-  var GATE = { view: { app: 0.25, body: 0.3, gait: 0.45 }, tint: { app: 0.1, body: 0.35, gait: 0.55 }, low: { app: 0.25, body: 0.45, gait: 0.3 } };
+  var CONDS = ['view', 'light', 'outfit', 'far'];
+  // 示意門控：依畫面情況調整各專家權重（光線不同、換裝時外觀降權；遠距時步態降權）
+  var GATE = { view: { app: 0.3, body: 0.3, gait: 0.4 }, light: { app: 0.1, body: 0.35, gait: 0.55 }, outfit: { app: 0.05, body: 0.35, gait: 0.6 }, far: { app: 0.3, body: 0.45, gait: 0.25 } };
 
   /* ======================= 特徵快取與距離 ======================= */
   var FC = null;
   function feats() {
     if (FC) return FC;
-    var cams = { c1: VK.CAM1, view: VK.CAM2.view, tint: VK.CAM2.tint, low: VK.CAM2.low };
+    var cams = { c1: VK.CAM1, view: VK.CAM2.view, light: VK.CAM2.light, outfit: VK.CAM2.outfit, far: VK.CAM2.far };
     FC = { app: {}, sil: {}, skel: {}, body: {} };
     Object.keys(cams).forEach(function (k) {
       FC.app[k] = P.map(function (p) { return VK.featApp(p, cams[k]); });
@@ -86,7 +87,9 @@
   function norm(a) { var m = med(a) || 1; return a.map(function (x) { return x / m; }); }
   /** 回傳攝影機 2 上 5 個人與查詢者的距離 */
   function dists(fid, qi, cond) {
-    if (fid === 'app' || fid === 'cal') return rawDists('app', qi, cond);
+    if (fid === 'app') return rawDists('app', qi, cond);
+    // 去衣服化示意：壓低衣服顏色、保留體型輪廓
+    if (fid === 'cal') { var ca = norm(rawDists('app', qi, cond)), cs = norm(rawDists('sil', qi, cond)); return ca.map(function (x, j) { return 0.3 * x + 0.7 * cs[j]; }); }
     if (fid === 'sil' || fid === 'skel' || fid === 'body') return rawDists(fid, qi, cond);
     var g = GATE[cond], a = norm(rawDists('app', qi, cond)), b = norm(rawDists('body', qi, cond)),
       s = norm(rawDists('sil', qi, cond)), k = norm(rawDists('skel', qi, cond));
@@ -96,7 +99,7 @@
   function hardest(d, qi) { var best = -1; d.forEach(function (x, j) { if (j !== qi && (best < 0 || x < d[best])) best = j; }); return best; }
 
   /* ======================= 狀態 ======================= */
-  var A = { fam: 'app', qi: 0, cond: 'tint', t: 1.2, raf: 0, playing: !U.reduceMotion, cells: [] };
+  var A = { fam: 'app', qi: 0, cond: 'view', t: 1.2, raf: 0, playing: !U.reduceMotion, cells: [] };
 
   CH.methods = {
     init: function () {
@@ -253,19 +256,20 @@
   }
   function sClothCls(ctx, W, H, row, t) {
     VK.label(ctx, 8, 20, '衣服分類器輸出', { size: 12, bold: true });
-    var classes = [['迷彩服', 1], ['軍便服', 0], ['便服', 0]];
+    var pt = row.cam.outfit === 'pt', classes = [['迷彩服', pt ? 0 : 1], ['運動服', pt ? 1 : 0], ['冬季外套', 0]];
     classes.forEach(function (c, i) {
       var y = 34 + i * 26;
       VK.label(ctx, 8, y + 13, c[0], { size: 11.5, color: '#48544b' });
-      ctx.fillStyle = '#eef0eb'; ctx.fillRect(54, y + 2, 86, 14);
-      ctx.fillStyle = c[1] ? '#6b8fc4' : '#c5ccc2'; ctx.fillRect(54, y + 2, Math.max(2, 86 * c[1]), 14);
+      ctx.fillStyle = '#eef0eb'; ctx.fillRect(62, y + 2, 78, 14);
+      ctx.fillStyle = c[1] ? '#6b8fc4' : '#c5ccc2'; ctx.fillRect(62, y + 2, Math.max(2, 78 * c[1]), 14);
     });
+    var change = A.cond === 'outfit';
     VK.rr(ctx, 8, 118, 134, 50, 5); ctx.fillStyle = '#eef3fa'; ctx.fill();
-    VK.label(ctx, 75, 138, '三列完全一樣', { align: 'center', size: 12, bold: true, color: '#6b8fc4' });
-    VK.label(ctx, 75, 156, '沒有衣服差異可對抗', { align: 'center', size: 11.5, color: '#48544b' });
-    caption(ctx, '對抗損失 ≈ 0', '#c93434');
+    VK.label(ctx, 75, 138, change ? '查詢與候選換了裝' : '三列穿同一套', { align: 'center', size: 12, bold: true, color: '#6b8fc4' });
+    VK.label(ctx, 75, 156, change ? '要學會忽略衣服差異' : '沒有衣服差異可對抗', { align: 'center', size: 11.5, color: '#48544b' });
+    caption(ctx, change ? '對抗損失在這裡派上用場' : '對抗損失 ≈ 0', change ? '#0c8a0c' : '#c93434');
   }
-  function sCalEmb(ctx, W, H, row) { sAppEmb(ctx, W, H, row); ctx.fillStyle = '#fff'; ctx.fillRect(0, CHH - 26, CW, 26); caption(ctx, '≈ 原本的外觀嵌入', '#c93434'); }
+  function sCalEmb(ctx, W, H, row) { sAppEmb(ctx, W, H, row); ctx.fillStyle = '#fff'; ctx.fillRect(0, CHH - 26, CW, 26); caption(ctx, '壓低衣服、保留體型（示意）', '#6b8fc4'); }
 
   /* 輪廓步態 */
   var silCv = document.createElement('canvas'); silCv.width = 22; silCv.height = 32;
@@ -434,7 +438,7 @@
       ctx.fillStyle = it[2]; ctx.fillRect(42, y + 2, 72 * it[1] / 0.6, 14);
       VK.label(ctx, 42 + 72 * it[1] / 0.6 + 4, y + 13.5, Math.round(it[1] * 100) + '%', { size: 11.5, bold: true, color: '#1c251f' });
     });
-    caption(ctx, A.cond === 'low' ? '低解析：步態降權' : A.cond === 'tint' ? '色偏：外觀降權' : '依畫面品質調整');
+    caption(ctx, A.cond === 'far' ? '遠距：步態降權' : A.cond === 'light' ? '光線不同：外觀降權' : A.cond === 'outfit' ? '換裝：外觀幾乎不信' : '依畫面品質調整');
   }
   function sFuseEmb(ctx, W, H, row) {
     var g = GATE[A.cond], F = feats(), x = 12, total = 126;
@@ -499,11 +503,11 @@
   /* ---------- 六類方法 × 三種條件 ---------- */
   function drawMatrix() {
     var svg = U.clear($('#ana-matrix'));
-    var L = 128, cw = 150, rh = 40, T = 46;
+    var L = 128, cw = 118, rh = 40, T = 46;
     CONDS.forEach(function (k, j) {
       el('text', { x: L + j * cw + cw / 2, y: 18, 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 700, fill: 'var(--ink)', text: VK.CAM2[k].n }, svg);
     });
-    el('text', { x: L + 1.5 * cw, y: 36, 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--ink-3)', text: '條件由左到右逐步變差 →' }, svg);
+    el('text', { x: L + 2 * cw, y: 36, 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--ink-3)', text: '每欄都是「攝影機 2 角度不同」，再各加一個條件' }, svg);
     FAMS.forEach(function (f, i) {
       var y = T + i * rh;
       var on = f.id === A.fam;
@@ -516,8 +520,8 @@
         var x = L + j * cw, g = el('g', { tabindex: 0, role: 'button', 'aria-label': f.n + '，' + VK.CAM2[k].n + '，' + ok + ' / 5 人排第一', style: 'cursor:pointer' }, svg);
         var sel = on && k === A.cond;
         el('rect', { x: x + 6, y: y + 3, width: cw - 12, height: rh - 10, rx: 4, fill: ok >= 4 ? '#dbeedb' : ok >= 3 ? '#f4ead0' : '#f6dcdc', stroke: sel ? 'var(--ink)' : 'none', 'stroke-width': 2 }, g);
-        rs.forEach(function (b, q) { el('circle', { cx: x + 22 + q * 13, cy: y + rh / 2 - 2, r: 4.5, fill: b ? 'var(--good)' : '#fff', stroke: b ? 'var(--good)' : 'var(--bad)', 'stroke-width': 1.4 }, g); });
-        el('text', { x: x + cw - 16, y: y + rh / 2 + 3, 'text-anchor': 'end', 'font-size': 13, 'font-weight': 700, class: 'num', fill: ok >= 4 ? 'var(--good)' : ok >= 3 ? 'var(--warn)' : 'var(--bad)', text: ok + ' / 5' }, g);
+        rs.forEach(function (b, q) { el('circle', { cx: x + 18 + q * 11.5, cy: y + rh / 2 - 2, r: 4, fill: b ? 'var(--good)' : '#fff', stroke: b ? 'var(--good)' : 'var(--bad)', 'stroke-width': 1.4 }, g); });
+        el('text', { x: x + cw - 12, y: y + rh / 2 + 3, 'text-anchor': 'end', 'font-size': 12.5, 'font-weight': 700, class: 'num', fill: ok >= 4 ? 'var(--good)' : ok >= 3 ? 'var(--warn)' : 'var(--bad)', text: ok + ' / 5' }, g);
         function go() { A.fam = f.id; A.cond = k; U.$$('#ana-cond button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-c') === k ? 'true' : 'false'); }); setFam(f.id); }
         g.addEventListener('click', go);
         g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });

@@ -19,7 +19,8 @@
   function shoRatio(p) { return PM.BASE.shoulderW * p.shoulderScale; }
 
   /* ======================= 0 總覽：同制服行進隊列 ======================= */
-  var hero = { lens: 'rgb', playing: !U.reduceMotion, t: 3.2, raf: 0, last: 0 };
+  var hero = { lens: 'rgb', outfit: 'camo', playing: !U.reduceMotion, t: 3.2, raf: 0, last: 0 };
+  var MIX = ['camo', 'helmet', 'winter', 'pt', 'summer'];
   var CAPTIONS = {
     rgb: '攝影機畫面：五人同款制服、同款帽子。若模型主要靠衣服顏色與紋理來判斷身分，這五個人的特徵幾乎相同——判別維度消失了。',
     sil: '輪廓：去掉顏色只剩人形。身高與體型差異開始浮現；但制服寬鬆程度、背包裝備也會改變輪廓，所以輪廓仍有一部分「衣服依賴」。',
@@ -41,6 +42,7 @@
         return { trail: trail, body: body, over: over, lab: lab };
       });
       hero.lens = U.segGroup($('#lens'), 'data-lens', function (v) { hero.lens = v; drawHero(); });
+      hero.outfit = U.segGroup($('#outfit-sel'), 'data-o', function (v) { hero.outfit = v; drawHero(); });
       var btn = $('#lineup-play');
       function syncBtn() { btn.textContent = hero.playing ? '暫停' : '播放'; btn.setAttribute('aria-pressed', hero.playing ? 'true' : 'false'); }
       btn.addEventListener('click', function () { hero.playing = !hero.playing; syncBtn(); if (hero.playing) loop(); });
@@ -66,8 +68,11 @@
 
   function drawHero() {
     var lens = hero.lens;
-    $('#lens-caption').textContent = CAPTIONS[lens];
-    PEOPLE.forEach(function (p, i) {
+    var ON = { camo: '', helmet: '鋼盔：頭形變大、頭頂被遮住，身高估計會偏高。', summer: '夏季捲袖：前臂露出，袖口位置與顏色都變了。', winter: '冬季外套：上身變厚、蓋過腰，肩寬與體型估計會被衣服撐大。', pt: '運動服：顏色、輪廓、鞋子全變了——外觀模型會把同一人當成另一個人，骨架與步態則幾乎不受影響。', mix: '同一天的不同時段：五人各穿不同服裝。系統必須把「穿迷彩服的 A」和「穿運動服的 A」連成同一人。' };
+    var base = (lens === 'rgb' && hero.outfit !== 'camo') ? '攝影機畫面：' + (hero.outfit === 'mix' ? '同一天裡，五人各穿不同服裝。' : '五人換上同一套服裝，彼此仍然幾乎一樣。') : CAPTIONS[lens];
+    $('#lens-caption').textContent = base + (ON[hero.outfit] ? '　【服裝】' + ON[hero.outfit] : '');
+    PEOPLE.forEach(function (p0, i) {
+      var p = Object.assign({}, p0, { outfit: hero.outfit === 'mix' ? MIX[i] : hero.outfit });
       var G = hero.groups[i];
       var view = { yaw: 0.42, pitch: 0.06, scale: 285, x: 100 + i * 200, y: 362 };
       var phi = phaseAt(p, hero.t);
@@ -113,19 +118,20 @@
   }
 
   /* ======================= 1 問題定義 ======================= */
+  // 矩陣的欄：兩套便服 + 營區四種常見服裝（皆為同款，屬「制服」）
   var OUTFITS = [
-    { n: '便服 1', c: '#b54a3c' }, { n: '便服 2', c: '#2d3a66' }, { n: '便服 3', c: '#9a9488' },
-    { n: '迷彩服', c: '#4f5c30', uni: true }, { n: '軍便服', c: '#7a7451', uni: true }
+    { k: 'casualA', n: '便服 1' }, { k: 'casualB', n: '便服 2' },
+    { k: 'camo', n: '迷彩小帽', uni: true }, { k: 'helmet', n: '鋼盔', uni: true }, { k: 'winter', n: '冬季外套', uni: true }, { k: 'pt', n: '運動服', uni: true }
   ];
   var GRID_DS = [
-    { id: 'gen', n: '一般 ReID', cells: [[0, 0], [1, 1], [2, 2], [3, 0], [4, 1]], pos: 'none',
-      txt: '<h3>一般 ReID（Market-1501 等）</h3><p>每人一套衣服，而且不同人幾乎都穿不同衣服。模型用「衣服＝身分」這條捷徑就能拿高分。</p><p class="small muted">兩人碰巧穿同色衣服時（第 1 與第 4 列）就容易錯配——這正是同制服的極端版本。</p>' },
-    { id: 'cc', n: 'LTCC / PRCC（換衣）', cells: [[0, 0], [0, 1], [1, 1], [1, 2], [2, 2], [2, 0], [3, 0], [3, 2], [4, 1], [4, 0]], pos: 'row', ltccFix: true,
+    { id: 'gen', n: '一般 ReID', cells: [[0, 0], [1, 1], [2, 0], [3, 1], [4, 0]], pos: 'none',
+      txt: '<h3>一般 ReID（Market-1501 等）</h3><p>每人一套便服，而且不同人幾乎都穿不同衣服。模型用「衣服＝身分」這條捷徑就能拿高分。</p><p class="small muted">兩人碰巧穿同一套衣服時（例如第 1、3、5 列）就容易錯配——這正是同制服的極端版本。</p>' },
+    { id: 'cc', n: 'LTCC / PRCC（換衣）', cells: [[0, 0], [0, 1], [1, 0], [1, 1], [2, 1], [3, 0], [3, 1], [4, 0]], pos: 'row', ltccFix: true,
       txt: '<h3>換衣 ReID</h3><p>同一列裡跨欄配對：<b>同一人換衣後還認得出來嗎？</b></p><p>LTCC 官方明確假設不同人不穿完全相同的服裝；PRCC 的 A/B 攝影機同衣、C 攝影機換衣。兩者都<b>沒有</b>測「同一欄裡分辨不同人」。</p><p class="small"><span class="ev proven"><i></i>文獻證實</span>（LTCC、PRCC 資料集說明）</p>' },
-    { id: 'fgpr', n: 'FGPR（同制服）', cells: [[0, 3], [1, 3], [2, 3], [3, 4], [4, 4]], pos: 'col',
+    { id: 'fgpr', n: 'FGPR（同制服）', cells: [[0, 2], [1, 2], [2, 2], [3, 3], [4, 3]], pos: 'col',
       txt: '<h3>FGPR：同制服細粒度 ReID</h3><p>把人分成制服組，同組的人穿相同衣服：358 人、716 段影片、5 個視角。</p><p>難點從「配對同一列」變成<b>「在同一欄裡把不同列分開」</b>——衣服完全提供不了負樣本的區分。</p><p class="small"><span class="ev proven"><i></i>文獻證實</span>（Yin et al., IJCV 2020）</p>' },
-    { id: 'camp', n: '軍營實際情境', cells: [[0, 3], [1, 3], [2, 3], [3, 3], [4, 3], [0, 4], [2, 4], [4, 4], [1, 0]], pos: 'both',
-      txt: '<h3>軍營：兩個問題同時存在</h3><p>多數時間全員穿迷彩服（同一欄分辨不同人），但也會換穿軍便服、休假穿便服（同一列跨欄配對）。</p><p>所以系統同時需要：<b>同制服時拉開不同人</b>，以及<b>換裝時仍連結同一人</b>。現有資料集沒有一個同時涵蓋兩者。</p><p class="small"><span class="ev inferred"><i></i>合理推論</span></p>' }
+    { id: 'camp', n: '本專案：營區', cells: [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [0, 5], [1, 5], [2, 3], [3, 4], [4, 5], [4, 3]], pos: 'both',
+      txt: '<h3>本專案：同一天、同一群人、多種服裝</h3><p>平常全員穿迷彩服加小帽（同一欄要分開不同人）；同一天內又會換鋼盔、冬季外套或運動服（同一列要連成同一人）。</p><p>所以系統同時要做到：<b>同服裝時分得開不同人</b>，以及<b>換裝後仍連得起同一人</b>。現有公開資料集沒有一個同時涵蓋兩者。</p><p class="small"><span class="ev inferred"><i></i>合理推論</span>（本專案需求）</p>' }
   ];
 
   CH.problem = {
@@ -170,21 +176,21 @@
 
   function drawGrid(d) {
     var svg = U.clear($('#id-grid'));
-    var x0 = 92, y0 = 50, cw = 88, rh = 58;
+    var x0 = 84, y0 = 50, cw = 78, rh = 58;
     OUTFITS.forEach(function (o, j) {
       el('text', { x: x0 + j * cw + cw / 2, y: 30, 'text-anchor': 'middle', 'font-size': 13, fill: o.uni ? 'var(--olive)' : 'var(--ink-2)', 'font-weight': o.uni ? 700 : 400, text: o.n }, svg);
     });
     // 制服欄底色
-    el('rect', { x: x0 + 3 * cw, y: y0 - 6, width: cw * 2, height: rh * 5 + 4, fill: '#dfe3d3', rx: 6 }, svg);
+    el('rect', { x: x0 + 2 * cw, y: y0 - 6, width: cw * 4, height: rh * 5 + 4, fill: '#dfe3d3', rx: 6 }, svg);
     var on = {};
     d.cells.forEach(function (c) { on[c[0] + '-' + c[1]] = true; });
     for (var i = 0; i < 5; i++) {
       el('text', { x: x0 - 14, y: y0 + i * rh + rh / 2 + 4, 'text-anchor': 'end', 'font-size': 13.5, fill: 'var(--ink)', text: '人員 ' + 'ABCDE'[i] }, svg);
-      for (var j = 0; j < 5; j++) {
+      for (var j = 0; j < OUTFITS.length; j++) {
         var cx = x0 + j * cw + cw / 2, cy = y0 + i * rh + rh / 2;
         var active = on[i + '-' + j];
-        el('rect', { x: cx - 38, y: cy - 24, width: 76, height: 48, rx: 5, fill: active ? '#fff' : 'transparent', stroke: active ? 'var(--ink)' : 'var(--rule)', 'stroke-width': active ? 1.4 : 1, 'stroke-dasharray': active ? null : '3 3' }, svg);
-        if (active) miniPerson(svg, cx, cy + 18, OUTFITS[j].c, 0.9 + i * 0.03);
+        el('rect', { x: cx - 34, y: cy - 24, width: 68, height: 48, rx: 5, fill: active ? '#fff' : 'transparent', stroke: active ? 'var(--ink)' : 'var(--rule)', 'stroke-width': active ? 1.4 : 1, 'stroke-dasharray': active ? null : '3 3' }, svg);
+        if (active) miniPerson(svg, cx, cy + 21, OUTFITS[j].k, i);
       }
     }
     // 配對示意
@@ -218,12 +224,9 @@
     el('text', { x: x0 + 212, y: ly + 4, 'font-size': 12.5, fill: 'var(--ink-2)', text: '要分開（不同人、同衣服）' }, svg);
     $('#grid-explain').innerHTML = d.txt;
   }
-  function miniPerson(svg, cx, base, color, s) {
-    var hgt = 40 * s;
-    el('circle', { cx: cx, cy: base - hgt + 4, r: 4.2, fill: '#c99b78' }, svg);
-    el('line', { x1: cx, y1: base - hgt + 10, x2: cx, y2: base - hgt * 0.45, stroke: color, 'stroke-width': 9, 'stroke-linecap': 'round' }, svg);
-    el('line', { x1: cx - 3, y1: base - hgt * 0.45, x2: cx - 5, y2: base, stroke: color, 'stroke-width': 4.5, 'stroke-linecap': 'round', opacity: 0.85 }, svg);
-    el('line', { x1: cx + 3, y1: base - hgt * 0.45, x2: cx + 5, y2: base, stroke: color, 'stroke-width': 4.5, 'stroke-linecap': 'round', opacity: 0.85 }, svg);
+  function miniPerson(svg, cx, base, outfit, i) {
+    var p = Object.assign({}, PEOPLE[i], { outfit: outfit }), g = el('g', {}, svg);
+    PM.renderSVG(g, PM.parts(p, p.phase0 + 1.2, { yaw: 0.5, pitch: 0.1, scale: 40, x: cx, y: base }, 'rgb'), {});
   }
 
   // ---- 特徵空間模擬 ----

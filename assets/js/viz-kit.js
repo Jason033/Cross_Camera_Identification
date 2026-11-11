@@ -15,11 +15,13 @@
 
   /* ---------- 攝影機條件 ----------
      yaw：0 = 側面；pitch：俯角；tint：色偏燈光；low：解析度縮小倍數 */
-  var CAM1 = { key: 'c1', yaw: 0.45, pitch: 0.12, tint: false, low: 1 };
+  // 參考常見路邊監視器：架高 3–4 m、俯角約 20–26°。攝影機 2 = 角度不同，再各加一個條件（不累加）
+  var CAM1 = { key: 'c1', yaw: 0.45, pitch: 0.35, tint: false, low: 1 };
   var CAM2 = {
-    view: { key: 'view', yaw: 0.62, pitch: 0.16, tint: false, low: 1, n: '另一台・角度不同' },
-    tint: { key: 'tint', yaw: 0.62, pitch: 0.16, tint: true, low: 1, n: '＋色偏燈光' },
-    low: { key: 'low', yaw: 0.62, pitch: 0.16, tint: true, low: 4, n: '＋遠距低解析' }
+    view: { key: 'view', yaw: 0.85, pitch: 0.45, tint: false, low: 1, n: '角度不同' },
+    light: { key: 'light', yaw: 0.85, pitch: 0.45, tint: true, low: 1, n: '角度＋光線' },
+    outfit: { key: 'outfit', yaw: 0.85, pitch: 0.45, tint: false, low: 1, outfit: 'pt', n: '角度＋換裝' },
+    far: { key: 'far', yaw: 0.85, pitch: 0.45, tint: false, low: 4, n: '角度＋遠距' }
   };
 
   function backdrop(ctx, w, h) {
@@ -62,7 +64,8 @@
     if (bg === 'scene') backdrop(ctx, w, h);
     else if (bg === 'white') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
     var v = view(p, w, h, cam, o.kind || 'crop', o.fill);
-    var parts = PM.parts(p, phase(p, t), v, o.mode || 'rgb');
+    var pp = cam.outfit ? Object.assign({}, p, { outfit: cam.outfit }) : p;
+    var parts = PM.parts(pp, phase(p, t), v, o.mode || 'rgb');
     if (o.mode === 'skel') drawSkel(ctx, parts, o.style || {});
     else PM.renderCanvas(ctx, parts, o.style || {});
     if (cam.tint && (o.mode || 'rgb') === 'rgb' && !o.noTint) tint(ctx, w, h);
@@ -88,7 +91,7 @@
     return out;
   }
   function poseNoise(cam) { return cam.low > 1 ? 0.035 : 0.006; }
-  function seedOf(p, cam, extra) { var s = 7; (p.id + '|' + cam.yaw + '|' + cam.low + (extra || '')).split('').forEach(function (c) { s = s * 31 + c.charCodeAt(0) >>> 0; }); return s; }
+  function seedOf(p, cam, extra) { var s = 7; (p.id + '|' + cam.yaw + '|' + cam.low + '|' + (cam.outfit || '') + (extra || '')).split('').forEach(function (c) { s = s * 31 + c.charCodeAt(0) >>> 0; }); return s; }
 
   /* ======================= 玩具特徵 ======================= */
   var NF = 16; // 每個步態週期取 16 幀
@@ -162,8 +165,10 @@
   /** 3D 體型：擬合後的身高與比例（估計誤差隨視角與解析度增加） */
   var BODY_NAMES = ['身高', '腿長比', '肩寬比', '髖寬比'];
   function featBody(p, cam) {
-    var r = U.rng(seedOf(p, cam, 'bd')), e = cam.low > 1 ? 0.07 : 0.03;
-    return { raw: [p.H * (1 + U.gauss(r) * e), p.legScale * (1 + U.gauss(r) * e), p.shoulderScale * (1 + U.gauss(r) * e * 1.5), p.hipScale * (1 + U.gauss(r) * e * 1.5)] };
+    var r = U.rng(seedOf(p, cam, 'bd')), e = cam.low > 1 ? 0.08 : 0.04;
+    // 衣服會撐大或縮小可見的體型；鋼盔讓頭頂偏高
+    var O = PM.OUTFITS[cam.outfit || p.outfit || 'camo'] || {}, bk = 1 + ((O.bulk || 1) - 1) * 0.8, hb = O.head === 'helmet' ? 1.02 : 1;
+    return { raw: [p.H * hb * (1 + U.gauss(r) * e), p.legScale * (1 + U.gauss(r) * e), p.shoulderScale * bk * (1 + U.gauss(r) * e * 2), p.hipScale * bk * (1 + U.gauss(r) * e * 2)] };
   }
 
   function dist(a, b) { var s = 0; for (var i = 0; i < a.length; i++) s += (a[i] - b[i]) * (a[i] - b[i]); return Math.sqrt(s); }
