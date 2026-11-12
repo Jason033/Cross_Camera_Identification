@@ -6,7 +6,7 @@
    輸出：PASS/WARN/FAIL [id] 訊息；有 FAIL 則 exit 1。
    每項檢查有 since（階段）；since > PHASE 的檢查只會印 WARN（不會 FAIL）。 */
 'use strict';
-const PHASE_NAME = '4'; // 4＝Phase 4（4a 資料＋4b 渲染）完成；slots 檢查為 FAIL 級
+const PHASE_NAME = '5'; // 5＝Phase 5（動畫與按鈕）完成；buttons 檢查為 FAIL 級
 const PHASE = PHASE_NAME === '3a' ? 2.5 : Number(PHASE_NAME);
 
 const fs = require('fs'), path = require('path');
@@ -377,6 +377,7 @@ async function smoke() {
   const fail = (m) => { fails.push(m); };
   const t0 = Date.now();
   let nAnim = 0, nBtn = 0;
+  const btnFails = []; // 渲染後的按鈕文字、title、圖例、動畫第一幕（Phase 5 起 FAIL）
   const stepwords = []; // 渲染文字裡的「第 N 步」：Phase 3（3a+3b 完成）起 FAIL，之前 WARN
 
   async function open(route, errs) {
@@ -420,8 +421,36 @@ async function smoke() {
         if (info.bad) fail('#/' + ch + '：DOM 文字' + info.bad);
         if (info.stepword.length) stepwords.push('#/' + ch + '：渲染後文字含「' + info.stepword.join('」「') + '」');
 
+        // 1b) 按鈕規範：.fp-btn 文字以 BUTTONS label 開頭、title＝BUTTONS[].d、並排比較帶「（N 個方法）」；圖例兩處都有且內容相同
+        const BT = PIPE && PIPE.BUTTONS ? PIPE.BUTTONS : null;
+        if (BT) {
+          const bi = await page.evaluate(() => {
+            const r = { fp: [], inline: [], legends: [] };
+            document.querySelectorAll('#main .fp-btn').forEach((b) => { if (!b.closest('.fp-modal')) r.fp.push({ t: b.textContent.trim(), title: b.getAttribute('title') || '', cmp: b.hasAttribute('data-cmp'), big: b.classList.contains('big') }); });
+            ['lineup-play', 'ana-play', 'master-home-tour', 'master-approach-tour', 'clu-play', 'clu-end'].forEach((id) => { const e = document.getElementById(id); if (e) r.inline.push({ id, t: e.textContent.trim(), title: e.getAttribute('title') || '' }); });
+            document.querySelectorAll('.btn-legend').forEach((e) => r.legends.push(e.textContent.trim()));
+            return r;
+          });
+          const L = { anim: BT.find((b) => b.k === 'anim'), cmp: BT.find((b) => b.k === 'cmp'), inline: BT.find((b) => b.k === 'inline') };
+          bi.fp.forEach((b) => {
+            const lab = b.cmp ? L.cmp : L.anim;
+            if (b.t.indexOf(lab.label) !== 0) btnFails.push('#/' + ch + '：.fp-btn「' + b.t + '」不以「' + lab.label + '」開頭');
+            else if (!b.cmp && b.t.length > lab.label.length && !/^：.{1,12}$/.test(b.t.slice(lab.label.length))) btnFails.push('#/' + ch + '：.fp-btn「' + b.t + '」的對象超過 12 字或格式不對');
+            else if (b.cmp && b.t.length > lab.label.length && !/^（\d+ 個方法）$/.test(b.t.slice(lab.label.length))) btnFails.push('#/' + ch + '：並排比較按鈕「' + b.t + '」格式不對');
+            if (b.title !== lab.d) btnFails.push('#/' + ch + '：.fp-btn「' + b.t + '」的 title 不是 BUTTONS.d');
+          });
+          bi.inline.forEach((b) => {
+            if (b.id === 'clu-end') { if (b.t !== '跳到結果') btnFails.push('#/' + ch + '：#clu-end 文字「' + b.t + '」應為「跳到結果」'); }
+            else if (b.t !== '▶ 播放' && b.t !== '❚❚ 暫停') btnFails.push('#/' + ch + '：#' + b.id + ' 文字「' + b.t + '」應為「▶ 播放」或「❚❚ 暫停」');
+            if (b.title !== L.inline.d) btnFails.push('#/' + ch + '：#' + b.id + ' 的 title 不是 BUTTONS.d');
+          });
+          const want = BT.map((b) => b.label + b.d).join('');
+          if (bi.legends.length < 2) btnFails.push('按鈕圖例應有兩處（左欄＋第 3 章），目前 ' + bi.legends.length);
+          bi.legends.forEach((x) => { if (x.replace(/\s/g, '') !== want.replace(/\s/g, '')) btnFails.push('按鈕圖例內容與 PIPE.BUTTONS 不一致'); });
+        }
+
         // 2) 動畫按鈕：每章每種抽樣
-        const groups = { 'data-fp': '.fp-btn[data-fp]', 'data-mp': '[data-mp]', 'data-op': '[data-op]', 'data-cmp': '[data-cmp]' };
+        const groups = { 'data-fp': '.fp-btn[data-fp]', 'data-mp': '[data-mp]', 'data-op': '[data-op]', 'data-pv-op': '[data-pv-op]', 'data-cmp': '[data-cmp]' };
         for (const key of Object.keys(groups)) {
           const count = await page.locator('#ch-' + ch + ' ' + groups[key]).count();
           const pick = ALL ? count : Math.min(count, 3);
@@ -451,6 +480,62 @@ async function smoke() {
         await page.waitForTimeout(100);
       } catch (e) { fail('#/' + ch + '：測試中斷（' + e.message.split('\n')[0] + '）'); }
       [...new Set(errs)].forEach((e) => fail('#/' + ch + '：' + e));
+      await ctx.close();
+    }
+
+    // 3b) 動畫第一幕：有 diff 的方法卡抽 5 張，亮起的方塊數＝diff.length；系統卡第一幕是 sys_line；並排比較第一幕有亮起的格子
+    {
+      const errs = [];
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+      const page = await ctx.newPage();
+      page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
+      page.on('console', (m) => { if (m.type() === 'error') errs.push('console.error: ' + m.text()); });
+      await page.goto(url + '#/methods'); await page.waitForTimeout(300);
+      const cards = await page.evaluate(() => {
+        const out = [];
+        STEPS.forEach((st) => st.groups.forEach((g, gi) => g.cards.forEach((c, ci) => { const d = PIPE.slotsOf(c); if (d && d.diff && d.diff.length) out.push({ id: st.id + '-' + gi + '-' + ci, n: d.diff.length }); })));
+        return out;
+      });
+      if (!cards.length) btnFails.push('找不到有 diff 的方法卡');
+      const pickC = Math.min(5, cards.length);
+      for (let k = 0; k < pickC; k++) {
+        const c = cards[Math.floor((k * cards.length) / pickC)];
+        try {
+          await page.locator('[data-mp="' + c.id + '"]').first().evaluate((el) => el.click());
+          await page.waitForSelector('.fp-modal:not([hidden])', { timeout: 3000 });
+          await page.keyboard.press('ArrowRight'); await page.waitForTimeout(80);
+          const r = await page.evaluate(() => ({ n: document.querySelectorAll('.fp-modal .fp-stage rect[data-lit]').length, name: document.querySelector('.fp-modal .fp-n').textContent }));
+          if (r.name !== '差在哪') btnFails.push('方法卡 ' + c.id + '：第一幕是「' + r.name + '」，應為「差在哪」');
+          else if (r.n !== c.n) btnFails.push('方法卡 ' + c.id + '：第一幕亮起 ' + r.n + ' 格，diff 有 ' + c.n + ' 格');
+          await page.keyboard.press('Escape');
+        } catch (e) { btnFails.push('方法卡 ' + c.id + ' 第一幕檢查失敗：' + e.message.split('\n')[0]); try { await page.keyboard.press('Escape'); } catch (e2) { /* 忽略 */ } }
+      }
+      const cmps = await page.evaluate(() => Object.keys(CmpPlay.CMP));
+      for (const id of cmps) {
+        try {
+          const has = await page.evaluate((id) => { const f = CmpPlay.spec(id).flow[0]; return f[3] === 'm_slots'; }, id);
+          if (!has) continue;
+          await page.locator('[data-cmp="' + id + '"]').first().evaluate((el) => el.click());
+          await page.waitForSelector('.fp-modal:not([hidden])', { timeout: 3000 });
+          await page.keyboard.press('ArrowRight'); await page.waitForTimeout(80);
+          const n = await page.evaluate(() => document.querySelectorAll('.fp-modal .fp-stage rect[data-lit]').length);
+          if (n < 1) btnFails.push('並排比較 ' + id + '：多列槽位第一幕沒有亮起的格子');
+          await page.keyboard.press('Escape');
+        } catch (e) { btnFails.push('並排比較 ' + id + ' 第一幕檢查失敗：' + e.message.split('\n')[0]); try { await page.keyboard.press('Escape'); } catch (e2) { /* 忽略 */ } }
+      }
+      await page.goto(url + '#/others'); await page.waitForTimeout(300);
+      const nSys = await page.evaluate(() => document.querySelectorAll('.fp-btn[data-fp]').length);
+      for (let i = 0; i < nSys; i++) {
+        try {
+          await page.locator('.fp-btn[data-fp]').nth(i).evaluate((el) => el.click());
+          await page.waitForSelector('.fp-modal:not([hidden])', { timeout: 3000 });
+          await page.keyboard.press('ArrowRight'); await page.waitForTimeout(40);
+          const r = await page.evaluate(() => ({ s: document.querySelector('.fp-modal .fp-sb').textContent, n: document.querySelector('.fp-modal .fp-stage').childElementCount }));
+          if (r.s !== '位置' || r.n < 3) btnFails.push('系統／架構動畫 #' + i + '：第一幕不是 sys_line（' + r.s + '）');
+          await page.keyboard.press('Escape');
+        } catch (e) { btnFails.push('系統動畫 #' + i + ' 第一幕檢查失敗：' + e.message.split('\n')[0]); try { await page.keyboard.press('Escape'); } catch (e2) { /* 忽略 */ } }
+      }
+      errs.forEach((e) => btnFails.push('第一幕檢查：' + e));
       await ctx.close();
     }
 
@@ -487,6 +572,7 @@ async function smoke() {
   } finally { await browser.close(); }
   const secs = ((Date.now() - t0) / 1000).toFixed(0);
   if (stepwords.length) stepwords.forEach((m) => emit(PHASE >= 3 ? 'FAIL' : 'WARN', 'stepword', m)); else emit('PASS', 'stepword', '各章渲染文字沒有「第 N 步」');
+  if (btnFails.length) [...new Set(btnFails)].forEach((m) => emit(PHASE >= 5 ? 'FAIL' : 'WARN', 'buttons', m)); else emit('PASS', 'buttons', '渲染後的按鈕文字、title、圖例與動畫第一幕符合規範');
   if (fails.length) [...new Set(fails)].forEach((m) => emit('FAIL', id, m));
   else emit('PASS', id, '各章 ' + ORDER.length + ' 路由、動畫視窗 ' + nAnim + ' 次、按鈕 ' + nBtn + ' 次、舊路由／?s=／?o= 皆正常（' + secs + ' 秒' + (ALL ? '，全部按鈕' : '，抽樣') + '）');
 }

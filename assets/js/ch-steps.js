@@ -21,7 +21,7 @@
   }
 
   /** 主要方法：怎麼運作 ＋ 在我們的條件下 */
-  function pbtn(id) { return '<button type="button" class="fp-btn" data-mp="' + id + '" title="用動畫說明這個方法怎麼運作"><i></i>動畫</button>'; }
+  function pbtn(id) { return global.PipeView.btn('anim', 'data-mp="' + id + '"'); }
   function wide(c, id, domId) {
     var m = info(c), h = c.how || {}, us = c.us || {};
     var flow = [['輸入', h.in], ['處理', h.proc], ['訓練', h.train], ['輸出', h.out]].filter(function (r) { return r[1]; });
@@ -120,13 +120,10 @@
       if (hv) hv.innerHTML = S.map(function (st) {
         return '<a class="hv" href="#/methods?s=' + st.id + '"><span class="num">' + sym(st.id) + '</span><b>' + nm(st.id) + '</b><span>' + st.table.use + '</span></a>';
       }).join('');
-      // 標籤說明與按鈕圖例（圖例只寫一份資料：PIPE.BUTTONS）
+      // 標籤說明（按鈕圖例由 pipeview.js 在載入時一次畫好，資料只有 PIPE.BUTTONS）
       U.$$('.tag-legend').forEach(function (el) {
         el.innerHTML = '<div>' + Object.keys(TAG).map(tag).join(' ') + '</div>' +
           '<p class="small muted" style="margin:6px 0 0">方法卡上的 ✓ 有利　△ 有條件　✗ 不利，是在我們條件下的判斷。點方法名可開出處；展開「實作資訊」看程式碼、權重、輸入格式與第一步怎麼試。</p>';
-      });
-      U.$$('.btn-legend').forEach(function (el) {
-        el.innerHTML = '<ul>' + PIPE.BUTTONS.map(function (b) { return '<li><span class="bl-b">' + b.label + '</span><span class="small muted">' + b.d + '</span></li>'; }).join('') + '</ul>';
       });
     }
   };

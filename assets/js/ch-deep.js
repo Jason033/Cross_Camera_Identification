@@ -352,7 +352,7 @@
     $('#clu-end').addEventListener('click', function () { stopPlay(); clu.step = CR.snaps.length - 1; $('#clu-step').value = clu.step; drawClu(); });
     recompute(); drawClu();
   }
-  function stopPlay() { if (clu.raf) clearTimeout(clu.raf); clu.raf = 0; var b = $('#clu-play'); if (b) b.textContent = '▶ 播放合併過程'; }
+  function stopPlay() { if (clu.raf) clearTimeout(clu.raf); clu.raf = 0; var b = $('#clu-play'); if (b) b.textContent = '▶ 播放'; }
   function play() {
     var b = $('#clu-play'); b.textContent = '❚❚ 暫停';
     if (clu.step >= CR.snaps.length - 1) clu.step = 0;

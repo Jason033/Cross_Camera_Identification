@@ -105,7 +105,7 @@
     init: function () {
       buildFamTabs(); buildCtrls(); buildGrid(); drawAll(); if ($('#land')) initLandscape();
       var btn = $('#ana-play');
-      function sync() { btn.textContent = A.playing ? '暫停' : '播放'; btn.setAttribute('aria-pressed', A.playing ? 'true' : 'false'); }
+      function sync() { btn.textContent = A.playing ? '❚❚ 暫停' : '▶ 播放'; btn.setAttribute('aria-pressed', A.playing ? 'true' : 'false'); }
       btn.addEventListener('click', function () { A.playing = !A.playing; sync(); if (A.playing) loop(); });
       sync();
     },

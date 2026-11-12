@@ -46,7 +46,7 @@
     inst.tick = function (dt, t) { use(inst, function () { tickArch(dt, t); }); };
     return inst;
   }
-  function syncTourBtn() { var tb = $(AR.o.tour); tb.textContent = AR.tour ? '暫停導覽' : '自動導覽'; tb.setAttribute('aria-pressed', AR.tour ? 'true' : 'false'); }
+  function syncTourBtn() { var tb = $(AR.o.tour); tb.textContent = AR.tour ? '❚❚ 暫停' : '▶ 播放'; tb.setAttribute('aria-pressed', AR.tour ? 'true' : 'false'); }
   function selectSt(i, jump) {
     AR.sel = i;
     if (jump) { AR.tokT = i * 2.4 + 1.0; if (AR.tok) placeToken(); }
@@ -194,7 +194,7 @@
     return '<div class="arch-num num">' + s.sym + '</div><div><h3 style="margin:0 0 4px">' + s.n + (s.ev ? '　' + evB(s.ev) : '') + '</h3><p style="margin:0 0 8px">' + PIPE.fmt(one) + '</p><dl>' +
       '<dt>輸入 → 輸出</dt><dd>' + PIPE.fmt(io) + '</dd><dt>為什麼需要</dt><dd>' + PIPE.fmt(why) + '</dd>' +
       (first ? '<dt>第一版選擇</dt><dd>' + first + '</dd>' : '') + cfg + '</dl>' +
-      '<p class="pv-links"><a class="pv-link" href="' + methods + '">看方法</a><button type="button" class="fp-btn" data-pv-op="' + s.play + '" title="開一個視窗，逐步播放這個方法、系統或步驟"><i></i>動畫</button><a class="pv-link" href="' + setting + '">我們的設定</a></p></div>';
+      '<p class="pv-links"><a class="pv-link" href="' + methods + '">看方法</a>' + global.PipeView.btn('anim', 'data-pv-op="' + s.play + '"') + '<a class="pv-link" href="' + setting + '">我們的設定</a></p></div>';
   }
   function drawMaster() {
     var o = AR.o, svg = U.clear(o.svg), inst = AR, ours = o.mode === 'ours', tok = o.mode !== 'compact';

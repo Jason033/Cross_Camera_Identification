@@ -9,10 +9,12 @@
   var K = FlowPlay.kit, S = FlowPlay.SCN;
   var W = K.W, IDC = K.IDC, SC = K.SC, INK = K.INK, INK3 = K.INK3, OLIVE = K.OLIVE, SKIN = K.SKIN, PAPER = K.PAPER;
   var T = K.T, R = K.R, Ln = K.Ln, Ci = K.Ci, arrow = K.arrow, person = K.person, camera = K.camera, bars = K.bars, net = K.net, db = K.db,
-    thumb = K.thumb, caption = K.caption, panel = K.panel, star = K.star, chip = K.chip, faceIcon = K.faceIcon, seg = K.seg, ease = K.ease, lerp = K.lerp, rnd = K.rnd, op = K.op, wrap = K.wrap;
+    thumb = K.thumb, caption = K.caption, panel = K.panel, star = K.star, chip = K.chip, faceIcon = K.faceIcon, seg = K.seg, ease = K.ease, lerp = K.lerp, rnd = K.rnd, op = K.op, wrap = K.wrap, fit = K.fit;
   var GOOD = '#0c8a0c', BAD = '#c93434', WARN = '#b97e00', BLUE = '#2a78d6', PURP = '#6250d6', PINK = '#d55181', ORNG = '#eb6834', GOLD = '#9a7b12';
   function g_(o, s) { return '<g' + op(o) + '>' + s + '</g>'; }
   function lines(x, y, s, n, o) { return wrap(s, n).slice(0, o && o.max || 4).map(function (l, k) { return T(x, y + k * (o && o.lh || 18), l, Object.assign({ size: 12, a: 'middle', c: INK3 }, o || {})); }).join(''); }
+  /** 依寬度折行的多行文字：cap＝一行容納幾個中文字寬 */
+  function fl(x, y, s, cap, o) { o = o || {}; return fit(s, cap, o.max || 4).map(function (l, k) { return T(x, y + k * (o.lh || 16), l, Object.assign({ size: 12, a: 'middle', c: INK3 }, o)); }).join(''); }
   function gauss(x, m, s) { return Math.exp(-(x - m) * (x - m) / (2 * s * s)); }
   function path(fn, x0, x1, n) { var p = []; for (var i = 0; i <= n; i++) { var x = x0 + (x1 - x0) * i / n; p.push(x.toFixed(1) + ',' + fn(x).toFixed(1)); } return p.join(' '); }
   /** 骨架小人：(x,y) 腳底 */
@@ -618,6 +620,71 @@
     return g + caption(320, 284, '組上限 +6；折扣比例與要不要合組，用 E11 在營區資料上決定');
   };
 
+  /* ======================= 槽位：差在哪（單列＝一張方法卡；多列＝並排比較） ======================= */
+  var PIPE = global.PIPE;
+  /** 槽位文字：字串，或 {v, mark} */
+  function sv(v) {
+    if (v && typeof v === 'object') return v.mark === 'skip' ? '（沒有這一格）' : (v.mark === 'merge' ? '合併：' : '') + (v.v || '—');
+    return v == null || v === '' ? '—' : String(v);
+  }
+  function groupKey(st, g) { return st.id === 3 ? '3:' + g.key : String(st.id); }
+  /** 這一組的基準：{ name, slots: {槽位 id: 文字} }；沒有資料回傳 null */
+  function baseVals(st, g) {
+    var b = PIPE.base(groupKey(st, g)), sl = {};
+    if (!b) return null;
+    if (b.card) { if (!b.data) return null; Object.keys(b.data.slots).forEach(function (k) { sl[k] = sv(b.data.slots[k]); }); return { name: b.card, card: b.card, slots: sl }; }
+    Object.keys(b.ours).forEach(function (k) { sl[k] = b.ours[k][0]; });
+    return { name: '我們的基準組合', slots: sl };
+  }
+  /** 本步的槽位清單；有任何一列帶「額外」就多一欄 */
+  function slotList(st, datas) {
+    var L = PIPE.SLOTS[st.id].map(function (s) { return { id: s.id, n: s.n }; }), ex = null;
+    datas.forEach(function (d) { if (d && d.slots.extra && !ex) ex = d.slots.extra; });
+    if (ex) L.push({ id: 'extra', n: '額外' + (ex.n ? '：' + ex.n : '') });
+    return L;
+  }
+  function slotName(st, id) { var s = PIPE.SLOTS[st.id].filter(function (x) { return x.id === id; })[0]; return s ? s.n : id === 'extra' ? '額外' : id; }
+  var LIT = '#e3e9d2';
+  function litBox(x, y, w, h, on, o) {
+    var r = R(x, y, w, h, { f: on ? LIT : '#fff', s: on ? OLIVE : '#c5ccc2', sw: on ? (o && o.focus ? 3.5 : 2.5) : 1.2 });
+    return on ? r.replace('<rect ', '<rect data-lit="1" ') : r;
+  }
+  S.m_slots = function (t, f) {
+    var p = f.p || {};
+    if (p.rows) return slotsMulti(t, p);
+    var sl = p.slots, n = sl.length, gap = 6, w = (600 - (n - 1) * gap) / n, diff = p.diff || [], nd = diff.length, g = '', cpl = Math.max(3, Math.floor((w - 10) / 11));
+    var fi = nd ? Math.min(nd - 1, Math.floor(Math.max(0, t - 0.12) / 0.6 * nd)) : -1;
+    g += T(320, 20, (p.name ? p.name + '　' : '') + '各槽位的做法（亮起＝與本組基準不同）', { size: 12.5, c: INK3, w: 1 });
+    sl.forEach(function (s, i) {
+      var x = 20 + i * (w + gap), di = diff.indexOf(s.id), on = di >= 0 && t >= 0.12 + di * 0.6 / nd, o = di >= 0 ? seg(t, 0.12 + di * 0.6 / nd, 0.2 + di * 0.6 / nd) : 1;
+      g += litBox(x, 32, w, 100, on, { focus: di === fi && di >= 0 }) + T(x + w / 2, 50, s.n, { size: 11.5, w: 1, c: on ? OLIVE : INK }) + (on ? T(x + w - 9, 48, '★', { size: 13, c: '#e8a600', w: 1, op: o }) : '') +
+        fl(x + w / 2, 70, sv(p.data[s.id]), (w - 10) / 10.5, { size: 10.5, max: 5, lh: 14, c: INK3 });
+    });
+    if (nd) {
+      var cur = sl.filter(function (s) { return s.id === diff[fi]; })[0], id = diff[fi];
+      g += R(20, 146, 600, 112, { f: '#fff', s: '#c5ccc2' }) + T(34, 168, '★ ' + (cur ? cur.n : id), { size: 13.5, w: 1, c: OLIVE, a: 'start' }) +
+        fl(34, 192, '本方法：' + sv(p.data[id]), 44, { size: 13, a: 'start', c: INK, max: 2, lh: 17 }) + fl(34, 234, '基準（' + p.baseName + '）：' + sv(p.base[id]), 44, { size: 13, a: 'start', c: INK3, max: 2, lh: 17 });
+    } else {
+      g += T(320, 200, '這是本組的基準', { size: 24, w: 1, c: OLIVE, op: seg(t, 0.2, 0.5) }) + T(320, 232, '同組其他方法，都和它比較哪一格不一樣', { size: 13, c: INK3, op: seg(t, 0.3, 0.6) });
+    }
+    return g + caption(320, 284, nd ? '共 ' + nd + ' 格和基準不同；其餘格子做法相同' : '', { size: 12 });
+  };
+  function slotsMulti(t, p) {
+    var sl = p.slots, rows = p.rows, n = sl.length, nw = 104, cw = (610 - nw) / n, rh = Math.min(50, 232 / rows.length), g = '', cpl = Math.max(3, Math.floor((cw - 6) / 10)), ml = Math.max(1, Math.floor((rh - 6) / 12));
+    g += T(320, 14, '同一組的方法，逐格比較（亮起＝與基準不同）', { size: 12, c: INK3, w: 1 });
+    sl.forEach(function (s, j) { g += R(nw + 10 + j * cw + 1, 20, cw - 2, 20, { f: '#fff', s: '#c5ccc2', sw: 1 }) + T(nw + 10 + j * cw + cw / 2, 34, s.n, { size: 10, w: 1, c: INK3 }); });
+    rows.forEach(function (r, i) {
+      var y = 44 + i * rh, a = 0.1 + i * 0.6 / rows.length, o = seg(t, a, a + 0.12), nm = r.name.replace(/（.*?）/g, '');
+      g += g_(o, R(10, y, nw - 4, rh - 4, { f: r.base ? '#eef0eb' : PAPER, s: '#dde2da', sw: 1 }) + fl(10 + (nw - 4) / 2, y + 16, nm, (nw - 12) / 10.5, { size: 10.5, c: INK, w: 1, max: 2, lh: 13 }) + (r.base ? T(10 + (nw - 4) / 2, y + rh - 9, '基準', { size: 9.5, c: OLIVE, w: 1 }) : ''));
+      sl.forEach(function (s, j) {
+        var on = !r.base && (r.diff || []).indexOf(s.id) >= 0, x = nw + 10 + j * cw;
+        g += g_(o, litBox(x + 1, y, cw - 2, rh - 4, on) + (on ? T(x + cw - 8, y + 11, '★', { size: 10, c: '#e8a600', w: 1 }) : '') + fl(x + cw / 2, y + 14, sv(r.slots[s.id]), (cw - 8) / 9.5, { size: 9.5, c: INK3, max: ml, lh: 12 }));
+      });
+    });
+    return g;
+  }
+  FlowPlay.DURK.m_slots = 9500;
+
   /* ======================= 每張卡要播什麼 ======================= */
   var CORE = {
     'YOLOX-S': 'm_yolox', 'YOLOv7（你現有）': 'm_yolov7', 'NanoDet-Plus-m': 'm_nanodet', 'ByteTrack': 'o2_bytetrack', '片段淨化（自行實作）': 'o2_purify', 'OC-SORT': 'm_ocsort',
@@ -645,21 +712,48 @@
   var GC = { app: BLUE, cc: BLUE, gait: PINK, face: PURP, body: GOLD, shape: GOLD };
   var DK = FlowPlay.DURK; DK.m_in = 5000; DK.m_out = 5000; DK.m_train = 6000; DK.m_us = 7500; DK.m_gauntlet = 9500; DK.m_verdict = 6500; DK.m_idea = 6000;
 
+  var MID = ['prep', 'rep', 'backbone', 'loss', 'head', 'cue', 'assign', 'calib', 'combine', 'merge', 'decide'];
+  /** 有槽位資料的卡：第一幕「差在哪」，並算出「處理」幕的 ★ 差異標示（沒有 diff 的基準卡不標） */
+  function slotFrame(st, g, c) {
+    var sd = PIPE.slotsOf(c), bv = baseVals(st, g);
+    if (!sd || !bv) return null;
+    var sl = slotList(st, [sd]), ids = sl.map(function (s) { return s.id; }), diff = (sd.diff || []).filter(function (d) { return ids.indexOf(d) >= 0; });
+    var names = diff.map(function (d) { return slotName(st, d); }), mid = diff.filter(function (d) { return MID.indexOf(d) >= 0; }).map(function (d) { return slotName(st, d); });
+    return {
+      hl: mid.length ? '★ 差異：' + mid.join('、') : '',
+      frame: ['差在哪', diff.length ? '與基準不同：' + names.join('、') : '這是本組的基準', st.id, 'm_slots', { pre: true, slots: sl, diff: diff, data: sd.slots, base: bv.slots, baseName: bv.name, name: '' }]
+    };
+  }
+  /** 並排比較用：這一組主要卡的多列槽位（每個方法一列）；有任何一張主要卡沒有槽位資料就回傳 null */
+  function slotRows(st, g) {
+    var cards = g.cards.filter(function (c) { return c.how; }), bv = baseVals(st, g);
+    if (!bv || !cards.length || !cards.every(function (c) { return PIPE.slotsOf(c); })) return null;
+    var key = function (c) { return c.m || (c.x && c.x.n); }, rows = [];
+    var datas = cards.map(function (c) { return PIPE.slotsOf(c); }), sl = slotList(st, datas);
+    var bc = bv.card ? cards.filter(function (c) { return key(c) === bv.card; })[0] : null;
+    rows.push({ name: bc ? key(bc) : bv.name, base: true, slots: bv.slots, diff: [] });
+    cards.forEach(function (c) { if (c === bc) return; var d = PIPE.slotsOf(c), o = {}; Object.keys(d.slots).forEach(function (k) { o[k] = d.slots[k]; }); rows.push({ name: key(c), slots: o, diff: d.diff || [] }); });
+    return rows.length > 1 ? { slots: sl, rows: rows } : null; // 只有基準一列就沒有可比的
+  }
+
   function spec(st, g, c) {
     var m = CH.steps.info(c), nm = c.m || (c.x && c.x.n) || m.n, h = c.how, core = CORE[nm], gk = g.key;
     var mline = '{{step:' + st.id + '}}' + (g.n ? '・' + g.n : '') + ' 的候選方法'; // 字幕由 FlowPlay 以 PIPE.text 換成純文字
+    var sf = slotFrame(st, g, c);
     if (h) {
       var io = OVR[nm] || [INX[gk] || IN[st.id], OUTX[gk] || OUT[st.id]];
       var flow = [];
       if (h.in) flow.push(['輸入', h.in, st.id, 'm_in', { kind: io[0], text: h.in }]);
-      flow.push(['處理', h.proc || c.idea, st.id, core || 'm_idea', { name: m.n, v: m.v, idea: c.idea }]);
+      flow.push(['處理', h.proc || c.idea, st.id, core || 'm_idea', { name: m.n, v: m.v, idea: c.idea, hl: sf && sf.hl }]);
       if (h.train) flow.push(['訓練', h.train, st.id, 'm_train', { text: h.train }]);
       if (h.out) flow.push(['輸出', h.out, st.id, 'm_out', { kind: io[1], c: GC[gk] || BLUE, text: h.out, res: m.res, cost: m.cost }]);
       if (c.us) flow.push(['在我們的條件下', '依序闖五關：路邊俯角、換裝、5 人交錯、CPU 算力、軍用授權；遇到 ✗ 就卡住', st.id, 'm_gauntlet', { us: c.us, name: m.n }]);
+      if (sf) flow.unshift(sf.frame);
       return { title: m.n, sub: c.idea, flow: flow, keyLabel: '關鍵差異', key: h.key || c.idea, m: mline };
     }
-    return { title: m.n, sub: c.idea, m: mline, keyLabel: '判定理由', key: c.fit || '',
-      flow: [['概念', c.idea, st.id, core || 'm_idea', { name: m.n, v: m.v, idea: c.idea }], ['判定', c.fit || '', st.id, 'm_verdict', { tag: c.tag, fit: c.fit }]] };
+    var flow2 = [['概念', c.idea, st.id, core || 'm_idea', { name: m.n, v: m.v, idea: c.idea }], ['判定', c.fit || '', st.id, 'm_verdict', { tag: c.tag, fit: c.fit }]];
+    if (sf) flow2.unshift(sf.frame);
+    return { title: m.n, sub: c.idea, m: mline, keyLabel: '判定理由', key: c.fit || '', flow: flow2 };
   }
 
   var CH = global.CH = global.CH || {};
@@ -675,5 +769,5 @@
       });
     }
   };
-  global.MethodPlay = { spec: spec, CORE: CORE };
+  global.MethodPlay = { spec: spec, CORE: CORE, slotRows: slotRows, slotFrame: slotFrame };
 })(window);

@@ -41,6 +41,8 @@
       <li><span class="sw-dot" style="--c:var(--c-face)"></span>臉</li>
       <li><span class="sw-dot" style="--c:var(--c-3d)"></span>體型 / 3D</li>
     </ul>
+    <h4>按鈕</h4>
+    <div class="btn-legend"></div>
     <h4>名詞</h4>
     <p style="margin:0">文中<span class="gl-demo">虛線底線</span>的字，滑過或點一下就有解釋。</p>
   </div>
@@ -72,7 +74,7 @@
         <button data-lens="anthro"><span class="sw" style="background:var(--c-3d)"></span>人體比例</button>
         <button data-lens="gait"><span class="sw" style="background:var(--c-gait)"></span>步態軌跡</button>
       </div>
-      <button class="btn ghost" id="lineup-play" aria-pressed="true">暫停</button>
+      <button class="btn ghost" id="lineup-play" aria-pressed="true" title="圖本身的動畫：播放／❚❚ 暫停；「跳到結果」直接看最後一步">❚❚ 暫停</button>
       <div class="seg seg-sm" id="outfit-sel" role="group" aria-label="服裝" style="flex-basis:100%">
         <button data-o="camo" aria-pressed="true">迷彩服＋小帽</button>
         <button data-o="helmet">鋼盔</button>
@@ -94,7 +96,7 @@
   <figure class="plate">
     <div class="plate-head">
       <div class="plate-title">系統全景：一段影片如何變成「人員 C」</div>
-      <button class="btn ghost" id="master-home-tour" aria-pressed="true">❚❚ 暫停</button>
+      <button class="btn ghost" id="master-home-tour" aria-pressed="true" title="圖本身的動畫：播放／❚❚ 暫停；「跳到結果」直接看最後一步">❚❚ 暫停</button>
     </div>
     <div class="plate-body" id="master-home"></div>
     <div class="plate-note">上排是每個系統都走的系統層 9 步，括號對到下排我們的步驟（①–⑦、Q）；膠囊是一段片段，自動導覽會帶著它走完全程，點任一步可停下來看細節。這是根據文獻整理出的<b>系統假說</b>，不是已驗證的系統；每一步的證據等級標在說明的標題旁。</div>
@@ -383,7 +385,7 @@
       <div class="ana-ctrl">
         <div class="ana-ctl"><span>攝影機 2 的條件</span><div class="seg" id="ana-cond" role="group" aria-label="攝影機 2 的條件"></div></div>
         <div class="ana-ctl"><span>查詢的人</span><div class="seg" id="ana-q" role="group" aria-label="查詢的人"></div></div>
-        <button class="btn ghost" id="ana-play" aria-pressed="true">暫停</button>
+        <button class="btn ghost" id="ana-play" aria-pressed="true" title="圖本身的動畫：播放／❚❚ 暫停；「跳到結果」直接看最後一步">❚❚ 暫停</button>
       </div>
       <p class="ana-how">由左到右是方法的運算步驟；由上到下是三段影片：<b>查詢</b>（攝影機 1 拍到的人）、<b>本人</b>（同一人在攝影機 2）、<b>最像的冒充者</b>（攝影機 2 裡，穿同款服裝、被這個方法判得最像的另一人）。兩台攝影機都以常見路邊監視器的俯角（約 20–26°）繪製；選「角度＋換裝」時，攝影機 2 裡的五個人都換成運動服。</p>
       <div class="ana-scroll"><div class="ana-grid" id="ana-grid"></div></div>
@@ -470,8 +472,8 @@
     <div class="plate-head">
       <div class="plate-title"><span class="fig"></span>分群實驗台：同一天 6 人、3 台攝影機，一步一步合併</div>
       <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn" id="clu-play">▶ 播放合併過程</button>
-        <button class="btn ghost" id="clu-end">看最終結果</button>
+        <button class="btn" id="clu-play" title="圖本身的動畫：播放／❚❚ 暫停；「跳到結果」直接看最後一步">▶ 播放</button>
+        <button class="btn ghost" id="clu-end" title="圖本身的動畫：播放／❚❚ 暫停；「跳到結果」直接看最後一步">跳到結果</button>
       </div>
     </div>
     <div class="plate-body">
@@ -538,8 +540,8 @@
   <figure class="plate">
     <div class="plate-head">
       <div class="plate-title"><span class="fig"></span>我們的做法：每一步與它的關鍵設定</div>
-      <button type="button" class="fp-btn" data-op="all" title="開一個視窗，逐步播放這個方法、系統或步驟"><i></i>動畫：從頭到尾</button>
-      <button class="btn ghost" id="master-approach-tour" aria-pressed="true">❚❚ 暫停</button>
+      <button type="button" class="fp-btn" data-op="all" title="開一個視窗，逐步播放這個方法、系統或步驟">▶ 動畫：從頭到尾</button>
+      <button class="btn ghost" id="master-approach-tour" aria-pressed="true" title="圖本身的動畫：播放／❚❚ 暫停；「跳到結果」直接看最後一步">❚❚ 暫停</button>
     </div>
     <div class="plate-body" id="master-approach"></div>
     <div class="plate-note">每個方塊下方是這一步最關鍵的設定（建議值，用自建資料調整）；點任一步看它的第一版選擇與完整設定。</div>

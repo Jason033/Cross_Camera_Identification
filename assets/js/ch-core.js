@@ -44,7 +44,7 @@
       hero.lens = U.segGroup($('#lens'), 'data-lens', function (v) { hero.lens = v; drawHero(); });
       hero.outfit = U.segGroup($('#outfit-sel'), 'data-o', function (v) { hero.outfit = v; drawHero(); });
       var btn = $('#lineup-play');
-      function syncBtn() { btn.textContent = hero.playing ? '暫停' : '播放'; btn.setAttribute('aria-pressed', hero.playing ? 'true' : 'false'); }
+      function syncBtn() { btn.textContent = hero.playing ? '❚❚ 暫停' : '▶ 播放'; btn.setAttribute('aria-pressed', hero.playing ? 'true' : 'false'); }
       btn.addEventListener('click', function () { hero.playing = !hero.playing; syncBtn(); if (hero.playing) loop(); });
       syncBtn();
       drawHero();

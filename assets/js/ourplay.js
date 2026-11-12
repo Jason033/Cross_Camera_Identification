@@ -408,7 +408,7 @@
       flow: [['路徑總覽', '平面圖上的每人軌跡', 0, 'o_output'], ['事後查詢', '指定人員與日期，列出時間與地點', 0, 'o_query'], ['人工覆核', '低信心連結交人工，結果回饋訓練', 0, 'o_review']] }
   };
   function play(id) { var s = SPECS[id]; if (s) FlowPlay.open({ title: s.title, sub: s.sub, flow: s.flow, keyLabel: s.keyLabel, key: s.key, ours: true }); }
-  function btn(id, label, cls) { return '<button type="button" class="fp-btn' + (cls ? ' ' + cls : '') + '" data-op="' + id + '" title="用動畫逐步說明"><i></i>' + label + '</button>'; }
+  function btn(id) { return global.PipeView.btn('anim', 'data-op="' + id + '"'); }
 
   var CH = global.CH = global.CH || {};
   CH.ourplay = {
@@ -416,15 +416,15 @@
       var sec = document.getElementById('ch-approach');
       if (!sec || sec.getAttribute('data-op-ready')) return;
       sec.setAttribute('data-op-ready', '1');
+      // 「從頭到尾」只有一顆：在一頁回顧的主圖標題列（index.html 的 data-op="all"）；這裡只加每一步的按鈕
       var t = document.getElementById('v1-table');
-      if (t) t.insertAdjacentHTML('beforebegin', '<div class="op-hero">' + btn('all', '動畫：第一版系統從頭到尾（約 1.5 分鐘）', 'big') + '<span class="small muted">每一步的細節，點下表各列右邊的「細看」</span></div>');
       if (t && t.tHead) {
         t.tHead.rows[0].insertAdjacentHTML('beforeend', '<th>動畫</th>');
-        Array.prototype.forEach.call(t.tBodies[0].rows, function (r, i) { r.insertAdjacentHTML('beforeend', '<td>' + btn('s' + (i + 1), '細看') + '</td>'); });
+        Array.prototype.forEach.call(t.tBodies[0].rows, function (r, i) { r.insertAdjacentHTML('beforeend', '<td>' + btn('s' + (i + 1)) + '</td>'); });
       }
       var L = document.getElementById('sys-layers'), O = document.getElementById('out-map');
-      if (L) L.closest('figure').querySelector('.plate-head').insertAdjacentHTML('beforeend', btn('layers', '動畫說明'));
-      if (O) O.closest('figure').querySelector('.plate-head').insertAdjacentHTML('beforeend', btn('output', '動畫說明'));
+      if (L) L.closest('figure').querySelector('.plate-head').insertAdjacentHTML('beforeend', btn('layers'));
+      if (O) O.closest('figure').querySelector('.plate-head').insertAdjacentHTML('beforeend', btn('output'));
       sec.addEventListener('click', function (e) { var b = e.target.closest('[data-op]'); if (b) play(b.getAttribute('data-op')); });
     }
   };

@@ -417,7 +417,21 @@
     if (note && gov) note.innerHTML = '別人怎麼做（' + gov[0] + '）：' + gov[1] + '。我們可以怎麼做：' + gov[2] + '。';
   }
 
-  global.PipeView = { master: master, sysRuler: sysRuler, sysstrip: sysstrip, comboStrip: comboStrip, matrixHTML: matrixHTML, minimap: minimap, stepsRow: stepsRow,
+  /* ======================= 按鈕（固定三種，資料只有 PIPE.BUTTONS）與圖例 ======================= */
+  function btnOf(kind) { return PIPE.BUTTONS.filter(function (b) { return b.k === kind; })[0]; }
+  /** .fp-btn：kind＝anim／cmp；attrs 是 data-* 屬性字串；extra 接在 label 後（「：對象」或「（N 個方法）」）；cls 例如 'big' */
+  function btn(kind, attrs, extra, cls) {
+    var b = btnOf(kind);
+    return '<button type="button" class="fp-btn' + (cls ? ' ' + cls : '') + '" ' + attrs + ' title="' + esc(b.d) + '">' + b.label + (extra || '') + '</button>';
+  }
+  /** 圖例：左欄 .legend-box 與方法總覽「怎麼讀這一章」同一份資料、同一個函式 */
+  function renderBtnLegend() {
+    U.$$('.btn-legend').forEach(function (el) {
+      el.innerHTML = '<ul>' + PIPE.BUTTONS.map(function (b) { return '<li><span class="bl-b">' + b.label + '</span><span class="small muted">' + b.d + '</span></li>'; }).join('') + '</ul>';
+    });
+  }
+
+  global.PipeView = { btn: btn, btnLegend: renderBtnLegend, master: master, sysRuler: sysRuler, sysstrip: sysstrip, comboStrip: comboStrip, matrixHTML: matrixHTML, minimap: minimap, stepsRow: stepsRow,
     slotTable: slotTable, slotOverview: slotOverview, flow: flow, deploy: deploy, daily: daily, decision: decision, idStates: idStates, dataStore: dataStore, legend: legend };
 
   /* ======================= CH.pipeview：元素存在才畫；動畫迴圈；黏頂列 ======================= */
@@ -498,4 +512,5 @@
       var bar = document.getElementById('mm-sticky'); if (bar) bar.classList.remove('on');
     }
   };
+  renderBtnLegend(); // 圖例的兩個容器（左欄、第 3 章）都是靜態的，載入時就畫好
 })(window);

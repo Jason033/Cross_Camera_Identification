@@ -25,7 +25,7 @@
     var box = $('#id-states');
     global.PipeView.idStates(box);
     var head = box.closest('figure') && box.closest('figure').querySelector('.plate-head');
-    if (head && !head.querySelector('[data-op="layers"]')) head.insertAdjacentHTML('beforeend', '<button type="button" class="fp-btn" data-op="' + global.PIPE.ID_STATES.anim + '" title="開一個視窗，逐步播放這個方法、系統或步驟"><i></i>動畫</button>');
+    if (head && !head.querySelector('[data-op="layers"]')) head.insertAdjacentHTML('beforeend', global.PipeView.btn('anim', 'data-op="' + global.PIPE.ID_STATES.anim + '"'));
   }
   // ---- 算力試算 ----
   var bud = { cams: 10, hrs: 24, occ: 40, fps: 5, det: 38.9, dec: 4, crops: 1600, reid: 15, win: 10, proc: 1 };

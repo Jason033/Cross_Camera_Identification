@@ -16,7 +16,9 @@
 
   /** 步驟條（D3）：每格放在系統層 9 欄的位置上；跳過、合併、額外、★ 特色用標記表示；點格子展開說明 */
   function strip(o) { return global.PipeView.sysstrip(o.flow, o.sys); }
-  function play(k, id) { return '<button type="button" class="fp-btn" data-fp="' + k + ':' + id + '" title="用動畫逐步說明這個流程"><i></i>動畫說明</button>'; }
+  function play(k, id) { return global.PipeView.btn('anim', 'data-fp="' + k + ':' + id + '"'); }
+  // 動畫第一幕：系統（或架構）在 9 欄系統層上的位置（sys_line）；其餘幕沿用原 flow
+  function withLine(o) { return [['在這條資料流上的位置', '灰＝跳過、跨欄＝合併、橘＝額外、★＝特色', 0, 'sys_line', { pre: true, flow: o.flow, sys: o.sys }]].concat(o.flow); }
   function dot(v) { return '<i class="lvd' + (v === 'g' ? ' f' : v === 'm' ? ' h' : '') + '"></i>'; }
 
   function card(s) {
@@ -75,10 +77,10 @@
         var k = b.getAttribute('data-fp').split(':');
         if (k[0] === 'pat') {
           var i = P.map(function (p) { return p.id; }).indexOf(k[1]), p = P[i];
-          FlowPlay.open({ title: p.n, sub: '代表：' + p.who, flow: p.flow, keyLabel: '在我們的系統', key: p.ours + '。優點：' + p.good + '；弱點：' + p.bad + '。' });
+          FlowPlay.open({ title: p.n, sub: '代表：' + p.who, flow: withLine(p), keyLabel: '在我們的系統', key: p.ours + '。優點：' + p.good + '；弱點：' + p.bad + '。' });
         } else {
           var s = O.filter(function (x) { return x.id === k[1]; })[0];
-          FlowPlay.open({ title: s.n, sub: '要解決：' + s.goal, flow: s.flow, keyLabel: '核心概念', key: s.key });
+          FlowPlay.open({ title: s.n, sub: '要解決：' + s.goal, flow: withLine(s), keyLabel: '核心概念', key: s.key });
         }
       });
       // 一條線：系統步驟尺（D2）與我們的組合（D4）

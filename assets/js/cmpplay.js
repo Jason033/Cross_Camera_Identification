@@ -226,8 +226,11 @@
 
   function spec(id) {
     var c = CMP[id], sid = +id.split('-')[0], st = (global.STEPS || []).filter(function (s) { return s.id === sid; })[0], g = st && st.groups[+id.split('-')[1]];
-    return { title: c.title, sub: '同一組方法放在一起比：' + c.names.map(short).join('、'), keyLabel: '結論', key: c.key, m: '{{step:' + sid + '}}' + (g && g.n ? '・' + g.n : '') + '・並排比較',
-      flow: c.frames.map(function (f) { var p = f[2] || {}; if (f[1] === 'c_idea') p = { cols: cols(c.names) }; if (f[1] === 'c_matrix' && !p.names) p = { names: c.names }; return [f[0], '', sid, f[1], p]; }) };
+    var flow = c.frames.map(function (f) { var p = f[2] || {}; if (f[1] === 'c_idea') p = { cols: cols(c.names) }; if (f[1] === 'c_matrix' && !p.names) p = { names: c.names }; return [f[0], '', sid, f[1], p]; });
+    // 這一組的主要方法都有槽位資料時，第一幕是多列槽位表（每個方法一列，和基準不同的格子亮起）
+    var sr = global.MethodPlay && global.MethodPlay.slotRows(st, g);
+    if (sr) flow.unshift(['差在哪', '亮起的格子＝和這一組的基準不同', sid, 'm_slots', { pre: true, slots: sr.slots, rows: sr.rows }]);
+    return { title: c.title, sub: '同一組方法放在一起比：' + c.names.map(short).join('、'), keyLabel: '結論', key: c.key, m: '{{step:' + sid + '}}' + (g && g.n ? '・' + g.n : '') + '・並排比較', flow: flow };
   }
 
   var CH = global.CH = global.CH || {};
@@ -240,7 +243,7 @@
         var p = id.split('-'), st = global.STEPS.filter(function (s) { return s.id === +p[0]; })[0], g = st.groups[+p[1]];
         var box = sec.querySelector('.step-cards[data-s="' + p[0] + '"][data-g="' + (g.key || p[1]) + '"]');
         if (!box) return;
-        var html = '<div class="cmp-bar"><button type="button" class="fp-btn big" data-cmp="' + id + '"><i></i>並排比較：' + CMP[id].names.length + ' 個方法差在哪</button><span class="small muted">' + CMP[id].names.map(short).join('、') + '</span></div>';
+        var html = '<div class="cmp-bar">' + global.PipeView.btn('cmp', 'data-cmp="' + id + '"', '（' + CMP[id].names.length + ' 個方法）', 'big') + '<span class="small muted">' + CMP[id].names.map(short).join('、') + '</span></div>';
         // 插在槽位表正上方（組標題與導言之後）；這一組沒有槽位表時，插在第一張方法卡之前
         var first = box.querySelector('.slot-tbl') || box.querySelector('.mcard');
         if (first) first.insertAdjacentHTML('beforebegin', html); else box.insertAdjacentHTML('beforeend', html);
