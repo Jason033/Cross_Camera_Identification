@@ -105,14 +105,180 @@
     7: S([['gallery', '比對名單', ''], ['unit', '比對單位', '單段或整群'], ['score', '分數來源', ''], ['decide', '決策規則', '門檻、間隔'], ['aux', '輔助證據', '刷卡'], ['out', '輸出狀態', '確認／待確認／未知／不一致']])
   };
 
-  /* 之後的階段才填：槽位表基準、組合條、部署圖、決策流程、身分狀態、每日時程、儲存表 */
-  P.BASE = {};
-  P.COMBO = [];
-  P.DEPLOY = {};
-  P.DECISIONS = {};
-  P.ID_STATES = {};
-  P.DAILY = [];
-  P.STORE = [];
+  /* ---------- 槽位表第一列：card 型＝取該卡 SLOTDATA；ours 型＝每格 [文字, 提供這格的卡片名]（文字只從 steps.js 的 how／choice／cfg 濃縮） ---------- */
+  P.BASE = {
+    '1': { card: 'YOLOX-S' },
+    '2': { ours: {
+      predict: ['卡爾曼濾波預測下一幀位置', 'ByteTrack'],
+      cue: ['框重疊度（IoU）；外觀用在片段淨化', 'ByteTrack'],
+      assign: ['高分框先配、低分框再撿一輪', 'ByteTrack'],
+      reconnect: ['暫時消失的軌跡保留一段時間等它回來', 'ByteTrack'],
+      clean: ['前後窗比外觀、身高、位置，突變就切', '片段淨化（自行實作）'] } },
+    '3:app': { card: 'SOLIDER Swin-S' },
+    '3:cc': { card: 'CAL' },
+    '3:gait': { ours: {
+      prep: ['人形分割取剪影；關節點取骨架', 'DeepGaitV2-P3D'],
+      rep: ['剪影序列；骨架為輔', 'DeepGaitV2-P3D'],
+      backbone: ['殘差網路，卷積拆成 2D 空間＋1D 時間', 'DeepGaitV2-P3D'],
+      loss: ['三元組損失＋ID 分類損失', 'DeepGaitV2-P3D'],
+      agg: ['時間最大池化，水平切帶各自池化', 'DeepGaitV2-P3D'],
+      out: ['多條水平帶串接的步態嵌入', 'DeepGaitV2-P3D'] } },
+    '3:face': { ours: {
+      prep: ['偵測臉並依 5 個特徵點對齊成 112×112', 'SCRFD-2.5GF'],
+      rep: ['臉部 RGB', 'AdaFace R100'],
+      backbone: ['IResNet-100', 'AdaFace R100'],
+      loss: ['自適應邊界損失（低品質臉少學難樣本）', 'AdaFace R100'],
+      agg: ['依品質分數加權多幀', 'MagFace'],
+      out: ['512 維特徵＋品質分數（特徵長度）', 'MagFace'] } },
+    '3:shape': { card: '肢體比例（由骨架估計，自行實作）' },
+    '3:body': { card: '單目身高估計（自行實作）' },
+    '4': { ours: {
+      in: ['每條線索的比對分數（片段先做品質加權聚合）', '品質加權片段聚合'],
+      quality: ['依品質分層，各層各估一組分布', '品質條件化（依品質調整證據）'],
+      calib: ['同人／不同人分數分布的高度比取對數＝證據', '似然比融合（對數相加）'],
+      combine: ['證據相加；相關線索合組，組內最強＋其餘一部分', '相關線索合組（避免重複計算）'],
+      missing: ['看不到的線索該項為 0', '似然比融合（對數相加）'],
+      out: ['總證據值（可換成同一人的機率）', '似然比融合（對數相加）'] } },
+    '5': { ours: {
+      where: ['攝影機 ID；平面圖座標用於畫路徑', '畫面座標轉平面圖（單應性）'],
+      model: ['硬規則排除不可能；轉移時間分布當證據', '不可能配對規則（cannot-link）'],
+      param: ['最短步行時間用平面圖量；轉移時間由標註資料統計', 'st-ReID'],
+      use: ['不可能配對否決；時間差機率加入證據', '不可能配對規則（cannot-link）'],
+      out: ['不可能配對清單；轉移時間證據', '不可能配對規則（cannot-link）'] } },
+    '6': { ours: {
+      sim: ['片段兩兩的總證據', '約束式平均連結凝聚分群'],
+      cons: ['不可能配對一律不併', '約束式平均連結凝聚分群'],
+      merge: ['由平均證據最高的一對開始逐步合併', '約束式平均連結凝聚分群'],
+      stop: ['最高平均證據低於合併門檻 τ 即停', '約束式平均連結凝聚分群'],
+      except: ['低信心片段嘗試併入最近的群，否則保留未歸群', '約束式平均連結凝聚分群'] } },
+    '7': { ours: {
+      gallery: ['當日在營或當日刷卡進營的人', '在營區攝影機下建立註冊資料'],
+      unit: ['整群（取群內品質最好的前幾段）', '整群多證據比對＋第一第二名間隔'],
+      score: ['群內片段與註冊人員的多線索證據', '整群多證據比對＋第一第二名間隔'],
+      decide: ['第一名過接受門檻且領先第二名一段間隔', '整群多證據比對＋第一第二名間隔'],
+      aux: ['刷卡證據（有上限）；影像與刷卡不符則標待查', '刷卡紀錄當輔助證據與一致性檢查'],
+      out: ['確認／待確認／未知-#N／與刷卡不符', '整群多證據比對＋第一第二名間隔'] } }
+  };
+  // 我們的組合：每格對到哪種架構（pat 取自 others.js PATTERNS）；steps 為我們的步驟 id
+  P.COMBO = [
+    { pat: 'mtmc', steps: [1, 2] }, { pat: 'bio', steps: [3, 4] }, { pat: 'archive', steps: [5, 6] },
+    { pat: 'anchor', steps: [7] }, { pat: 'bind', steps: [7] }, { pat: 'search', steps: ['Q'] }
+  ];
+
+  /* ---------- D7 部署架構：kind＝cam／store／proc／db／ui／ext；step＝對應我們的步驟（可無） ---------- */
+  P.DEPLOY = {
+    nodes: [
+      { id: 'cam', col: 0, row: 1, kind: 'cam', t: '路邊攝影機 ×N', d: '營區各處既有的攝影機；數量與點位以現場為準。' },
+      { id: 'nvr', col: 1, row: 1, kind: 'store', t: '錄影主機（既有）', d: '白天照常錄影，存在既有的錄影主機；系統不另存原始錄影。' },
+      { id: 'export', col: 2, row: 1, kind: 'proc', t: '夜間匯出', d: '夜間把當天錄影匯出給營區伺服器，離線處理。' },
+      { id: 'srv', col: 3, row: 1, kind: 'proc', t: '營區伺服器', d: '依序跑解碼、偵測與追蹤、線索特徵、融合與分群、比對名冊。', steps: [1, 2, 3, 4, 5, 6, 7],
+        parts: [{ t: '解碼', steps: [] }, { t: '偵測、追蹤', steps: [1, 2] }, { t: '線索特徵', steps: [3] }, { t: '融合、時空、分群', steps: [4, 5, 6] }, { t: '比對名冊', steps: [7] }] },
+      { id: 'db', col: 4, row: 1, kind: 'db', t: '資料庫', d: '片段索引、特徵、群、身分結果、覆核紀錄；各類資料分開保存。', steps: ['Q'] },
+      { id: 'ui', col: 5, row: 1, kind: 'ui', t: '查詢介面', d: '報表、事後查詢、人工覆核。', steps: ['Q'] },
+      { id: 'acl', col: 3, row: 0, kind: 'ext', t: '門禁系統（刷卡）', d: '只讀取刷卡紀錄，作為輔助證據；不複製、不單獨決定身分。', steps: [7] },
+      { id: 'roster', col: 3, row: 2, kind: 'ext', t: '人員名冊／註冊資料', d: '名冊與在營區攝影機下拍的多服裝註冊資料；與匿名軌跡分開保存。', steps: [7] }
+    ],
+    edges: [
+      { from: 'cam', to: 'nvr', label: '錄影' }, { from: 'nvr', to: 'export', label: '白天錄、夜間匯出' }, { from: 'export', to: 'srv' },
+      { from: 'srv', to: 'db', label: '結果' }, { from: 'db', to: 'ui' },
+      { from: 'acl', to: 'srv', label: '刷卡' }, { from: 'roster', to: 'srv', label: '名冊' },
+      { from: 'ui', to: 'roster', label: '人工覆核：更新註冊資料與門檻（每週）', kind: 'feedback' }
+    ]
+  };
+
+  /* ---------- D9 決策流程：節點的 cfg 以 {cfg:[步,'項目名']} 引用 steps.js，不複製數值 ---------- */
+  P.DECISIONS = {
+    gate: { title: '③ 線索可用條件', nodes: [
+      { id: 'start', kind: 'start', t: '一段片段', col: 0, row: 2 },
+      { id: 'face', kind: 'test', t: '臉夠清楚？', cfg: { cfg: [3, '臉的門檻'] }, col: 1, row: 0 },
+      { id: 'tag', kind: 'test', t: '近距點位、人夠大？', cfg: { cfg: [3, '名牌與階級章'] }, col: 1, row: 1 },
+      { id: 'gait', kind: 'test', t: '連續走夠久？', cfg: { cfg: [3, '步態門檻'] }, col: 1, row: 2 },
+      { id: 'app', kind: 'test', t: '要比的是同一天？', note: '外觀只用在同一天內；換裝後不可靠', col: 1, row: 3 },
+      { id: 'ht', kind: 'test', t: '全身可見？', cfg: { cfg: [3, '身高'] }, col: 1, row: 4 },
+      { id: 'use', kind: 'use', t: '用這條線索', col: 2, row: 1 },
+      { id: 'skip', kind: 'skip', t: '不用（證據設為 0）', col: 2, row: 3 }
+    ], edges: [
+      { from: 'start', to: 'face' }, { from: 'start', to: 'tag' }, { from: 'start', to: 'gait' }, { from: 'start', to: 'app' }, { from: 'start', to: 'ht' },
+      { from: 'face', to: 'use', label: '是' }, { from: 'tag', to: 'use', label: '是' }, { from: 'gait', to: 'use', label: '是' }, { from: 'app', to: 'use', label: '是' }, { from: 'ht', to: 'use', label: '是' },
+      { from: 'face', to: 'skip', label: '否' }, { from: 'tag', to: 'skip', label: '否' }, { from: 'gait', to: 'skip', label: '否' }, { from: 'app', to: 'skip', label: '否' }, { from: 'ht', to: 'skip', label: '否' }
+    ] },
+    shape: { title: '④ 體型組', nodes: [
+      { id: 'gait', kind: 'in', t: '步態', cfg: { cfg: [3, '步態門檻'] }, col: 0, row: 0 },
+      { id: 'cal', kind: 'in', t: '換裝（CAL）', cfg: { cfg: [3, '換裝訓練'] }, col: 0, row: 1 },
+      { id: 'ht', kind: 'in', t: '身高', cfg: { cfg: [3, '身高'] }, col: 0, row: 2 },
+      { id: 'prop', kind: 'in', t: '肢體比例', col: 0, row: 3 },
+      { id: 'best', kind: 'proc', t: '取最強的一項', col: 1, row: 1 },
+      { id: 'rest', kind: 'proc', t: '其餘各取一部分', col: 1, row: 2 },
+      { id: 'cap', kind: 'out', t: '合為體型組證據，並設上限', cfg: { cfg: [4, '體型組'] }, col: 2, row: 1 }
+    ], edges: [
+      { from: 'gait', to: 'best' }, { from: 'cal', to: 'best' }, { from: 'ht', to: 'best' }, { from: 'prop', to: 'best' },
+      { from: 'gait', to: 'rest' }, { from: 'cal', to: 'rest' }, { from: 'ht', to: 'rest' }, { from: 'prop', to: 'rest' },
+      { from: 'best', to: 'cap' }, { from: 'rest', to: 'cap' }
+    ] },
+    identify: { title: '⑦ 確認、待確認、未知與刷卡不一致', nodes: [
+      { id: 'list', kind: 'proc', t: '縮小名單', cfg: { cfg: [7, '比對名單'] }, col: 0, row: 1 },
+      { id: 'grp', kind: 'proc', t: '整群比對', cfg: { cfg: [7, '取前 k 段'] }, col: 1, row: 1 },
+      { id: 'acc', kind: 'test', t: '第一名過接受門檻？', cfg: { cfg: [7, '接受門檻'] }, col: 2, row: 1 },
+      { id: 'gap', kind: 'test', t: '領先第二名夠多？', cfg: { cfg: [7, '間隔門檻'] }, col: 3, row: 1 },
+      { id: 'ok', kind: 'end', t: '確認：人員 X', col: 4, row: 0 },
+      { id: 'maybe', kind: 'end', t: '待確認（交人工覆核）', col: 4, row: 1 },
+      { id: 'unk', kind: 'end', t: '未知-#N', col: 4, row: 2 },
+      { id: 'card', kind: 'test', t: '刷卡與影像一致？', cfg: { cfg: [7, '刷卡證據'] }, col: 2, row: 3 },
+      { id: 'flag', kind: 'flag', t: '疑似代刷／疑似尾隨（只標記）', cfg: { cfg: [7, '尾隨與代刷'] }, col: 3, row: 3 },
+      { id: 'mis', kind: 'flag', t: '與刷卡不符（列入待查）', col: 4, row: 3 }
+    ], edges: [
+      { from: 'list', to: 'grp' }, { from: 'grp', to: 'acc' },
+      { from: 'acc', to: 'gap', label: '是' }, { from: 'acc', to: 'unk', label: '否' },
+      { from: 'gap', to: 'ok', label: '是' }, { from: 'gap', to: 'maybe', label: '否' },
+      { from: 'grp', to: 'card' }, { from: 'card', to: 'flag', label: '門口有疑點' }, { from: 'card', to: 'mis', label: '身分不同' }
+    ] }
+  };
+
+  /* ---------- D10 身分狀態圖 ---------- */
+  P.ID_STATES = {
+    nodes: [
+      { id: 'seg', col: 0, row: 1, t: '片段', d: '同一台攝影機內的一段，片段內是同一人。', step: 2 },
+      { id: 'day', col: 1, row: 1, t: '日內匿名 ID', d: '同一天內聚成一人一群。', step: 6 },
+      { id: 'glob', col: 2, row: 1, t: '全域匿名 ID', d: '跨日連結，只用臉、步態、身高。', step: 6 },
+      { id: 'ok', col: 3, row: 0, t: '已確認：人員 X', d: '整群比對過門檻且領先第二名。', step: 7, kind: 'end' },
+      { id: 'maybe', col: 3, row: 1, t: '待確認', d: '證據不夠明確，交人工覆核。', step: 7, kind: 'mid' },
+      { id: 'unk', col: 3, row: 2, t: '未知-#N', d: '名冊裡找不到足夠相近的人（訪客、新進人員）。', step: 7, kind: 'end' },
+      { id: 'none', col: 1, row: 2, t: '未歸群', d: '低信心片段，證據不足就保留，不硬併。', step: 6, kind: 'end' },
+      { id: 'flag', col: 3, row: 3, t: '刷卡不一致旗標', d: '影像判定與刷卡不同，列入待查；只標記。', step: 7, kind: 'flag' }
+    ],
+    edges: [
+      { from: 'seg', to: 'day', label: '同日分群', step: 6 }, { from: 'day', to: 'glob', label: '跨日連結', step: 6 },
+      { from: 'glob', to: 'ok', label: '比對名冊', step: 7 }, { from: 'glob', to: 'maybe', step: 7 }, { from: 'glob', to: 'unk', step: 7 },
+      { from: 'seg', to: 'none', label: '低信心' },
+      { from: 'maybe', to: 'ok', label: '人工覆核' }, { from: 'maybe', to: 'unk', label: '人工覆核' },
+      { from: 'ok', to: 'flag', label: '刷卡不一致', kind: 'dash' }
+    ],
+    anim: 'layers'
+  };
+
+  /* ---------- D8 每日時程：時間都是示意（與 ourplay 的 o_day 一致：白天錄影、夜間批次）；週列是每週回饋 ---------- */
+  P.DAILY = [
+    { id: 'rec', band: 'day', t: '白天錄影', from: 6, to: 22, mark: '示意', d: '路邊攝影機照常錄影，存在既有錄影主機。' },
+    { id: 'batch', band: 'night', t: '夜間批次處理', from: 22, to: 6, mark: '示意', d: '匯出當天錄影，依序跑完七步。', steps: [1, 2, 3, 4, 5, 6, 7] },
+    { id: 'report', band: 'morning', t: '早上報表', from: 7, to: 8, mark: '示意', d: '每人時間與地點；低信心連結列入待覆核。', steps: ['Q'] },
+    { id: 'review', band: 'morning', t: '人工覆核', from: 8, to: 10, mark: '示意', d: '覆核待確認與刷卡不一致的項目。', steps: ['Q'] },
+    { id: 'wk1', band: 'week', t: '加入人工確認的配對（半監督）', cfg: { cfg: [6, '半監督'] }, d: '每週把覆核確認的配對加入訓練。' },
+    { id: 'wk2', band: 'week', t: '重掃合併門檻 τ', cfg: { cfg: [6, '合併門檻 τ'] }, d: '用標註資料重新掃描門檻。' },
+    { id: 'wk3', band: 'week', t: '更新註冊資料', cfg: { cfg: [7, '註冊資料'] }, d: '新進人員與服裝變化補進註冊。' }
+  ];
+
+  /* ---------- D11 存什麼、存多久：期限一律「待核定」；引用 OTHER_GOV「資料用完即刪、保存期限」 ---------- */
+  P.STORE = [
+    { data: '原始錄影', step: 1, where: '錄影主機（既有）', keep: '依現行規定；系統不另存', who: '依現行規定' },
+    { data: '片段索引與縮圖', step: 2, where: '營區伺服器資料庫', keep: '待核定', who: '待核定' },
+    { data: '特徵', step: 3, where: '營區伺服器資料庫', keep: '待核定', who: '待核定' },
+    { data: '匿名群與軌跡', step: 6, where: '營區伺服器資料庫', keep: '待核定', who: '待核定' },
+    { data: '身分結果與報表', step: 7, where: '營區伺服器資料庫', keep: '待核定', who: '待核定' },
+    { data: '註冊資料', step: 7, where: '營區伺服器（與匿名軌跡分開保存）', keep: '待核定', who: '待核定' },
+    { data: '刷卡紀錄', step: 7, where: '門禁系統（只讀、不複製）', keep: '依門禁系統現行規定', who: '依門禁系統現行規定' },
+    { data: '人工覆核紀錄', step: 'Q', where: '營區伺服器資料庫', keep: '待核定', who: '待核定' }
+  ];
+  P.STORE_NOTE = { gov: '資料用完即刪、保存期限' };
 
   /* ---------- 按鈕（固定三種） ---------- */
   P.BUTTONS = [

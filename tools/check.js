@@ -197,32 +197,99 @@ function checkRefs() {
   report('refs', 2, f, 'token、xref、OURS、SYS 全部可解析');
 }
 
-// slots（Phase 4 起）
+// slots（Phase 4 起）：資料不全時只發 WARN，不會崩潰
+const CIRC = { 1: '①', 2: '②', 3: '③', 4: '④', 5: '⑤', 6: '⑥', 7: '⑦' };
 function checkSlots() {
   if (!PIPE || !PIPE.SLOTS) return skip('slots', 4, '槽位資料（PIPE.SLOTS）尚未建立');
-  if (!G.SLOTDATA || !Object.keys(G.SLOTDATA).length) return skip('slots', 4, 'SLOTDATA 尚未填入（第 4 階段）');
-  const f = [];
+  const f = [], warns = [], infos = [];
+  const SD = G.SLOTDATA || {};
   const VALID = ['acquire', 'detect', 'track', 'feature', 'score', 'st', 'cluster', 'identify', 'query'];
-  (G.STEPS || []).forEach((st) => {
-    const slots = (PIPE.SLOTS[st.id] || []).map((s) => s.id);
-    const allowed = slots.concat(['extra']);
-    (st.groups || []).forEach((g) => (g.cards || []).forEach((c) => {
-      const nm = c.x && c.x.n;
-      if (c.slots) {
-        Object.keys(c.slots).forEach((k) => { if (allowed.indexOf(k) < 0) f.push(nm + '：未知槽位 ' + k); });
-        if (c.how) slots.forEach((k) => { if (!(k in c.slots)) f.push(nm + '：缺槽位 ' + k); });
-        (c.diff || []).forEach((k) => { if (allowed.indexOf(k) < 0) f.push(nm + '：diff 含未知槽位 ' + k); });
-        (c.part || []).forEach((k) => { if (allowed.indexOf(k) < 0) f.push(nm + '：part 含未知槽位 ' + k); });
-      } else if (c.how) f.push(nm + '：主要卡缺 slots');
-    }));
+  const cname = (c) => c.m || (c.x && c.x.n);
+  const cards = {}; // 卡片名 → { c, st, g }
+  (G.STEPS || []).forEach((st) => (st.groups || []).forEach((g) => (g.cards || []).forEach((c) => { const n = cname(c); if (n) cards[n] = { c, st, g }; })));
+  const slotIds = (stid) => (PIPE.SLOTS[stid] || []).map((s) => s.id);
+  const isTxt = (v) => typeof v === 'string' || (v && typeof v === 'object' && (typeof v.v === 'string' || v.mark === 'skip'));
+  if (!Object.keys(SD).length) warns.push('SLOTDATA 尚未填入或為空');
+  // SLOTDATA 每個鍵對得到卡片；槽位鍵、diff／part 合法；主要卡完整
+  Object.keys(SD).forEach((k) => {
+    const e = SD[k], hit = cards[k];
+    if (!hit) return f.push('SLOTDATA 鍵「' + k + '」對不到 steps.js 任何卡片');
+    const allowed = slotIds(hit.st.id).concat(['extra']);
+    Object.keys((e && e.slots) || {}).forEach((s) => { if (allowed.indexOf(s) < 0) f.push(k + '：未知槽位 ' + s); });
+    ['diff', 'part'].forEach((fld) => (e[fld] || []).forEach((s) => { if (allowed.indexOf(s) < 0) f.push(k + '：' + fld + ' 含未知槽位 ' + s); }));
+    if (hit.c.how) slotIds(hit.st.id).forEach((s) => {
+      const v = e.slots && e.slots[s];
+      if (v === undefined) f.push(k + '：缺槽位 ' + s + '（缺格須明確 mark:\'skip\'）');
+      else if (!isTxt(v)) f.push(k + '：槽位 ' + s + ' 格式不對');
+    });
+    walkStrings(e.slots, (v, pth) => { if (/待確認/.test(v)) infos.push(k + pth + '：' + v); });
   });
+  Object.keys(cards).forEach((k) => {
+    if (cards[k].c.how && Object.keys(SD).length && !SD[k]) f.push('主要卡「' + k + '」沒有 SLOTDATA 條目');
+  });
+  // BASE：card 型要存在且有 SLOTDATA；ours 型提供者要在該組、且該卡 part 含此槽位
+  const BASE = PIPE.BASE || {};
+  if (!Object.keys(BASE).length) warns.push('PIPE.BASE 尚未填入');
+  Object.keys(BASE).forEach((key) => {
+    const b = BASE[key], sid = +String(key).split(':')[0], gkey = String(key).split(':')[1];
+    if (b.card) {
+      if (!cards[b.card]) f.push('BASE[' + key + '].card「' + b.card + '」對不到卡片');
+      else if (Object.keys(SD).length && !SD[b.card]) warns.push('BASE[' + key + '].card「' + b.card + '」尚無 SLOTDATA');
+    }
+    if (b.ours) Object.keys(b.ours).forEach((s) => {
+      const cell = b.ours[s], pv = cell && cell[1], hit = pv && cards[pv];
+      if (slotIds(sid).indexOf(s) < 0) return f.push('BASE[' + key + '].ours 未知槽位 ' + s);
+      if (!hit) return f.push('BASE[' + key + '].ours.' + s + ' 提供者「' + pv + '」對不到卡片');
+      if (hit.st.id !== sid || (gkey && hit.g.key !== gkey)) f.push('BASE[' + key + '].ours.' + s + ' 提供者「' + pv + '」不在該組');
+      const e = SD[pv];
+      if (!e) warns.push('BASE[' + key + '].ours.' + s + ' 提供者「' + pv + '」尚無 SLOTDATA');
+      else if ((e.part || []).indexOf(s) < 0) warns.push('BASE[' + key + '].ours.' + s + ' 提供者「' + pv + '」的 part 不含 ' + s);
+    });
+  });
+  // 有主要卡的步驟（組）都該有 BASE
+  (G.STEPS || []).forEach((st) => (st.groups || []).forEach((g) => {
+    if (!(g.cards || []).some((c) => c.how)) return;
+    const key = st.id === 3 ? '3:' + g.key : String(st.id);
+    if (!BASE[key] && Object.keys(BASE).length) warns.push('BASE 缺「' + key + '」');
+  }));
+  // others.js：sys／flow、lead／s、lessons
+  const sysOurs = (id) => { const o = (PIPE.OURS || []).filter((z) => z.id === id)[0]; return o ? o.sys : []; };
   (G.OTHERS || []).concat(G.PATTERNS || []).forEach((o) => {
-    if (!o.sys) return f.push((o.n || o.id) + '：缺 sys');
-    if (o.sys.length !== o.flow.length) f.push((o.n || o.id) + '：sys 與 flow 不等長');
+    if (!o.sys) return warns.push((o.n || o.id) + '：尚無 sys');
+    if (o.sys.length !== (o.flow || []).length) f.push((o.n || o.id) + '：sys 與 flow 不等長');
     o.sys.forEach((v) => [].concat(v).forEach((x) => { if (x !== 'extra' && VALID.indexOf(x) < 0) f.push((o.n || o.id) + '：sys 值 ' + x + ' 不合法'); }));
+    if (o.cover && o.cover.s) [1, 2, 3, 4, 5, 6, 7].forEach((i) => {
+      const has = o.sys.some((v) => [].concat(v).some((x) => sysOurs(i).indexOf(x) >= 0)), c = o.cover.s[i - 1];
+      if (has && c === 'b') warns.push((o.n || o.id) + '：sys 有 ' + CIRC[i] + ' 對應步驟但 cover 為 b');
+      if (!has && c && c !== 'b') warns.push((o.n || o.id) + '：cover 的 ' + CIRC[i] + ' 非 b 但 sys 沒有對應步驟（多半漏標合併）');
+    });
   });
-  (G.OTHER_LESSONS || []).forEach((l) => { if (['adopt', 'test', 'later'].indexOf(l[4]) < 0) f.push('lessons「' + l[1] + '」狀態不合法'); });
-  report('slots', 4, f, '槽位、diff／part、sys／flow、lessons 狀態皆合法');
+  (G.PATTERNS || []).forEach((p) => { ['lead', 's'].forEach((k) => { if (!p[k]) warns.push('PATTERNS「' + p.id + '」缺 ' + k); }); });
+  (G.OTHER_LESSONS || []).forEach((l) => {
+    if (l[4] === undefined) return warns.push('lessons「' + l[1] + '」尚無狀態（第 5 格）');
+    if (['adopt', 'test', 'later'].indexOf(l[4]) < 0) f.push('lessons「' + l[1] + '」狀態不合法：' + l[4]);
+    if (l[5] === undefined) return warns.push('lessons「' + l[1] + '」尚無第 6 格 token');
+    const toks = String(l[5]).match(/\{\{[^}]*\}\}/g) || [];
+    toks.forEach((t) => { if (!PIPE.ref || !PIPE.ref(t)) f.push('lessons「' + l[1] + '」token 無法解析：' + t); });
+  });
+  // pipeline.js 資料：COMBO、DECISIONS 的 cfg 引用、ID_STATES 邊
+  (PIPE.COMBO || []).forEach((c) => { if (!(G.PATTERNS || []).some((p) => p.id === c.pat)) f.push('COMBO 的 pat「' + c.pat + '」不存在'); });
+  Object.keys(PIPE.DECISIONS || {}).forEach((d) => {
+    const spec = PIPE.DECISIONS[d], ids = (spec.nodes || []).map((n) => n.id);
+    (spec.nodes || []).forEach((n) => { if (n.cfg && !PIPE.ref('cfg:' + n.cfg.cfg[0] + ':' + n.cfg.cfg[1])) f.push('DECISIONS.' + d + '.' + n.id + ' cfg 引用找不到：' + n.cfg.cfg.join('／')); });
+    (spec.edges || []).forEach((e) => { if (ids.indexOf(e.from) < 0 || ids.indexOf(e.to) < 0) f.push('DECISIONS.' + d + ' 邊指向不存在的節點：' + e.from + '→' + e.to); });
+  });
+  ['DEPLOY', 'ID_STATES'].forEach((k) => {
+    const spec = PIPE[k] || {}, ids = (spec.nodes || []).map((n) => n.id);
+    (spec.edges || []).forEach((e) => { if (ids.indexOf(e.from) < 0 || ids.indexOf(e.to) < 0) f.push(k + ' 邊指向不存在的節點：' + e.from + '→' + e.to); });
+    if (!ids.length) warns.push(k + ' 尚未填入');
+  });
+  walkStrings([PIPE.DEPLOY, PIPE.DAILY, PIPE.STORE], (v, pth) => { if (/\d+\s*天|\d+\s*個月|\d+\s*年/.test(v) && !/待核定/.test(v)) warns.push('DEPLOY／DAILY／STORE' + pth + ' 含保存期限樣式的數字：' + v); });
+  if (!(PIPE.DAILY || []).length) warns.push('PIPE.DAILY 尚未填入');
+  if (!(PIPE.STORE || []).length) warns.push('PIPE.STORE 尚未填入');
+  report('slots', 4, f, '槽位、diff／part、BASE、sys／flow、lessons 狀態皆合法');
+  warns.forEach((m) => emit('WARN', 'slots', m));
+  infos.forEach((m) => console.log('INFO [slots] 待確認格：' + m));
 }
 
 // offline：只能載入相對路徑且存在的檔案
