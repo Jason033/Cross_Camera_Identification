@@ -333,10 +333,10 @@
     f.steps.forEach(function (s, k) {
       var x = 320 - (n * w) / 2 + k * w, o = seg(t, 0.3 + k * 0.08, 0.4 + k * 0.08), c = SC[s[2]];
       var xs = /^x_/.test(s[3] || '');
-      g += '<g' + op(o) + '>' + R(x + 4, 190, w - 8, 56, { f: xs ? '#fff8e1' : '#fff', s: c, sw: xs ? 3 : 2 }) + (xs ? star(x + w - 10, 194, 8, '#e8a600') : '') + T(x + w / 2, 212, NUM[s[2]], { size: s[2] ? 18 : 11, c: c, w: 1 }) + T(x + w / 2, 236, s[0].length > 7 ? s[0].slice(0, 7) + '…' : s[0], { size: 11 }) + '</g>';
+      g += '<g' + op(o) + '>' + R(x + 4, 190, w - 8, 56, { f: xs ? '#fff8e1' : '#fff', s: c, sw: xs ? 3 : 2 }) + (xs ? star(x + w - 10, 194, 8, '#e8a600') : '') + T(x + w / 2, 212, NUM[s[2]], { size: s[2] ? 18 : 11, c: c, w: 1 }) + T(x + w / 2, 236, s[0].length > Math.floor((w - 10) / 11) ? s[0].slice(0, Math.floor((w - 10) / 11) - 1) + '…' : s[0], { size: 11 }) + '</g>';
       if (k < n - 1) g += arrow(x + w - 4, 218, x + w + 4, 218, INK3, { op: o });
     });
-    return g + caption(320, 280, '圓圈數字＝對應我們的第幾步　★＝它和別人不同的地方（會放慢講解）', { op: seg(t, 0.6, 0.8) });
+    return g + caption(320, 280, ours ? '圓圈數字＝我們系統的第幾步' : '圓圈數字＝對應我們的第幾步　★＝它和別人不同的地方（會放慢講解）', { op: seg(t, 0.6, 0.8) });
   };
   SCN.key = function (t, f) {
     var g = '<g' + op(seg(t, 0, 0.2)) + '><path d="M320,40 a30,30 0 0,1 18,54 v12 h-36 v-12 a30,30 0 0,1 18,-54Z" fill="#f2c94c" stroke="#9a7b12" stroke-width="2"/>' + R(304, 110, 32, 6, { f: '#9a7b12' }) + '</g>';
@@ -820,8 +820,8 @@
   }
 
   /* ---------------- 播放器 ---------------- */
-  var M, frames = [], idx = 0, t0 = 0, playing = false, raf = 0, last = null;
-  var DUR = { intro: 4000, key: 6500, step: 3800, x: 7500 };
+  var ours = false, M, frames = [], idx = 0, t0 = 0, playing = false, raf = 0, last = null;
+  var DUR = { intro: 4000, key: 6500, step: 3800, x: 7500, o: 9000 };
 
   function build() {
     M = document.createElement('div');
@@ -851,7 +851,7 @@
     else if (a === 'next') go(Math.min(frames.length - 1, idx + 1));
     else if (a === 'prev') go(Math.max(0, idx - 1));
   }
-  function dur(f) { return f.x ? DUR.x : DUR[f.type] || DUR.step; }
+  function dur(f) { return f.o ? DUR.o : f.x ? DUR.x : DUR[f.type] || DUR.step; }
   function elapsed() { return playing ? performance.now() - t0 : (last || 0); }
   function setPlay(p) {
     if (p && !playing) t0 = performance.now() - (last || 0);
@@ -867,7 +867,7 @@
     M.querySelector('.fp-sb').style.cssText = 'color:' + (f.type === 'step' ? c : '#9a7b12') + ';border-color:' + (f.type === 'step' ? c : '#9a7b12');
     M.querySelector('.fp-n').textContent = f.type === 'step' ? f.n : f.type === 'intro' ? f.title : f.label;
     M.querySelector('.fp-d').textContent = f.type === 'step' ? (f.d || '') : f.type === 'intro' ? f.sub : f.text;
-    M.querySelector('.fp-m').textContent = f.type === 'step' ? '對應我們的' + (f.s ? '第 ' + f.s + ' 步：' + STEPN[f.s] : '：' + STEPN[0]) + (f.x ? '' : '　（各系統做法相近，快速帶過）') : '';
+    M.querySelector('.fp-m').textContent = f.type !== 'step' ? '' : ours ? (f.s ? '我們的第 ' + f.s + ' 步：' + STEPN[f.s] : '整體流程') : '對應我們的' + (f.s ? '第 ' + f.s + ' 步：' + STEPN[f.s] : '：' + STEPN[0]) + (f.x ? '' : '　（各系統做法相近，快速帶過）');
     M.querySelector('.fp-x-badge').hidden = !f.x;
     M.querySelector('.fp-cap').classList.toggle('xs', !!f.x);
     M.querySelector('.fp-prog').innerHTML = frames.map(function (g, k) {
@@ -895,8 +895,9 @@
   }
   function open(spec) {
     if (!M) build();
+    ours = !!spec.ours;
     frames = [{ type: 'intro', title: spec.title, sub: spec.sub, steps: spec.flow }]
-      .concat(spec.flow.map(function (f) { var k = pick(f); return { type: 'step', n: f[0], d: f[1], s: f[2], kind: k, x: /^x_/.test(k), p: f[4] }; }))
+      .concat(spec.flow.map(function (f) { var k = pick(f); return { type: 'step', n: f[0], d: f[1], s: f[2], kind: k, x: /^x_/.test(k), o: /^o_/.test(k), p: f[4] }; }))
       .concat([{ type: 'key', label: spec.keyLabel, text: spec.key }]);
     M.querySelector('#fp-title').textContent = spec.title;
     M.hidden = false; document.body.classList.add('fp-open');
@@ -905,5 +906,5 @@
   }
   function close() { setPlay(false); M.hidden = true; document.body.classList.remove('fp-open'); }
 
-  global.FlowPlay = { open: open, pick: pick };
+  global.FlowPlay = { open: open, pick: pick, SCN: SCN, kit: { W: W, H: H, SC: SC, IDC: IDC, NAMES: NAMES, INK: INK, INK3: INK3, OLIVE: OLIVE, SKIN: SKIN, PAPER: PAPER, cl: cl, ease: ease, seg: seg, lerp: lerp, rnd: rnd, op: op, T: T, R: R, Ln: Ln, Ci: Ci, arrow: arrow, person: person, camera: camera, bars: bars, net: net, db: db, thumb: thumb, wrap: wrap, caption: caption, panel: panel, star: star, chip: chip, folder: folder, faceIcon: faceIcon, curve: curve } };
 })(window);
