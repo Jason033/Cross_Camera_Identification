@@ -16,12 +16,13 @@
   <ol class="toc" id="toc">
     <li><a href="#/home"><span class="n">0</span>總覽</a></li>
     <li><a href="#/problem"><span class="n">1</span>問題定義</a></li>
-    <li><a href="#/methods"><span class="n">2</span>方法總覽</a></li>
-    <li><a href="#/others"><span class="n">3</span>別人怎麼做</a></li>
+    <li><a href="#/others"><span class="n">2</span>別人怎麼做</a></li>
+    <li><a href="#/methods"><span class="n">3</span>方法總覽</a></li>
     <li><a href="#/approach"><span class="n">4</span>我們的做法</a></li>
     <li><a href="#/plan"><span class="n">5</span>執行計畫</a></li>
     <li class="grp">參考</li>
-    <li><a href="#/appendix"><span class="n">A</span>附錄</a></li>
+    <li><a href="#/appendix"><span class="n">A</span>技術參考</a></li>
+    <li><a href="#/mgmt"><span class="n">B</span>專案管理</a></li>
     <li><a href="#/refs"><span class="n">R</span>參考文獻</a></li>
   </ol>
   <div class="legend-box">
@@ -40,21 +41,30 @@
       <li><span class="sw-dot" style="--c:var(--c-face)"></span>臉</li>
       <li><span class="sw-dot" style="--c:var(--c-3d)"></span>體型 / 3D</li>
     </ul>
+    <h4>按鈕</h4>
+    <div class="btn-legend"></div>
     <h4>名詞</h4>
     <p style="margin:0">文中<span class="gl-demo">虛線底線</span>的字，滑過或點一下就有解釋。</p>
   </div>
   <p class="rail-foot">圖中人物與數值皆為教學示意，由程式產生；論文數字以原文為準。可離線使用。</p>
 </nav>
 
+<nav class="minimap-sticky" id="mm-sticky" aria-label="目前在第幾步（方法總覽）"></nav>
+
 <main id="main">
 
-<!-- ======================= 0 總覽 ======================= -->
+<!-- ======================= ch-home 總覽 ======================= -->
 <section class="chapter" id="ch-home" data-title="總覽">
   <div class="hero">
     <h1>當每個人都穿著同一套制服，<br class="br-wide">還能靠什麼認出誰是誰？</h1>
-    <p class="thesis">五位穿同款國軍迷彩服的人。在攝影機眼中他們幾乎一樣；換一個「鏡頭」看，身形比例與走路方式就分開了。同一天裡他們還會換上鋼盔、冬季外套或運動服——系統要分得開不同人，也要連得起換了裝的同一人。</p>
+    <p class="thesis">目標是利用營區既有的監視器，自動重建每個人「誰、在什麼時間、經過哪些地點」。難點是全員穿同款制服、同一天還會換裝：系統要分得開不同的人，也要連得起換了裝的同一人。</p>
   </div>
 
+  <h2>目標：國軍版的「天眼」</h2>
+  <p>利用營區既有的一般光學監視器，自動重建「誰、在什麼時間、經過哪些地點」。三個用途：每天重建每個人的移動路徑、事後查詢特定人員、標出名冊外的人。完整的目標、範圍與成功標準見<a href="#/problem" data-xref="ch:problem|num"></a>。</p>
+
+  <h2>為什麼難：同制服＋換裝</h2>
+  <p>難題有兩個，方向剛好相反。<b>同制服</b>：穿得一樣的不同人，要分得開。<b>換裝</b>：同一個人換上鋼盔、冬季外套或運動服，要連得起來。下圖是五位穿同款制服的人：在攝影機眼中他們幾乎一樣，換一個「鏡頭」看，身形比例與走路方式就分開了。</p>
   <figure class="plate" aria-label="同制服人員與不同身分線索">
     <div class="plate-head">
       <div class="seg" id="lens" role="group" aria-label="切換觀察方式">
@@ -64,7 +74,7 @@
         <button data-lens="anthro"><span class="sw" style="background:var(--c-3d)"></span>人體比例</button>
         <button data-lens="gait"><span class="sw" style="background:var(--c-gait)"></span>步態軌跡</button>
       </div>
-      <button class="btn ghost" id="lineup-play" aria-pressed="true">暫停</button>
+      <button class="btn ghost" id="lineup-play" aria-pressed="true" title="圖本身的動畫：播放／❚❚ 暫停；「跳到結果」直接看最後一步">❚❚ 暫停</button>
       <div class="seg seg-sm" id="outfit-sel" role="group" aria-label="服裝" style="flex-basis:100%">
         <button data-o="camo" aria-pressed="true">迷彩服＋小帽</button>
         <button data-o="helmet">鋼盔</button>
@@ -78,7 +88,18 @@
       <svg class="lineup-svg" id="lineup" viewBox="0 0 1000 410" role="img" aria-label="五位穿同款制服、正在行走的人員"></svg>
       <p class="lens-caption" id="lens-caption"></p>
     </div>
-    <div class="plate-note">人物由程序化步行模型產生：五人的身高、腿長比例、肩寬、步幅、擺臂與步頻各不相同；服裝依國軍常見樣式繪製，配色為近似值。<b>這是示意，不是實測資料。</b></div>
+    <div class="plate-note">各種線索怎麼把人分開，見{{ch:methods|num}}的「<a href="#/methods?a=cue-fig">線索入門</a>」。人物由程序化步行模型產生：五人的身高、腿長比例、肩寬、步幅、擺臂與步頻各不相同；服裝依國軍常見樣式繪製，配色為近似值。<b>這是示意，不是實測資料。</b></div>
+  </figure>
+
+  <h2>系統全貌：一條資料流</h2>
+  <p>一段影片從攝影機進來，經過七個步驟，變成「這是人員 C」或「不認識的人」。前段（{{step:1-6|sym}}）不需要名冊，最後的{{step:7|short}}才把結果對到名冊。{{ch:methods|num}}就是依這七步，逐步介紹每一步有哪些方法。</p>
+  <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title">系統全景：一段影片如何變成「人員 C」</div>
+      <button class="btn ghost" id="master-home-tour" aria-pressed="true" title="圖本身的動畫：播放／❚❚ 暫停；「跳到結果」直接看最後一步">❚❚ 暫停</button>
+    </div>
+    <div class="plate-body" id="master-home"></div>
+    <div class="plate-note">上排是每個系統都走的系統層 9 步，括號對到下排我們的步驟（①–⑦、Q）；膠囊是一段片段，自動導覽會帶著它走完全程，點任一步可停下來看細節。這是根據文獻整理出的<b>系統假說</b>，不是已驗證的系統；每一步的證據等級標在說明的標題旁。</div>
   </figure>
 
   <h2>三句話的研究結論</h2>
@@ -88,49 +109,23 @@
     <li><span class="ev open"><i></i>待驗證</span><p>這套做法能否在一般路邊監視器、白天、5 人以內的情境下，把每個人的路徑連對、換裝前後也連得起來，沒有論文直接證明——這是下一階段用自建資料與營區試錄要回答的問題。</p></li>
   </ul>
 
-  <h2>目標：國軍版的「天眼」</h2>
-  <p>利用營區既有的一般光學監視器，自動重建「誰、在什麼時間、經過哪些地點」：每天產出每個人的移動路徑、可事後查詢特定人員、並標出名冊外的人。完整的目標、範圍與成功標準見<a href="#/problem">第 1 章</a>。</p>
+  <h2>讀完每章你會知道</h2>
+  <nav class="chmap" id="chmap" aria-label="各章讀完後你會知道什麼"></nav>
 
-  <h2>整個系統，一張圖</h2>
-  <p>全站都圍繞這張架構圖：一段影片從攝影機進來，經過七個步驟，變成「這是人員 C」或「不認識的人」。第 2 章就是依這七步，逐步介紹每一步有哪些方法。</p>
-  <figure class="plate">
-    <div class="plate-head">
-      <div class="plate-title">系統全景：七個步驟</div>
-      <button class="btn ghost" id="pano-tour" aria-pressed="true">暫停導覽</button>
-    </div>
-    <div class="plate-body">
-      <div class="tbl-wrap"><svg id="pano" viewBox="0 0 1000 440" role="img" aria-label="七個步驟的系統架構，從攝影機到身分" style="min-width:820px"></svg></div>
-      <div id="pano-detail" class="detail arch-detail"></div>
-    </div>
-    <div class="plate-note">這是根據文獻整理出的<b>系統假說</b>，不是已驗證的系統。每一步的證據等級標在說明的標題旁。</div>
-  </figure>
-
-  <h2>建議的第一版系統，一頁看懂</h2>
-  <p>每一步選用的方法如下；點任一步，看它有哪些候選方法、各自的成績與授權，以及為什麼選這個。</p>
-  <div class="home-v1" id="home-v1"></div>
-
-  <h2>剛接觸這個領域？先認識這幾個名詞</h2>
-  <p>後面各章會一直用到。文中第一次出現時也會加上虛線底線，滑過即可看解釋。</p>
-  <div class="gloss-grid" id="gloss-grid"></div>
-  <details class="more"><summary>完整名詞表</summary><div class="more-body"><dl class="gloss-all" id="gloss-all"></dl></div></details>
-
-  <h2>閱讀路線</h2>
-  <nav class="chmap" aria-label="章節地圖">
-    <a href="#/problem"><span class="n">1</span><b>問題定義</b><span class="d">目標、用途、範圍與成功標準；營區場景 × 線索；ReID 怎麼評分</span></a>
-    <a href="#/methods"><span class="n">2</span><b>方法總覽</b><span class="d">依系統七步：每一步有哪些方法、成績、授權、算力，我們選哪個</span></a>
-    <a href="#/others"><span class="n">3</span><b>別人怎麼做</b><span class="d">十個面向、六種架構、31 個系統：比賽、聚檔、商用搜尋、同制服研究、軍營與機場門禁、感測器綁定；評估與治理；十二條可借用的做法</span></a>
-    <a href="#/approach"><span class="n">4</span><b>我們的做法</b><span class="d">第一版元件清單、系統要交出什麼、跑不跑得動、不做什麼與風險</span></a>
-    <a href="#/plan"><span class="n">5</span><b>執行計畫</b><span class="d">已知與未知；自建資料怎麼拍；十一個實驗；六個月查核點</span></a>
-    <a href="#/appendix"><span class="n">A</span><b>附錄</b><span class="d">資料集、55 個方法完整表、研究空缺、TRL 與月報範本</span></a>
-  </nav>
+  <h2>名詞表</h2>
+  <details class="more" id="gloss-more"><summary>剛接觸這個領域？名詞表（{{count:gloss}} 個）</summary><div class="more-body">
+    <p>後面各章會一直用到。文中第一次出現時也會加上虛線底線，滑過即可看解釋。</p>
+    <div class="gloss-grid" id="gloss-grid"></div>
+    <dl class="gloss-all" id="gloss-all"></dl>
+  </div></details>
 </section>
 
-<!-- ======================= 1 問題 ======================= -->
+<!-- ======================= ch-problem 問題 ======================= -->
 <section class="chapter" id="ch-problem" data-title="問題定義">
   <header class="ch-head">
     <p class="ch-num">第 1 章</p>
     <h1>問題定義：我們要做出什麼</h1>
-    <p class="thesis">這一章先把目標與範圍定下來：系統要回答什麼問題、在哪些情況下要能用、怎樣才算成功。接著說明人員再辨識（ReID）怎麼認人、怎麼評分，以及「全員同制服、同一天又會換裝」為什麼難。</p>
+    <p class="thesis">這一章先把目標與範圍定下來：系統要回答什麼問題、在哪些情況下要能用。接著說明人員再辨識（ReID）怎麼認人、怎麼評分，再定怎樣才算成功，最後看「全員同制服、同一天又會換裝」為什麼難，以及各種營區場景下哪些線索用得上。</p>
   </header>
 
   <h2>專案目標與範圍</h2>
@@ -165,36 +160,12 @@
     <div class="plate-note">範圍依專案目前的設定整理，屬<span class="ev inferred"><i></i>合理推論</span>；正式範圍以長官核定為準。</div>
   </figure>
 
-  <h3>門禁刷卡在系統裡的角色</h3>
+  <h3 id="role-card">門禁刷卡在系統裡的角色</h3>
   <p>刷卡紀錄很有價值——它告訴系統「某張卡在某時某地被刷過」——但它是一個<b>待驗證的主張</b>，不是答案。系統的做法是：把刷卡當成一條證據，和影像的臉、體型、步態證據一起比對；兩者一致就加強信心，<b>不一致時以影像為準並列入待查</b>（可能是代刷或冒用）。所以系統的影像辨識能力必須能獨立成立，刷卡只是加分。</p>
-
-  <h3>怎樣才算成功（建議的評估方式，目標值待討論）</h3>
-  <div class="tbl-wrap"><table class="tbl">
-    <thead><tr><th>用途</th><th>評估指標</th><th>說明</th><th>第一階段建議起點</th></tr></thead>
-    <tbody>
-      <tr><td><b>路徑重建</b></td><td>跨攝影機連結正確率</td><td>相鄰兩段片段被連成同一人時，真的是同一人的比例</td><td>白天、5 人情境 ≥ 90%（待討論）</td></tr>
-      <tr><td></td><td>路徑完整度</td><td>一個人當天實際經過的攝影機中，被正確串進他路徑的比例</td><td>≥ 70%，其餘標「無法判定」（待討論）</td></tr>
-      <tr><td></td><td>換裝連結率</td><td>同一人換裝前後的兩段路徑，被連成同一人的比例</td><td>先量現況，再訂目標</td></tr>
-      <tr><td><b>事後查詢</b></td><td>Rank-1、mAP</td><td>查詢某人時，系統找回的片段是否正確、是否找得全</td><td>先量現況，再訂目標</td></tr>
-      <tr><td><b>身分對應</b></td><td>誤認率（FPIR）優先</td><td>把 A 認成 B、把陌生人認成某位官兵，比「認不出來」嚴重</td><td>先壓到 ≤ 1%，再看漏認率（待討論）</td></tr>
-      <tr><td><b>未知人員</b></td><td>未知人員偵出率</td><td>名冊外的人被標成「未知」的比例</td><td>先量現況，再訂目標</td></tr>
-    </tbody>
-  </table></div>
-  <p class="small muted">建議起點是依文獻與工程經驗提出的討論基準（<span class="ev inferred"><i></i>合理推論</span>），不是已驗證的可達成值；第 5 章的實驗會量出現況。</p>
-
-  <h3>營區場景 × 可用線索</h3>
-  <p>攝影機可能出現在營區任何地方。下表是每種場景下，各線索大概用不用得上（第一階段範圍內：白天、5 人以內）。點格子看原因。</p>
-  <figure class="plate">
-    <div class="plate-head"><div class="plate-title"><span class="fig"></span>營區場景 × 身分線索</div></div>
-    <div class="plate-body cols cols-7-5">
-      <div class="tbl-wrap"><svg id="scene-mx" viewBox="0 0 640 400" role="img" aria-label="營區場景與身分線索的可用程度" style="min-width:560px"></svg></div>
-      <div id="scene-d" class="detail"></div>
-    </div>
-    <div class="plate-note"><i class="lvd f"></i> 可用　<i class="lvd h"></i> 有限　<i class="lvd"></i> 幾乎用不上。依攝影機幾何、各線索的必要條件與文獻整理，屬<span class="ev inferred"><i></i>合理推論</span>；實際程度要用營區試錄資料量測。換裝通常發生在場景之間（例如寢室換運動服 → 操場），所以跨場景的連結要靠不受衣服影響的線索：臉、體型、步態與時空。</div>
-  </figure>
 
   <h2>ReID 系統怎麼「認人」、怎麼評分</h2>
   <p>給系統一段某人的畫面（查詢），它會把資料庫裡的每段畫面依「像不像」排序。評分看的是：<b>本人有沒有排在第一</b>（Rank-1），以及<b>所有屬於本人的畫面是不是都排在前面</b>（mAP）。切換三種排序，看兩個指標怎麼變。</p>
+  <p>另外有兩種錯要分開看：名冊外的人或別人被認成某位官兵的比例（誤認率 FPIR），與本人沒被認出的比例（漏認率 FNIR）。營區用途下，認錯人比認不出來嚴重，所以誤認率要先壓低。</p>
   <figure class="plate">
     <div class="plate-head">
       <div class="plate-title"><span class="fig"></span>查詢、排序與評分</div>
@@ -211,7 +182,22 @@
     <div class="plate-note">人物由程序化模型產生；排序為示意。真實系統的「資料庫」可能有上千段畫面，同一人通常有很多段——所以 mAP 比 Rank-1 更能反映「找得全不全」。</div>
   </figure>
 
-  <h2>同制服＋換裝：兩個方向相反的難題同時存在</h2>
+  <h2>怎樣才算成功</h2>
+  <p>以下是建議的評估方式，目標值待討論。</p>
+  <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>用途</th><th>評估指標</th><th>說明</th><th>第一階段建議起點</th></tr></thead>
+    <tbody>
+      <tr><td><b>路徑重建</b></td><td>跨攝影機連結正確率</td><td>相鄰兩段片段被連成同一人時，真的是同一人的比例</td><td>白天、5 人情境 ≥ 90%（待討論）</td></tr>
+      <tr><td></td><td>路徑完整度</td><td>一個人當天實際經過的攝影機中，被正確串進他路徑的比例</td><td>≥ 70%，其餘標「無法判定」（待討論）</td></tr>
+      <tr><td></td><td>換裝連結率</td><td>同一人換裝前後的兩段路徑，被連成同一人的比例</td><td>先量現況，再訂目標</td></tr>
+      <tr><td><b>事後查詢</b></td><td>Rank-1、mAP</td><td>查詢某人時，系統找回的片段是否正確、是否找得全</td><td>先量現況，再訂目標</td></tr>
+      <tr><td><b>身分對應</b></td><td>誤認率（FPIR）優先</td><td>把 A 認成 B、把陌生人認成某位官兵，比「認不出來」嚴重</td><td>先壓到 ≤ 1%，再看漏認率（待討論）</td></tr>
+      <tr><td><b>未知人員</b></td><td>未知人員偵出率</td><td>名冊外的人被標成「未知」的比例</td><td>先量現況，再訂目標</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">建議起點是依文獻與工程經驗提出的討論基準（<span class="ev inferred"><i></i>合理推論</span>），不是已驗證的可達成值；{{ch:plan|num}}的實驗會量出現況。</p>
+
+  <h2>為什麼難：同制服＋換裝</h2>
   <p>兩者都說「衣服不可靠」，但難點相反：同制服要<b>把穿一樣的不同人分開</b>，換裝要<b>把換了衣服的同一人連起來</b>。本專案兩個都要，而公開研究多半只做其中一個。</p>
   <figure class="plate">
     <div class="plate-head">
@@ -225,53 +211,118 @@
     <div class="plate-note">列 = 不同的人，欄 = 不同的服裝。<b>換衣</b>是在同一列裡跨欄配對；<b>同制服</b>是在同一欄裡分辨不同列。</div>
   </figure>
 
-  
-
-  <h2>直接研究「不同人、同制服」的文獻很少</h2>
+  <h3>直接研究「不同人、同制服」的文獻很少</h3>
   <div class="tbl-wrap"><table class="tbl" id="direct-tbl"></table></div>
+
+  <h2>營區場景 × 可用線索</h2>
+  <p>攝影機可能出現在營區任何地方。下表是每種場景下，各線索大概用不用得上（第一階段範圍內：白天、5 人以內）。點格子看原因。</p>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>營區場景 × 身分線索</div></div>
+    <div class="plate-body cols cols-7-5">
+      <div class="tbl-wrap"><svg id="scene-mx" viewBox="0 0 640 400" role="img" aria-label="營區場景與身分線索的可用程度" style="min-width:560px"></svg></div>
+      <div id="scene-d" class="detail"></div>
+    </div>
+    <div class="plate-note"><i class="lvd f"></i> 可用　<i class="lvd h"></i> 有限　<i class="lvd"></i> 幾乎用不上。依攝影機幾何、各線索的必要條件與文獻整理，屬<span class="ev inferred"><i></i>合理推論</span>；實際程度要用營區試錄資料量測。換裝通常發生在場景之間（例如寢室換運動服 → 操場），所以跨場景的連結要靠不受衣服影響的線索：臉、體型、步態與時空。</div>
+  </figure>
+
+  <section class="ch-end">
+    <h2>本章小結</h2>
+    <ul>
+      <li>範圍有四個條件：5 人以內的小團體、白天與一般照明、同一天會換裝，以及{{cav:card-aux}}。</li>
+      <li>成功看三件事：跨攝影機連結正確率、路徑完整度，以及誤認率（FPIR）；認錯人比認不出來嚴重。</li>
+      <li>外觀跨服裝不可靠；要連起換了裝的同一人，只能靠臉（近距點位）、體型、步態與時空約束。</li>
+    </ul>
+    <p class="ch-next">別人的完整系統怎麼處理類似問題？見{{ch:others}}。</p>
+  </section>
 </section>
 
-<!-- ======================= 2 方法總覽 ======================= -->
-<section class="chapter" id="ch-methods" data-title="方法總覽">
+<!-- ======================= ch-others 別人怎麼做 ======================= -->
+<section class="chapter" id="ch-others" data-title="別人怎麼做">
   <header class="ch-head">
     <p class="ch-num">第 2 章</p>
-    <h1>方法總覽：每一步有哪些方法，我們選哪個</h1>
-    <p class="thesis">依系統的七個步驟，逐步列出學界的候選方法：原理、成績、授權、算力，以及對我們適不適合。每一步最後給出「我們的選擇」。點下面架構圖的任一步，可直接跳到那一節。</p>
+    <h1>別人怎麼做：現有系統、比賽與研究</h1>
+    <p class="thesis">上一章定下問題；這一章用同一條資料流（{{sys:acquire}}、{{sys:detect}}、{{sys:track}}、{{sys:feature}}、{{sys:score}}、{{sys:st}}、{{sys:cluster}}、{{sys:identify}}、{{sys:query}}）看別人的系統：每個系統跳過了哪些步驟、合併了哪些、多做了什麼、特色在哪。看完{{count:patterns|zh}}種常見架構與 {{count:systems}} 個系統，再說明我們組合了哪幾種、借用了哪些做法。下一章（{{ch:methods|num}}）再拆到每個元件。</p>
   </header>
-  <div class="tag-legend"></div>
 
+  <details class="more" id="oth-facets-more"><summary>搜尋範圍：{{count:facets|zh}}個面向</summary><div class="more-body">
+    <p>「誰、何時、去過哪裡」不只是監視器的問題。下表是這次搜尋涵蓋的{{count:facets|zh}}個面向，軍方、警方、機場、零售、工地、運動轉播、手機相簿與學術比賽都包含在內。它只說明我們找過哪些地方，不是分類法；後面的系統改依架構分組。</p>
+    <div class="tbl-wrap"><table class="tbl facets" id="oth-facets"></table></div>
+  </div></details>
+
+  <h2>一條線看所有系統</h2>
+  <p>不論哪一種系統，只要在做「人員追蹤或辨識」，都會走過下面這條資料流。差別只是有的步驟被跳過、有的合併成一步、有的多出額外的步驟，以及各自的特色。</p>
+  <p class="small">圖中的 ①–⑦ 是我們系統自己的步驟，已在{{ch:home}}的主圖介紹過；這章先看別人怎麼做，最後再對回我們的步驟。</p>
+  <div id="sys-ruler" class="sys-ruler"></div>
+  <p class="small muted">之後每個架構與系統都會對到這條線，用四種標記說明它和這條線的差別：<b>跳過</b>（該步驟沒有）、<b>合併</b>（一個方塊同時做了幾個步驟）、<b>額外</b>（這條線上沒有的步驟）、<b>★ 特色</b>（它和別人不同的地方）。</p>
+
+  <h2>{{count:patterns|zh}}種常見架構</h2>
+  <p>現有系統可分成{{count:patterns|zh}}種架構，每一種只解決問題的一部分，也就是在上面那條線的不同段落特別著力。標 <span class="xstar">★ 特色</span> 的是這個架構和別人不同的地方；其他步驟各系統做法相近。每張卡片右上角的「動畫說明」會逐步播放流程：相近的步驟快速帶過，特色步驟放慢並用專屬的圖解說明。流程方塊右上角的圓圈數字是「對應我們的哪一步」，標「額外」的是我們七步裡沒有的步驟。</p>
+  <div class="patterns" id="patterns"></div>
+
+  <h2>{{count:systems}} 個系統，依架構分組</h2>
+  <p>下面每個系統都屬於上面其中一類架構；不是完整系統的單項研究與支撐技術放在最後一組。卡片右上的「領域」只是這個系統來自哪個應用場景的標籤。</p>
+  <div id="oth-groups"></div>
+
+  <h2>對照表：每個系統涵蓋了我們的哪幾步</h2>
+  <p>點系統名稱可跳到它的詳細說明。<i class="lvd f"></i> 有　<i class="lvd h"></i> 部分　<i class="lvd"></i> 沒有。</p>
+  <div class="tbl-wrap"><table class="tbl mx omx" id="oth-matrix"></table></div>
+  <p class="small muted">沒有任何一個現有系統同時涵蓋七步、又處理同制服與換裝。涵蓋程度為依公開資料的判斷（<span class="ev inferred"><i></i>合理推論</span>）；本專案那一列是設計目標，尚未驗證。</p>
+
+  <h2>我們的組合</h2>
+  <p>本專案不是照抄任何單一架構，而是各取所長，接在同一條線上：</p>
+  <div id="combo-strip" class="combo-strip"></div>
+
+  <h2>別人怎麼評估、訂了哪些規則</h2>
+  <details class="more"><summary>評估指標：每個指標衡量什麼、誰在用、我們用在哪</summary><div class="more-body">
+    <div class="tbl-wrap"><table class="tbl" id="oth-metrics"></table></div>
+  </div></details>
+  <h3>治理規則</h3>
+  <p>這些不是技術問題，但每個實際上線的系統都要面對；先訂好可避免日後的爭議。</p>
+  <div class="tbl-wrap"><table class="tbl" id="oth-gov"></table></div>
+
+  <h2>{{count:lessons|zh}}條可借用的做法，{{ch:approach|num}}採用了哪些</h2>
+  <p>以下是從上面的系統歸納出、可以直接放進我們系統的做法，依步驟排序。</p>
+  <div class="tbl-wrap"><table class="tbl lessons" id="oth-lessons"></table></div>
+
+  <section class="ch-end">
+    <h2>本章小結</h2>
+    <ul>
+      <li>所有系統都走同一條資料流（影像、人框、片段、特徵、證據、身分），差別在跳過、合併、額外與特色。</li>
+      <li>{{count:patterns|zh}}種常見架構各解決問題的一部分；沒有任何系統同時處理同制服與換裝。</li>
+      <li>我們的做法是組合其中幾種（追蹤成片段、多線索融合、時空約束聚檔、檢查點與刷卡對到名冊），並從系統裡歸納出{{count:lessons|zh}}條可借用的做法。</li>
+    </ul>
+    <p class="ch-next">接下來拆到元件：每一步的方法差在哪個槽位，見{{ch:methods}}。</p>
+  </section>
+</section>
+
+<!-- ======================= ch-methods 方法總覽 ======================= -->
+<section class="chapter" id="ch-methods" data-title="方法總覽">
+  <header class="ch-head">
+    <p class="ch-num">第 3 章</p>
+    <h1>方法總覽：每一步有哪些方法，我們選哪個</h1>
+    <p class="thesis">上一章看的是別人的整個系統；這一章拆到元件。依我們的步驟（{{step:1-7|sym}}），先說明「線索」是什麼，再逐步列出學界的候選方法：原理、成績、授權、算力，以及對我們適不適合。每一步的方法都放進同樣的幾個比較面向，各方法只在一兩處不同；每一步最後給出「我們的選擇」。</p>
+  </header>
+
+  <h2>怎麼讀這一章</h2>
+  <p>先看整條流程在哪裡：點下圖的任一步，可直接跳到那一節。</p>
   <figure class="plate">
     <div class="plate-head">
       <div class="plate-title"><span class="fig"></span>整體技術架構：一段影片如何變成「人員 C」</div>
-      <button class="btn ghost" id="arch-tour" aria-pressed="true">暫停導覽</button>
     </div>
-    <div class="plate-body">
-      <div class="seg arch-steps" id="arch-steps" role="group" aria-label="架構步驟"></div>
-      <div class="tbl-wrap"><svg id="arch" viewBox="0 0 1000 440" role="img" aria-label="七個步驟的技術架構，從攝影機到身分" style="min-width:820px"></svg></div>
-      <div id="arch-detail" class="detail arch-detail"></div>
-    </div>
-    <div class="plate-note">下方的膠囊是一段片段，自動導覽會帶著它走完七步；點任一步可停下來看細節，或用說明裡的連結跳到該步的候選方法。整體是根據文獻整理的系統假說，各元件的證據等級標在說明的標題旁。</div>
+    <div class="plate-body" id="master-methods"></div>
+    <div class="plate-note">上排是系統層的 9 步，下排是我們的步驟，箭頭上寫每一步交給下一步的產出物；⑤ 的兩個產出分別回到 ④（轉移時間當證據）與去到 ⑥（不可能配對）。點任一步直接跳到該節。整體是根據文獻整理的系統假說，各元件的證據等級見各節。</div>
   </figure>
+  <p>每一節（{{step:1-7|sym}}）的排列順序都一樣，看熟一節就會看每一節：</p>
+  <ol class="chain read-order">
+    <li>你在這裡</li><li>我們選</li><li>要解決什麼</li><li>路線地圖</li><li>並排比較與槽位表</li><li>方法卡</li><li>我們的選擇</li>
+  </ol>
+  <div class="tag-legend"></div>
+  <div class="btn-legend"></div>
 
-  <section class="step" id="step-1">
-    <h2>① 攝影機與人物偵測</h2>
-    <div class="step-q" data-s="1"></div>
-    <div class="step-cards" data-s="1" data-g="0"></div>
-    <div class="step-choice" data-s="1"></div>
-  </section>
-
-  <section class="step" id="step-2">
-    <h2>② 單相機追蹤成片段</h2>
-    <div class="step-q" data-s="2"></div>
-    <div class="step-cards" data-s="2" data-g="0"></div>
-    <div class="step-choice" data-s="2"></div>
-  </section>
-
-  <section class="step" id="step-3">
-    <h2>③ 身分線索特徵</h2>
-    <div class="step-q" data-s="3"></div>
-    <p>先用兩張圖理解「線索」與「方法」：同一個人有哪些看法，以及六類方法各自把畫面變成什麼。</p>
-    <figure class="plate">
+  <h2>線索入門：同一個人有哪些可用資訊</h2>
+  <p>先弄懂「線索」，後面每一步的方法才看得懂：「線索」是人身上的資訊；「方法」是把畫面變成可比對特徵的模型。同一種線索可能被好幾組方法用到。</p>
+  <h3>同一個人，七種看法</h3>
+  <figure class="plate">
     <div class="plate-head">
       <div class="plate-title"><span class="fig"></span>同一個人，七種看法</div>
       <div class="chips" id="cue-chips" role="group" aria-label="選擇身分線索"></div>
@@ -281,27 +332,10 @@
       <div id="cue-detail" class="detail"></div>
     </div>
   </figure>
-    <figure class="plate">
-    <div class="plate-head">
-      <div class="plate-title"><span class="fig"></span>方法解剖台</div>
-      <div class="seg" id="ana-fam" role="group" aria-label="方法類別"></div>
-    </div>
-    <div class="plate-body">
-      <div class="ana-ctrl">
-        <div class="ana-ctl"><span>攝影機 2 的條件</span><div class="seg" id="ana-cond" role="group" aria-label="攝影機 2 的條件"></div></div>
-        <div class="ana-ctl"><span>查詢的人</span><div class="seg" id="ana-q" role="group" aria-label="查詢的人"></div></div>
-        <button class="btn ghost" id="ana-play" aria-pressed="true">暫停</button>
-      </div>
-      <p class="ana-how">由左到右是方法的運算步驟；由上到下是三段影片：<b>查詢</b>（攝影機 1 拍到的人）、<b>本人</b>（同一人在攝影機 2）、<b>最像的冒充者</b>（攝影機 2 裡，穿同款服裝、被這個方法判得最像的另一人）。兩台攝影機都以常見路邊監視器的俯角（約 20–26°）繪製；選「角度＋換裝」時，攝影機 2 裡的五個人都換成運動服。</p>
-      <div class="ana-scroll"><div class="ana-grid" id="ana-grid"></div></div>
-      <div class="cols cols-5-7 ana-bottom">
-        <svg id="ana-rank" viewBox="0 0 440 270" role="img" aria-label="攝影機 2 五個人與查詢者的距離排名"></svg>
-        <div id="ana-info" class="detail"></div>
-      </div>
-    </div>
-    <div class="plate-note">人物、剪影、關節都由程序化步行模型產生；排名用的距離是<b>從畫出來的像素與關節實際算出的玩具特徵</b>（外觀 = 區塊平均色；輪廓 = 剪影平均；骨架 = 關節角度與比例；體型 = 加入估計誤差的身體尺寸；融合 = 依門控權重加總）。它示範的是「每類方法依賴什麼、在哪裡失效」的機制，<b>不是任何真實模型的成績</b>；真實數字見右側「文獻數字」。</div>
-  </figure>
-    <p>在你們的攝影機架設下，每種線索在多遠的距離還有資訊，可以用下面的計算器估：</p>
+  <h3>各線索在系統中的角色</h3>
+  <div class="tbl-wrap"><table class="tbl" id="cue-decision"></table></div>
+  <p class="small muted">步態、換裝（CAL、CLIP3DReID）、肢體比例、身高都帶有「體型」資訊，彼此相關。{{step:4|short}}把它們合成「體型組」，避免同一件事被重複加分。</p>
+  <details class="more"><summary>在你們的攝影機架設下，每種線索在多遠還能用？（可行性計算器）</summary><div class="more-body">
     <figure class="plate">
     <div class="plate-head"><div class="plate-title"><span class="fig"></span>可行性計算器：輸入攝影機架設，看各線索在哪個距離可用</div></div>
     <div class="plate-body cols cols-7-5">
@@ -316,83 +350,131 @@
     </div>
     <div class="plate-note">像素由針孔模型計算（方形像素、平地、人站立；兩眼間距 0.063 m、頭高 0.23 m）。門檻：人臉兩眼間距 ≥ 10 px、俯角 ≤ 30°（<span class="ev proven"><i></i>文獻證實</span>，但為受控 1:1 實驗）；外觀 ReID 人高 ≥ 128 px、步態人高 ≥ 64 px 且俯角 ≤ 30°、身高人高 ≥ 100 px（<span class="ev inferred"><i></i>合理推論</span>，依常用輸入尺寸與高俯角研究推估）。實際門檻要用 E4、E5 實驗量測。</div>
   </figure>
-    <h3>線索與方法的對照</h3>
-    <p>網站裡提到的「線索」是人身上的資訊；「方法」是把畫面變成可比對特徵的模型。同一種線索可能被好幾組方法用到：</p>
-    <div class="tbl-wrap"><table class="tbl cue-map">
-      <thead><tr><th>線索</th><th>是什麼</th><th>用到它的方法組</th><th>換裝後</th></tr></thead>
-      <tbody>
-        <tr><td><span class="sw-dot" style="--c:var(--c-app)"></span><b>外觀</b></td><td>衣服顏色、紋理、配件</td><td>3A 外觀 ReID</td><td>失效（只在同一天、同一套服裝內可靠）</td></tr>
-        <tr><td><span class="sw-dot" style="--c:var(--c-sil)"></span><b>輪廓</b></td><td>剪影：哪些像素屬於這個人（原始表示，本身不是身分特徵）</td><td>動態：3C 步態（剪影序列）；靜態：3E 靜態體型（FSAM）</td><td>大致有效；冬季外套、鋼盔會改變輪廓</td></tr>
-        <tr><td><span class="sw-dot" style="--c:var(--c-skel)"></span><b>骨架</b></td><td>關節點與肢段（由 RTMPose 估出）</td><td>動態：3C 步態（SkeletonGait++、GPGait）；靜態：3E 肢體比例、骨架序列再辨識</td><td>有效；但遠距時關節估不準</td></tr>
-        <tr><td><span class="sw-dot" style="--c:var(--c-3d)"></span><b>體型／3D</b></td><td>身材比例：肩寬、胖瘦、腿長比</td><td>3E（3DSL、肢體比例）；3B 換裝裡的 CLIP3DReID、3DInvarReID 也靠它</td><td>有效；厚外套會干擾估計</td></tr>
-        <tr><td><span class="sw-dot" style="--c:var(--c-3d)"></span><b>身高</b></td><td>幾公分（唯一有絕對大小的）</td><td>3F 身高（攝影機幾何）；輪廓與骨架都已縮放，算不出身高</td><td>有效；鋼盔約高 2–3 cm，可修正</td></tr>
-        <tr><td><span class="sw-dot" style="--c:var(--c-gait)"></span><b>步態</b></td><td>走路的動作：步幅、擺臂、步頻</td><td>3C 步態（從輪廓或骨架的連續畫面學）</td><td>有效；跑步和走路不同</td></tr>
-        <tr><td><span class="sw-dot" style="--c:var(--c-face)"></span><b>臉</b></td><td>臉部特徵</td><td>3D 臉（近距點位）</td><td>有效</td></tr>
-        <tr><td><span class="sw-dot" style="--c:var(--olive)"></span><b>制服記號</b></td><td>姓名條、階級章</td><td>3G 名牌與階級章（近距點位）</td><td>只在穿迷彩服時有</td></tr>
-      </tbody>
-    </table></div>
-    <p class="small muted">步態、換裝（CAL、CLIP3DReID）、肢體比例、身高都帶有「體型」資訊，彼此相關。第 4 步把它們合成「體型組」，避免同一件事被重複加分。</p>
+  </div></details>
+
+  <section class="step" id="step-1">
+    <h2>{{step:1}}</h2>
+    <div class="minimap" data-s="1"></div>
+    <div class="step-pick" data-s="1"></div>
+    <div class="step-q" data-s="1"></div>
+    <div class="step-cards" data-s="1" data-g="0"></div>
+    <div class="step-choice" data-s="1" id="choice-1"></div>
+  </section>
+
+  <section class="step" id="step-2">
+    <h2>{{step:2}}</h2>
+    <div class="minimap" data-s="2"></div>
+    <div class="step-pick" data-s="2"></div>
+    <div class="step-q" data-s="2"></div>
+    <div class="step-cards" data-s="2" data-g="0"></div>
+    <div class="step-choice" data-s="2" id="choice-2"></div>
+  </section>
+
+  <section class="step" id="step-3">
+    <h2>{{step:3}}</h2>
+    <div class="minimap" data-s="3"></div>
+    <div class="step-pick" data-s="3"></div>
+    <div class="step-q" data-s="3"></div>
+    <h3>方法解剖台</h3>
+    <p>六類方法各自把畫面變成什麼、又在哪裡失效，用下面這張圖直接操作看看。</p>
+    <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title"><span class="fig"></span>方法解剖台</div>
+      <div class="seg" id="ana-fam" role="group" aria-label="方法類別"></div>
+    </div>
+    <div class="plate-body">
+      <div class="ana-ctrl">
+        <div class="ana-ctl"><span>攝影機 2 的條件</span><div class="seg" id="ana-cond" role="group" aria-label="攝影機 2 的條件"></div></div>
+        <div class="ana-ctl"><span>查詢的人</span><div class="seg" id="ana-q" role="group" aria-label="查詢的人"></div></div>
+        <button class="btn ghost" id="ana-play" aria-pressed="true" title="圖本身的動畫：播放／❚❚ 暫停；「跳到結果」直接看最後一步">❚❚ 暫停</button>
+      </div>
+      <p class="ana-how">由左到右是方法的運算步驟；由上到下是三段影片：<b>查詢</b>（攝影機 1 拍到的人）、<b>本人</b>（同一人在攝影機 2）、<b>最像的冒充者</b>（攝影機 2 裡，穿同款服裝、被這個方法判得最像的另一人）。兩台攝影機都以常見路邊監視器的俯角（約 20–26°）繪製；選「角度＋換裝」時，攝影機 2 裡的五個人都換成運動服。</p>
+      <div class="ana-scroll"><div class="ana-grid" id="ana-grid"></div></div>
+      <div class="cols cols-5-7 ana-bottom">
+        <svg id="ana-rank" viewBox="0 0 440 270" role="img" aria-label="攝影機 2 五個人與查詢者的距離排名"></svg>
+        <div id="ana-info" class="detail"></div>
+      </div>
+    </div>
+    <div class="plate-note">人物、剪影、關節都由程序化步行模型產生；排名用的距離是<b>從畫出來的像素與關節實際算出的玩具特徵</b>（外觀 = 區塊平均色；輪廓 = 剪影平均；骨架 = 關節角度與比例；體型 = 加入估計誤差的身體尺寸；融合 = 依門控權重加總）。它示範的是「每類方法依賴什麼、在哪裡失效」的機制，<b>不是任何真實模型的成績</b>；真實數字見右側「文獻數字」。</div>
+  </figure>
+    <h3>③ 總表：七組方法在同一組槽位上的差異</h3>
+    <p>七組方法共用同一組槽位（前處理、表示方式、骨幹模型、訓練目標、片段聚合、輸出），依組分段列出主要方法；標 ★ 的格子是和該組第一列不同的地方。各組的並排比較在下面各組的槽位表上方。</p>
+    <table class="tbl slot-tbl" id="slot-overview" data-s="3"></table>
     <div class="step-cards" data-s="3" data-g="app"></div>
+    <details class="more"><summary>公開基準數字：外觀骨幹在 MSMT17 的 mAP</summary><div class="more-body">
     <figure class="plate">
     <div class="plate-head"><div class="plate-title"><span class="fig"></span>外觀骨幹：MSMT17 mAP</div></div>
     <div class="plate-body"><svg id="ch-msmt" viewBox="0 0 520 400" role="img" aria-label="外觀骨幹比較"></svg></div>
     <div class="plate-note">自監督人體預訓練（PersonViT、SOLIDER）比你現有的 CLIP-ReID 高 1–7 點，授權也寬鬆。但 MSMT17 的人穿著各異，<b>這個差距在同制服下會不會保留是未知數</b>，要用 E2 實驗驗證。</div>
   </figure>
+    </div></details>
     <div class="step-cards" data-s="3" data-g="cc"></div>
+    <details class="more"><summary>公開基準數字：換衣基準很樂觀，真實跨日很殘酷（MEVID）</summary><div class="more-body">
     <figure class="plate">
     <div class="plate-head"><div class="plate-title"><span class="fig"></span>換衣基準很樂觀，真實跨日很殘酷</div></div>
     <div class="plate-body"><svg id="ch-mevid" viewBox="0 0 520 300" role="img" aria-label="MEVID 換衣結果"></svg></div>
     <div class="plate-note">MEVID：158 人、33 個視角、73 天內 9 個日期，是最接近「多日跨攝影機」的公開基準。同一個 HAMoBE 在 CCVID 換衣 R1 有 87.6，在 MEVID 只有 20.1。</div>
   </figure>
+    </div></details>
     <div class="step-cards" data-s="3" data-g="gait"></div>
+    <details class="more"><summary>公開基準數字：步態在 Gait3D 的 Rank-1</summary><div class="more-body">
     <figure class="plate">
     <div class="plate-head"><div class="plate-title"><span class="fig"></span>步態：Gait3D Rank-1</div></div>
     <div class="plate-body"><svg id="ch-gait" viewBox="0 0 520 400" role="img" aria-label="步態方法比較"></svg></div>
     <div class="plate-note">Gait3D 是 39 台相機、4,000 人的室內野外資料。DeepGaitV2-P3D 以 2.9 GFLOPs 達 74.4，是精度與算力的平衡點。所有方法都在接近平視的視角訓練。</div>
   </figure>
+    </div></details>
     <div class="step-cards" data-s="3" data-g="face"></div>
     <div class="step-cards" data-s="3" data-g="shape"></div>
     <div class="step-cards" data-s="3" data-g="body"></div>
     <div class="step-cards" data-s="3" data-g="tag"></div>
-    <h3>各線索在系統中的角色</h3>
-    <div class="tbl-wrap"><table class="tbl" id="cue-decision"></table></div>
-    <div class="step-choice" data-s="3"></div>
+    <div class="step-choice" data-s="3" id="choice-3"></div>
   </section>
 
   <section class="step" id="step-4">
-    <h2>④ 換成同一種證據（融合）</h2>
+    <h2>{{step:4}}</h2>
+    <div class="minimap" data-s="4"></div>
+    <div class="step-pick" data-s="4"></div>
     <div class="step-q" data-s="4"></div>
     <div class="step-cards" data-s="4" data-g="0"></div>
+    <details class="more"><summary>公開基準數字：遠距、高視角的全身辨識，三種線索與融合（BRIAR）</summary><div class="more-body">
     <figure class="plate">
     <div class="plate-head"><div class="plate-title"><span class="fig"></span>遠距、高視角的全身辨識：三種線索與融合（BRIAR）</div></div>
     <div class="plate-body"><svg id="briar" viewBox="0 0 900 200" role="img" aria-label="BRIAR 各線索與融合結果"></svg></div>
     <div class="plate-note">BRIAR 協定 5.0.1、424 人、俯角至 50°、最遠 1,000 m；指標 TAR@0.1%FAR。「臉受限」設定最接近看不清臉的監視器。來源：arXiv 2505.04616，<span class="ev proven"><i></i>文獻證實</span>。注意它不是同制服資料。</div>
   </figure>
-    <div class="step-choice" data-s="4"></div>
+    </div></details>
+    <div class="step-choice" data-s="4" id="choice-4"></div>
   </section>
 
   <section class="step" id="step-5">
-    <h2>⑤ 時空約束</h2>
+    <h2>{{step:5}}</h2>
+    <div class="minimap" data-s="5"></div>
+    <div class="step-pick" data-s="5"></div>
     <div class="step-q" data-s="5"></div>
     <div class="step-cards" data-s="5" data-g="0"></div>
+    <details class="more"><summary>公開基準數字：時空約束的實測增益（st-ReID）</summary><div class="more-body">
     <figure class="plate">
     <div class="plate-head"><div class="plate-title"><span class="fig"></span>時空約束的實測增益（st-ReID，AAAI 2019）</div></div>
     <div class="plate-body"><svg id="st-chart" viewBox="0 0 900 135" role="img" aria-label="時空約束增益"></svg></div>
     <div class="plate-note">只加相機 ID 與時間戳，不改外觀模型。注意：這兩個資料集的人穿著各異、人流稀疏；營區人流密集、同時段多人走同一路線，增益可能較小，也可能因外觀更弱而相對更重要（<span class="ev open"><i></i>待驗證</span>）。</div>
   </figure>
-    <div class="step-choice" data-s="5"></div>
+    </div></details>
+    <div class="step-choice" data-s="5" id="choice-5"></div>
   </section>
 
   <section class="step" id="step-6">
-    <h2>⑥ 分群：把片段聚成人</h2>
+    <h2>{{step:6}}</h2>
+    <div class="minimap" data-s="6"></div>
+    <div class="step-pick" data-s="6"></div>
     <div class="step-q" data-s="6"></div>
     <p>下圖示範建議的演算法（約束式凝聚分群）怎麼一步步合併，以及時空約束怎麼擋下錯誤合併：</p>
     <figure class="plate">
     <div class="plate-head">
       <div class="plate-title"><span class="fig"></span>分群實驗台：同一天 6 人、3 台攝影機，一步一步合併</div>
       <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn" id="clu-play">▶ 播放合併過程</button>
-        <button class="btn ghost" id="clu-end">看最終結果</button>
+        <button class="btn" id="clu-play" title="圖本身的動畫：播放／❚❚ 暫停；「跳到結果」直接看最後一步">▶ 播放</button>
+        <button class="btn ghost" id="clu-end" title="圖本身的動畫：播放／❚❚ 暫停；「跳到結果」直接看最後一步">跳到結果</button>
       </div>
     </div>
     <div class="plate-body">
@@ -409,118 +491,108 @@
     <div class="plate-body"><div class="tbl-wrap"><svg id="clu-tree" viewBox="0 0 960 390" role="img" aria-label="分群演算法選擇流程" style="min-width:760px"></svg></div></div>
     <div class="plate-note">大規模圖分群（GCN 類）都在人臉清晰、身分數十萬以上的資料上驗證；每日數十到數百人時，帶約束的凝聚分群通常已足夠，也最容易加入約束（<span class="ev inferred"><i></i>合理推論</span>）。</div>
   </figure>
+    <details class="more"><summary>公開基準數字：無標註學習與有標註學習的差距（MSMT17 mAP）</summary><div class="more-body">
     <figure class="plate">
     <div class="plate-head"><div class="plate-title"><span class="fig"></span>無標註學習 vs 有標註：MSMT17 mAP</div></div>
     <div class="plate-body"><svg id="ch-uda" viewBox="0 0 520 330" role="img" aria-label="無監督方法比較"></svg></div>
     <div class="plate-note">只靠無標註營區影片，目前最好約 50 mAP，與有標註的 77–81 差 27–30 點。全員同服還會讓偽標籤分群把不同人併在一起，所以建議用少量註冊樣本做半監督。</div>
   </figure>
-    <div class="step-choice" data-s="6"></div>
+    </div></details>
+    <div class="step-choice" data-s="6" id="choice-6"></div>
   </section>
 
   <section class="step" id="step-7">
-    <h2>⑦ 比對名冊（刷卡輔助）</h2>
+    <h2>{{step:7}}</h2>
+    <div class="minimap" data-s="7"></div>
+    <div class="step-pick" data-s="7"></div>
     <div class="step-q" data-s="7"></div>
-    <figure class="plate">
-    <div class="plate-head"><div class="plate-title"><span class="fig"></span>建議的決策流程：先看品質，再看分數</div></div>
-    <div class="plate-body"><svg id="os-flow" viewBox="0 0 960 250" role="img" aria-label="開放集決策流程"></svg></div>
-    <div class="plate-note">「未知者被錯認成已知人」與「已知人排第二」是完全不同等級的系統風險。開放世界 ReID（Li et al., ECCV 2018）直接定義了這個問題。</div>
-  </figure>
+    <p>「未知者被錯認成已知人」與「已知人排第二」是完全不同等級的系統風險；開放世界 ReID（Li et al., ECCV 2018）直接定義了這個問題。我們的決策流程（先看品質、再看分數、未知者不硬配）畫在{{ch:approach}}。</p>
     <div class="step-cards" data-s="7" data-g="0"></div>
-    <div class="step-choice" data-s="7"></div>
+    <div class="step-choice" data-s="7" id="choice-7"></div>
+  </section>
+
+  <section class="ch-end">
+    <h2>本章小結</h2>
+    <ul>
+      <li>每一步的候選方法放在一起比較，差異集中在少數環節；線索的角色先在線索入門講清楚。</li>
+      <li>每一步我們各有一個第一版選擇與理由（{{step:1-7|sym}}），選擇時一起考慮同制服、換裝與算力。</li>
+      <li>這些選擇都來自文獻與推論，全部要在自建資料上驗證（見{{ch:plan|num}}）。</li>
+    </ul>
+    <p class="ch-next">把這些選擇組成完整系統、怎麼部署與每天怎麼跑，見{{ch:approach}}。</p>
   </section>
 </section>
 
-<!-- ======================= 3 別人怎麼做 ======================= -->
-<section class="chapter" id="ch-others" data-title="別人怎麼做">
-  <header class="ch-head">
-    <p class="ch-num">第 3 章</p>
-    <h1>別人怎麼做：現有系統、比賽與研究</h1>
-    <p class="thesis">第 2 章是一個一個的方法；這一章看別人怎麼把方法組成系統。我們從十個面向搜尋了軍方、警方、機場、零售、工地、運動轉播、手機相簿與學術比賽的做法，歸納成六種架構，再逐一拆解 31 個高相關的系統：它的流程每一步在做什麼、對應我們的第幾步、核心概念是什麼、我們可以借用什麼、哪裡不適合我們。最後整理成十二條落到我們各步驟的具體做法。</p>
-  </header>
-
-  <h2>先看全貌：別人從哪些面向處理這個問題</h2>
-  <p>「誰、何時、去過哪裡」不只是監視器的問題。下表是這次搜尋涵蓋的十個面向，每個面向的詳細系統在本章後面。</p>
-  <div class="tbl-wrap"><table class="tbl facets" id="oth-facets"></table></div>
-
-  <h2>六種常見架構</h2>
-  <p>現有系統可分成六種架構，每一種只解決問題的一部分。標 <span class="xstar">★ 特色</span> 的是這個系統和別人不同的地方；其他步驟各系統做法相近。每張卡片右上角的「動畫說明」會逐步播放流程：相近的步驟快速帶過，特色步驟放慢並用專屬的圖解說明。流程方塊右上角的圓圈數字是「對應我們的第幾步」，標「額外」的是我們七步裡沒有的步驟。</p>
-  <div class="patterns" id="patterns"></div>
-  <div class="combo">
-    <p class="combo-t"><b>本專案的架構是組合：</b></p>
-    <p><span class="cp">架構一 追蹤後關聯</span> 的前段：每台攝影機追蹤出片段（第 1、2 步）<br>
-    ＋ <span class="cp">架構三 多生物特徵融合</span>：外觀、換裝、步態、臉、身高依品質加權成證據，處理同制服與換裝（第 3、4 步）<br>
-    ＋ <span class="cp">架構五 聚檔</span> 的後段：加上時空約束，夜間把片段聚成「一人一群」（第 5、6 步）<br>
-    ＋ <span class="cp">架構四 檢查點錨定</span> 與 <span class="cp">架構六 感測器綁定</span>：在營門、餐廳等必經點用臉、名牌、刷卡把群對到名冊（第 7 步）<br>
-    ＋ <span class="cp">架構二 先建索引、再查詢</span> 的操作方式，提供「事後查詢特定人員」</p>
-  </div>
-
-  <h2>對照表：每個系統涵蓋了我們的哪幾步</h2>
-  <p>點系統名稱可跳到它的詳細說明。<i class="lvd f"></i> 有　<i class="lvd h"></i> 部分　<i class="lvd"></i> 沒有。</p>
-  <div class="tbl-wrap"><table class="tbl mx omx" id="oth-matrix"></table></div>
-  <p class="small muted">沒有任何一個現有系統同時涵蓋七步、又處理同制服與換裝。涵蓋程度為依公開資料的判斷（<span class="ev inferred"><i></i>合理推論</span>）；本專案那一列是設計目標，尚未驗證。</p>
-
-  <h2>完整的多攝影機系統與比賽</h2>
-  <p>比賽與商用框架的主流都是「片段 → 外觀特徵 → 時空 → 分群」。2024 年 AI City 冠軍的做法與我們第 3、6 步幾乎相同。</p>
-  <div class="osys-list" id="oth-sys"></div>
-
-  <h2>聚檔與人物聚類</h2>
-  <p>另一條路線不追蹤，而是把每一次出現都抽特徵，再定期聚成「一人一檔」。我們的第 6 步就是這個概念，只是聚的單位是片段。</p>
-  <div class="osys-list" id="oth-arc"></div>
-
-  <h2>商用影片搜尋與步態產品</h2>
-  <p>商用系統多為「索引後查詢」：對換衣的標準答案是加臉部辨識，同制服時以衣服為主的外觀與屬性搜尋幾乎失效。產品描述多來自廠商，準確度未經獨立驗證。</p>
-  <div class="osys-list" id="oth-com"></div>
-
-  <h2>外觀相同時的研究</h2>
-  <p>直接處理「同制服」或「外觀一樣」的研究很少，以下是這次找到的高相關者。</p>
-  <div class="osys-list" id="oth-res"></div>
-
-  <h2>制服、門禁與檢查點</h2>
-  <p>軍營、機場、監獄、工地、無人商店的共同做法：<b>不追衣服，在必經點確認身分，點與點之間再靠影像或時間</b>。</p>
-  <div class="osys-list" id="oth-uni"></div>
-
-  <h2>影像＋感測器綁定身分</h2>
-  <p>身分來自感測器（刷卡、手機、識別證），影像負責「這個人之後去了哪裡」。我們的刷卡紀錄屬於這一類，但只有時間點、沒有連續訊號。</p>
-  <div class="osys-list" id="oth-fus"></div>
-
-  <h2>支撐技術：自動學攝影機關係、新場域自我調適</h2>
-  <p>兩個讓系統「不校正、不大量標註」也能上線的技術。</p>
-  <div class="osys-list" id="oth-sup"></div>
-
-  <h2>人工判讀與證據等級</h2>
-  <p>系統說不準時交給人；但研究顯示人也會錯，而步態在法庭上只算支持性證據。</p>
-  <div class="osys-list" id="oth-hum"></div>
-
-  <h2>別人怎麼評估、訂了哪些規則</h2>
-  <h3>評估指標</h3>
-  <div class="tbl-wrap"><table class="tbl" id="oth-metrics"></table></div>
-  <h3>治理規則</h3>
-  <p>這些不是技術問題，但每個實際上線的系統都要面對；先訂好可避免日後的爭議。</p>
-  <div class="tbl-wrap"><table class="tbl" id="oth-gov"></table></div>
-
-  <h2>整理：別人的做法落到我們的哪一步</h2>
-  <p>以下十二條是從上面的系統歸納出、可以直接放進我們系統的做法，依步驟排序。</p>
-  <div class="tbl-wrap"><table class="tbl lessons" id="oth-lessons"></table></div>
-</section>
-
-<!-- ======================= 3 我們的做法 ======================= -->
+<!-- ======================= ch-approach 我們的做法 ======================= -->
 <section class="chapter" id="ch-approach" data-title="我們的做法">
   <header class="ch-head">
     <p class="ch-num">第 4 章</p>
     <h1>我們的做法：第一版系統用什麼</h1>
-    <p class="thesis">把第 2 章每一步的選擇收成一張清單，再說明系統的整體邏輯、要交出什麼、需要什麼等級的伺服器、刻意不做什麼，以及主要風險。</p>
+    <p class="thesis">把{{ch:methods|num}}每一步的選擇收成一張清單，再說明系統的整體邏輯、要交出什麼、需要什麼等級的伺服器、刻意不做什麼，以及主要風險。</p>
   </header>
 
+  <h2>一頁回顧：我們做什麼、為什麼</h2>
+  <ol class="recap">
+    <li><b>問題：</b>用路邊監視器的影片，重建營區裡每位官兵「誰、何時、去過哪」（範圍與成功標準見{{ch:problem}}）。</li>
+    <li><b>兩個難題：</b>同制服（不同人穿一樣，要分開）與換裝（同一人換了衣服，要連起來）。</li>
+    <li><b>策略：先分類、再識別。</b>先把片段聚成匿名的人，名冊與刷卡只在最後一步參與；名冊以外的人標「未知」。</li>
+    <li><b>第一版元件：</b>每一步各自選好第一版用的方法（{{step:1-7|sym}}），收成下面這張清單。</li>
+    <li><b>怎麼驗證：</b>所有選擇都靠自建資料與{{count:exps|zh}}個實驗驗證，見{{ch:plan}}。</li>
+  </ol>
+  <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title"><span class="fig"></span>我們的做法：每一步與它的關鍵設定</div>
+      <button type="button" class="fp-btn" data-op="all" title="開一個視窗，逐步播放這個方法、系統或步驟">▶ 動畫：從頭到尾</button>
+      <button class="btn ghost" id="master-approach-tour" aria-pressed="true" title="圖本身的動畫：播放／❚❚ 暫停；「跳到結果」直接看最後一步">❚❚ 暫停</button>
+    </div>
+    <div class="plate-body" id="master-approach"></div>
+    <div class="plate-note">每個方塊下方是這一步最關鍵的設定（建議值，用自建資料調整）；點任一步看它的第一版選擇與完整設定。</div>
+  </figure>
+
   <h2>第一版系統元件</h2>
-  <p>點步驟名稱可回到第 2 章看該步的候選方法與理由；各元件的程式碼、權重、輸入格式在第 2 章卡片的「實作資訊」裡。</p>
+  <p>點步驟名稱可回到{{ch:methods|num}}看該步的候選方法與理由；各元件的程式碼、權重、輸入格式在{{ch:methods|num}}卡片的「實作資訊」裡。</p>
   <div class="tbl-wrap"><table class="tbl" id="v1-table"></table></div>
   <p class="small muted">授權欄為本次研究讀到的狀態，正式採用前需法務確認。步態元件（OpenGait）僅限學術：研究期可用，正式系統需取得授權或重新實作。</p>
 
-  <h2>先分類、再識別</h2>
-  <p>前面的步驟不需要人員名冊，就能回答「今天出現過幾個不同的人、各自去過哪裡」；名冊與刷卡只在最後一步參與。這樣即使名冊不完整或刷卡被代刷，路徑仍然成立。</p>
+  <h2>部署架構</h2>
+  <p>營區現有的攝影機與錄影主機照舊運作；夜間把當天的錄影交給營區伺服器處理，結果進資料庫，再由查詢介面給人看、給人覆核。名冊與門禁刷卡只在最後的{{step:7|short}}進來。</p>
   <figure class="plate">
-    <div class="plate-head"><div class="plate-title"><span class="fig"></span>身分的四層：從片段到真實身分</div></div>
-    <div class="plate-body"><svg id="sys-layers" viewBox="0 0 980 320" role="img" aria-label="身分分層"></svg></div>
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>部署架構：從攝影機到查詢介面</div></div>
+    <div class="plate-body"><div id="deploy-arch"></div></div>
+    <div class="plate-note">虛線箭頭是每週的回饋：人工覆核的結果更新註冊資料與門檻。點任一個方塊看說明與對應的步驟。</div>
+  </figure>
+
+  <h2>每天怎麼運作</h2>
+  <p>白天照常錄影，夜間批次處理，早上看報表並覆核；每週再把覆核的結果回饋給系統。圖上的時間只是示意，實際時程要等營區試錄與伺服器實測後才定。</p>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>一天與每週的運作（示意）</div></div>
+    <div class="plate-body"><div id="daily-timeline"></div></div>
+    <div class="plate-note">時間為示意，不是實測值。夜間處理要在多長的窗口內跑完，見下方的「營區伺服器跑不跑得動」。</div>
+  </figure>
+
+  <h2>關鍵判斷怎麼做</h2>
+  <p>三個判斷決定系統的結果：每一段片段該用哪些線索、相關的線索怎麼合成體型組、最後把群對到名冊時怎麼判斷確認、待確認或未知。每個方塊的設定都取自{{ch:methods|num}}各步的「我們的選擇」。</p>
+  <h3>{{step:3|short}}：線索可用條件</h3>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>每條線索什麼時候用、什麼時候不用</div></div>
+    <div class="plate-body"><div id="dec-gate"></div></div>
+  </figure>
+  <h3>{{step:4|short}}：體型組</h3>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>相關的線索怎麼合成體型組</div></div>
+    <div class="plate-body"><div id="dec-shape"></div></div>
+  </figure>
+  <h3>{{step:7|short}}：確認、待確認、未知與刷卡不一致</h3>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>把群對到名冊的判斷流程</div></div>
+    <div class="plate-body"><div id="dec-identify"></div></div>
+    <div class="plate-note">刷卡只能加分、不能單獨決定身分；不一致或疑似尾隨只標記，交人工覆核。</div>
+  </figure>
+
+  <h2>身分怎麼一步步確定</h2>
+  <p>前面的步驟不需要人員名冊，就能回答「今天出現過幾個不同的人、各自去過哪裡」；名冊與刷卡只在最後一步參與。這樣即使名冊不完整、刷卡也不可靠（{{cav:card-aux}}），路徑仍然成立。</p>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>身分怎麼一步步確定：從片段到真實身分</div></div>
+    <div class="plate-body"><div id="id-states"></div></div>
     <div class="plate-note">分類（前三層）與識別（最後一層）分開：沒有資料庫時，系統照樣能數人、畫軌跡；資料庫只在最後一步參與，而且用整群的多段證據比對，比單段比對穩定。</div>
   </figure>
 
@@ -537,14 +609,23 @@
     <div class="plate-note">平面圖、人員與軌跡皆為虛構示意。軌跡座標由腳點經單應性轉換到平面圖；低信心的連結以虛線顯示並列入人工覆核。</div>
   </figure>
 
+  <h2>存什麼、存多久</h2>
+  <p>各類資料分開保存，註冊資料與匿名軌跡分開；保存期限與誰可以看，要由單位依規定核定，這裡先列出每一類資料的歸屬。</p>
+  <div class="tbl-wrap"><table class="tbl" id="data-store"></table></div>
+  <p class="small muted" id="data-store-note"></p>
+
   <h2>營區伺服器跑不跑得動</h2>
-  <p>以第一版流程（偵測 → 追蹤 → 姿態、外觀、步態、臉部特徵 → 融合與分群）為準，估算伺服器能支援幾台攝影機。<b>任何一台伺服器都能算</b>：在下方「你的伺服器」填入網路上查得到的規格（核心數、時脈、GPU 的 TFLOPS 與解碼能力），就會和六個常見等級放在一起比較。</p>
+  <p class="srv-concl" id="srv-concl"></p>
+  <p>以第一版流程（偵測 → 追蹤 → 姿態、外觀、步態、臉部特徵 → 融合與分群）為準，估算伺服器能支援幾台攝影機。<b>任何一台伺服器都能算</b>：展開下方「你的伺服器」，填入網路上查得到的規格（核心數、時脈、GPU 的 TFLOPS 與解碼能力），就會和六個常見等級放在一起比較。</p>
   <figure class="plate">
     <div class="plate-head"><div class="plate-title"><span class="fig"></span>常見伺服器等級 × 第一版流程</div></div>
+    
     <div class="plate-body cols cols-7-5">
       <div><div class="tbl-wrap"><svg id="srv-svg" viewBox="0 0 620 360" role="img" aria-label="各等級伺服器可支援的攝影機數" style="min-width:520px"></svg></div></div>
       <div id="srv-ctrl"></div>
     </div>
+  </figure>
+  <details class="more"><summary>你的伺服器：填入公開規格，看能支援幾台</summary><div class="more-body">
     <div class="plate-body my-box">
       <h3 style="margin-top:0">★ 你的伺服器：填入公開規格</h3>
       <div class="cols cols-7-5">
@@ -552,9 +633,10 @@
         <div id="my-out"></div>
       </div>
     </div>
-    <div class="plate-body" style="padding-top:0"><div class="tbl-wrap"><table class="tbl srv" id="srv-tbl"></table></div></div>
-    <div class="plate-note">估算方法：每個運算步驟的單位成本 × 每相機小時的工作量，依核心數與時脈（以 70% 效率計）、GPU 的 TFLOPS、硬體解碼能力換算成每晚可處理的相機小時；CPU 與 GPU、解碼器同時運作，取最慢的一項。<b>這是粗估，誤差可能到 2 倍</b>，用來比較等級與找瓶頸；單位成本與依據列在下方。代表型號為常見產品線，實際以單位採購規格為準。</div>
-  </figure>
+  </div></details>
+  <details class="more"><summary>六個常見等級：代表型號、規格與瓶頸</summary><div class="more-body">
+    <div class="tbl-wrap"><table class="tbl srv" id="srv-tbl"></table></div>
+  </div></details>
   <details class="more"><summary>規格去哪裡查、怎麼換算</summary><div class="more-body">
     <div class="tbl-wrap"><table class="tbl">
       <thead><tr><th>欄位</th><th>去哪裡查</th><th>查不到時</th></tr></thead>
@@ -568,6 +650,7 @@
     <p class="small muted">換算方式：CPU 速度 = 時脈 ÷ 4.3（參考核心為 i7-8700）× 指令集係數（AVX-512 為 1.3、ARM 為 0.5），以 70% 多核心效率計；GPU 速度 = FP16 Tensor TFLOPS ÷ 65（T4）。這是依理論算力的比例換算，實際速度還受記憶體頻寬、驅動、推論框架影響。</p>
   </div></details>
   <details class="more"><summary>估算依據：每個運算步驟的單位成本與來源</summary><div class="more-body">
+    <p class="small muted">估算方法：每個運算步驟的單位成本 × 每相機小時的工作量，依核心數與時脈（以 70% 效率計）、GPU 的 TFLOPS、硬體解碼能力換算成每晚可處理的相機小時；CPU 與 GPU、解碼器同時運作，取最慢的一項。<b>這是粗估，誤差可能到 2 倍</b>，用來比較等級與找瓶頸；單位成本與依據列在下方。代表型號為常見產品線，實際以單位採購規格為準。</p>
     <div class="tbl-wrap"><table class="tbl" id="srv-basis"></table></div>
     <p class="small muted">工作量假設：有人時段偵測 5 fps、沒人時 1 fps；影片全部解碼（壓縮影片無法任意跳幀）；有人比例 40% 時每相機小時約 200 段片段，每段取 8 張裁切算外觀、16 張算姿態；一半的片段做步態（回原始影片取 30 幀）；約 20% 的片段經過近距點位、每段 5 張臉。邊緣運算盒的 ARM CPU 以 x86 的一半速度計。</p>
   </div></details>
@@ -580,20 +663,29 @@
     <li>確認錄影主機的<b>匯出方式與頻寬</b>：每晚要搬的影片量（見上方儲存估算）是否來得及讀出。</li>
   </ol>
 
-
   <h2>刻意不做什麼</h2>
   <ul class="not-list" id="not-list"></ul>
 
   <h2>主要風險與對策</h2>
   <div class="tbl-wrap"><table class="tbl" id="fail-tbl"></table></div>
+
+  <section class="ch-end">
+    <h2>本章小結</h2>
+    <ul>
+      <li>第一版先分類、再識別：先把片段聚成匿名的人，最後才對到名冊，名冊以外的標「未知」。</li>
+      <li>每一步的選擇收成一張元件清單；系統要交出的成果是每個人的路徑與可追溯的證據。</li>
+      <li>營區伺服器估算用公開規格就能算；刻意不做的事與主要風險也先講清楚。所有選擇都靠自建資料與{{count:exps|zh}}個實驗驗證。</li>
+    </ul>
+    <p class="ch-next">怎麼驗證、先做哪些實驗，見{{ch:plan}}。</p>
+  </section>
 </section>
 
-<!-- ======================= 4 執行計畫 ======================= -->
+<!-- ======================= ch-plan 執行計畫 ======================= -->
 <section class="chapter" id="ch-plan" data-title="執行計畫">
   <header class="ch-head">
     <p class="ch-num">第 5 章</p>
     <h1>執行計畫：先驗證什麼、怎麼驗證</h1>
-    <p class="thesis">公開資料集沒有一個像營區，所以第 2、3 章的選擇都要在自建資料上驗證。這一章說明目前已知與未知、資料怎麼拍怎麼切、用什麼方式評估、十個實驗與通過條件，以及六個月的查核點。</p>
+    <p class="thesis">公開資料集沒有一個像營區，所以{{ch:methods}}與{{ch:approach}}的選擇都要在自建資料上驗證。這一章說明目前已知與未知、資料怎麼拍怎麼切、用什麼方式評估、{{count:exps|zh}}個實驗與通過條件，以及六個月的查核點。</p>
   </header>
 
   <h2>已知、推論、未知</h2>
@@ -630,24 +722,34 @@
     <div class="plate-body"><svg id="protocols" viewBox="0 0 960 300" role="img" aria-label="四種評估協定"></svg></div>
   </figure>
 
-  <h2>十一個實驗與通過條件</h2>
-  <p>每個實驗只回答一個可以被否證的問題。全站提到的 E1–E11 都指這十一個實驗；E10（換裝連結）與 E11（體型類線索重複計算）是依本專案範圍新增的。</p>
+  <h2>{{count:exps|zh}}個實驗與通過條件</h2>
+  <p>每個實驗只回答一個可以被否證的問題。全站提到的 E1–E{{count:exps}} 都指這{{count:exps|zh}}個實驗；E10（換裝連結）與 E11（體型類線索重複計算）是依本專案範圍新增的。</p>
   <figure class="plate">
-    <div class="plate-head"><div class="plate-title"><span class="fig"></span>十一個實驗，每個都回答一個可被否證的問題（點選查看）</div></div>
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>{{count:exps|zh}}個實驗，每個都回答一個可被否證的問題（點選查看）</div></div>
     <div class="plate-body"><svg id="val-exp" viewBox="0 0 1080 230" role="img" aria-label="實驗順序"></svg><div id="val-exp-d" class="detail" style="margin-top:10px"></div></div>
   </figure>
 
   <h2>六個月查核點</h2>
   <div class="tbl-wrap"><table class="tbl" id="plan-tbl"></table></div>
-  <p class="small muted">每個查核點都具體、可驗證、可量化（借用經濟部科專查核點原則）。每月只服務一個主要問題；新工作若答不出「推進哪個模組的哪一級」，就列入待辦，不做。TRL 自評與月報範本見附錄。</p>
+  <p class="small muted">每個查核點都具體、可驗證、可量化（借用經濟部科專查核點原則）。每月只服務一個主要問題；新工作若答不出「推進哪個模組的哪一級」，就列入待辦，不做。TRL 自評與月報範本見{{ch:mgmt}}。</p>
+
+  <section class="ch-end">
+    <h2>本章小結</h2>
+    <ul>
+      <li>已知、推論、未知分開講；目前最重的結論仍是「待驗證」。</li>
+      <li>自建資料（辦公室同制服）、四種評估與{{count:exps|zh}}個實驗，每個都有通過條件。</li>
+      <li>六個月查核點讓每個月只對準一個主要問題；TRL 自評與月報範本見{{ch:mgmt}}。</li>
+    </ul>
+    <p class="ch-next">資料集、方法完整表與研究空缺見{{ch:appendix}}；專案管理見{{ch:mgmt}}。</p>
+  </section>
 </section>
 
-<!-- ======================= 附錄 ======================= -->
-<section class="chapter" id="ch-appendix" data-title="附錄">
+<!-- ======================= ch-appendix 技術參考 ======================= -->
+<section class="chapter" id="ch-appendix" data-title="技術參考">
   <header class="ch-head">
-    <p class="ch-num">附錄</p>
-    <h1>參考資料：資料集、完整方法表、研究空缺、專案管理</h1>
-    <p class="thesis">查詢用的參考資料。主文需要的結論都已寫在第 2–4 章。</p>
+    <p class="ch-num">附錄 A</p>
+    <h1>技術參考：資料集、完整方法表、研究空缺</h1>
+    <p class="thesis">查詢用的參考資料；主文的結論在{{ch:others|num}}至{{ch:approach|num}}。</p>
   </header>
 
   <h2>公開資料集</h2>
@@ -675,7 +777,7 @@
     <div class="plate-note">合成資料無法涵蓋監視器壓縮、動態模糊、感測器雜訊、追蹤 ID 切換與姿態估計誤差。可以宣稱「預訓練有幫助」，不能宣稱「可以部署」。</div>
   </figure>
 
-  <h2>55 個方法的完整清單</h2>
+  <h2>{{count:methods}} 個方法的完整清單</h2>
   <figure class="plate">
     <div class="plate-head">
       <div class="plate-title"><span class="fig"></span>方法版圖：族群 × 年份 × 授權</div>
@@ -687,7 +789,7 @@
       </div>
     </div>
     <div class="plate-body">
-      <div class="tbl-wrap"><svg id="land" viewBox="0 0 970 494" role="img" aria-label="55 個方法依族群與年份分布" style="min-width:760px"></svg></div>
+      <div class="tbl-wrap"><svg id="land" viewBox="0 0 970 494" role="img" aria-label="{{count:methods}} 個方法依族群與年份分布" style="min-width:760px"></svg></div>
       <div id="land-detail" class="detail" style="margin-top:12px"></div>
     </div>
     <div class="plate-note">一眼可見的三件事：(1) 同制服族群只有 2020 年的 FGPR 一個點；(2) 紅色（授權受限）集中在步態與部位方法；(3) 綠色的建議元件多半是外觀骨幹與追蹤，衣服以外的線索仍缺授權乾淨的選擇。</div>
@@ -712,8 +814,25 @@
     <div class="plate-note">標「研究空缺」的格子，比在 Market-1501 上再跑一個骨幹更貼近你的問題。這是由資料集與方法的缺口推導出的機會，<span class="ev open"><i></i>待驗證</span>。</div>
   </figure>
 
-  <h2>專案管理：TRL、MLTRL 與月報</h2>
-  <p>中科院內部的研發管制與品保文件沒有公開，應以單位內規為準。公開可借用的有三套：對外用 TRL、內部檢查用 AI 專用的 MLTRL、查核點寫法借經濟部科專。</p>
+  <section class="ch-end">
+    <h2>本章小結</h2>
+    <ul>
+      <li>「換衣」的公開資料集很多，「不同人、同制服」的很少；能同時接近軍營情境與真實監視器的多半是新資料，取得方式要先確認。</li>
+      <li>{{count:methods}} 個方法都列出出處、授權與算力；數字不同資料集、協定之間不能互相比較。</li>
+      <li>研究空缺：方法與資料集之間還沒人做過的組合，比再刷一次 Market-1501 更貼近我們的問題。</li>
+    </ul>
+    <p class="ch-next">專案管理（TRL、MLTRL 與月報範本）見{{ch:mgmt}}。</p>
+  </section>
+</section>
+
+<!-- ======================= ch-mgmt 專案管理 ======================= -->
+<section class="chapter" id="ch-mgmt" data-title="專案管理">
+  <header class="ch-head">
+    <p class="ch-num">附錄 B</p>
+    <h1>專案管理：TRL、MLTRL 與月報</h1>
+    <p class="thesis">中科院內部的研發管制與品保文件沒有公開，應以單位內規為準。公開可借用的有三套：對外用 TRL、內部檢查用 AI 專用的 MLTRL、查核點寫法借經濟部科專。</p>
+  </header>
+
   <figure class="plate">
     <div class="plate-head"><div class="plate-title"><span class="fig"></span>模組成熟度自評：系統等級取決於最弱的模組</div><button class="btn ghost" id="mod-reset">還原預設</button></div>
     <div class="plate-body cols cols-7-5">
@@ -739,9 +858,19 @@
     <div class="plate-head"><div class="plate-title"><span class="fig">範本</span>TRL 1–3 AI 研究專案月報</div><button class="btn" id="copy-report">複製範本</button></div>
     <div class="plate-body"><pre id="report-tpl" style="white-space:pre-wrap;font-family:var(--sans);font-size:14px;line-height:1.7;margin:0"></pre></div>
   </figure>
+
+  <section class="ch-end">
+    <h2>本章小結</h2>
+    <ul>
+      <li>公開可借用的有三套：對外用 TRL、內部檢查用 AI 專用的 MLTRL、查核點寫法借經濟部科專；內部規範以單位內規為準。</li>
+      <li>系統等級取決於最弱的模組，所以自評時要逐模組看。</li>
+      <li>月報範本可直接複製使用，每月只對準一個主要問題。</li>
+    </ul>
+    <p class="ch-next">全部引用來源見{{ch:refs}}。</p>
+  </section>
 </section>
 
-<!-- ======================= 6 參考文獻 ======================= -->
+<!-- ======================= ch-refs 參考文獻 ======================= -->
 <section class="chapter" id="ch-refs" data-title="參考文獻">
   <header class="ch-head">
     <p class="ch-num">參考文獻</p>
@@ -762,7 +891,9 @@
 <script src="assets/js/research.js"></script>
 <script src="assets/js/glossary.js"></script>
 <script src="assets/js/steps.js"></script>
+<script src="assets/js/slots.js"></script>
 <script src="assets/js/others.js"></script>
+<script src="assets/js/pipeline.js"></script>
 <script src="assets/js/geom.js"></script>
 <script src="assets/js/person.js"></script>
 <script src="assets/js/util.js"></script>
@@ -770,6 +901,7 @@
 <script src="assets/js/viz-kit.js"></script>
 <script src="assets/js/ch-methods.js"></script>
 <script src="assets/js/ch-fusion.js"></script>
+<script src="assets/js/pipeview.js"></script>
 <script src="assets/js/ch-deploy.js"></script>
 <script src="assets/js/ch-deep.js"></script>
 <script src="assets/js/ch-plan.js"></script>

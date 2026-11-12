@@ -48,7 +48,7 @@
       learns: '每位專家各學一種線索；門控學「這段影片哪個線索比較可靠」。',
       needs: '影片', fails: ['算力（凍結 CLIP ViT-L/14）', '全部線索同時失效時救不回'],
       num: [['MEVID 真實跨日換衣 Rank-1', '20.1（HAMoBE；舊方法 < 6）', 'proven'], ['BRIAR 臉受限 TAR@0.1%FAR', '臉 30.7 → 三模態 65.0', 'proven']],
-      score: 3, verdict: '最接近「依情況選線索」的思路，是本章第 4 步（融合）的參考。弱伺服器需改成小型專家＋分數層融合。',
+      score: 3, verdict: global.PIPE.text('最接近「依情況選線索」的思路，是本章{{step:4|short}}的參考。弱伺服器需改成小型專家＋分數層融合。'),
       lic: '未確認', cost: '高（大模型骨幹）' }
   ];
   var FAM = {}; FAMS.forEach(function (f) { FAM[f.id] = f; });
@@ -105,7 +105,7 @@
     init: function () {
       buildFamTabs(); buildCtrls(); buildGrid(); drawAll(); if ($('#land')) initLandscape();
       var btn = $('#ana-play');
-      function sync() { btn.textContent = A.playing ? '暫停' : '播放'; btn.setAttribute('aria-pressed', A.playing ? 'true' : 'false'); }
+      function sync() { btn.textContent = A.playing ? '❚❚ 暫停' : '▶ 播放'; btn.setAttribute('aria-pressed', A.playing ? 'true' : 'false'); }
       btn.addEventListener('click', function () { A.playing = !A.playing; sync(); if (A.playing) loop(); });
       sync();
     },

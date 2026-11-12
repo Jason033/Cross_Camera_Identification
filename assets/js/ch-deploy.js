@@ -1,4 +1,4 @@
-/* ch-deploy.js — 評估協定與合成資料、身分比對決策流程、資料集、證據板與研究空缺、參考文獻 */
+/* ch-deploy.js — 評估協定與合成資料、資料集、證據板與研究空缺、參考文獻 */
 (function (global) {
   'use strict';
   var D = global.DATA, PM = global.PersonModel, el = U.el, $ = U.$;
@@ -51,41 +51,6 @@
       el('circle', { cx: cx, cy: y, r: 8, fill: r[1] >= 2 ? 'var(--good)' : 'var(--bad)' }, svg);
       el('text', { x: cx, y: y + 4, 'text-anchor': 'middle', 'font-size': 11, fill: '#fff', 'font-weight': 700, text: r[1] >= 2 ? '✓' : '✕' }, svg);
     });
-  }
-
-  /* ======================= 身分比對的決策流程 ======================= */
-  CH.openset = { init: function () { if ($('#os-flow')) drawFlow(); } };
-
-  function drawFlow() {
-    var svg = $('#os-flow'), A = global.svgArrow;
-    function node(x, y, w, t, sub, fill, color) {
-      el('rect', { x: x, y: y, width: w, height: 50, rx: 8, fill: fill || '#fff', stroke: color || 'var(--ink-3)', 'stroke-width': 1.3 }, svg);
-      el('text', { x: x + w / 2, y: y + (sub ? 22 : 30), 'text-anchor': 'middle', 'font-size': 13.5, 'font-weight': 700, fill: fill === 'var(--ink)' ? '#fff' : 'var(--ink)', text: t }, svg);
-      if (sub) el('text', { x: x + w / 2, y: y + 39, 'text-anchor': 'middle', 'font-size': 11.5, fill: fill === 'var(--ink)' ? '#dfe3d3' : 'var(--ink-3)', text: sub }, svg);
-    }
-    function diamond(cx, cy, t) {
-      el('path', { d: 'M' + cx + ' ' + (cy - 32) + 'L' + (cx + 66) + ' ' + cy + 'L' + cx + ' ' + (cy + 32) + 'L' + (cx - 66) + ' ' + cy + 'Z', fill: '#fff', stroke: 'var(--ink)', 'stroke-width': 1.3 }, svg);
-      el('text', { x: cx, y: cy + 5, 'text-anchor': 'middle', 'font-size': 12.5, fill: 'var(--ink)', text: t }, svg);
-    }
-    node(0, 60, 110, 'Query 軌跡', '多幀');
-    A(svg, 110, 85, 140, 85);
-    diamond(208, 85, '品質足夠？');
-    A(svg, 208, 117, 208, 168);
-    el('text', { x: 216, y: 146, 'font-size': 12, fill: 'var(--bad)', text: '否' }, svg);
-    node(130, 170, 156, '等待更多幀', '或交人工確認', '#fbefe9', 'var(--serious, #c93434)');
-    A(svg, 274, 85, 316, 85);
-    el('text', { x: 282, y: 76, 'font-size': 12, fill: 'var(--good)', text: '是' }, svg);
-    node(318, 60, 140, '品質門控融合', '可用的線索才參與');
-    A(svg, 458, 85, 488, 85);
-    node(490, 60, 120, 'Top-K 檢索', 'gallery');
-    A(svg, 610, 85, 640, 85);
-    diamond(708, 85, '分數 > τ ？');
-    A(svg, 774, 85, 818, 85);
-    el('text', { x: 782, y: 76, 'font-size': 12, fill: 'var(--good)', text: '是' }, svg);
-    node(820, 60, 136, '已知身分', '輸出 ID + 信心', 'var(--ink)');
-    A(svg, 708, 117, 708, 168);
-    el('text', { x: 716, y: 146, 'font-size': 12, fill: 'var(--bad)', text: '否' }, svg);
-    node(626, 170, 164, '未知人員', '建立暫時 ID、提醒', '#fbefe9', '#c93434');
   }
 
   /* ======================= 7 資料集 ======================= */

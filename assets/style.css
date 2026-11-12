@@ -575,3 +575,177 @@ body.fp-open { overflow: hidden; }
 .cmp-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 6px 0 14px; padding: 10px 12px; background: #eef2e4; border: 1px solid var(--olive-2); border-radius: var(--radius-m); }
 .cue-map td:first-child { white-space: nowrap; }
 .cue-map .sw-dot { margin-right: 6px; vertical-align: -1px; }
+
+/* 本章小結（每章結尾：重點三條＋轉場句） */
+.ch-end { margin: 44px 0 8px; padding: 18px 20px 16px; border-top: 2px solid var(--ink); background: var(--sheet); border-radius: 0 0 var(--radius-m) var(--radius-m); }
+.ch-end h2 { margin: 0 0 8px; font-size: 18px; }
+.ch-end ul { margin: 0 0 12px; padding-left: 1.3em; }
+.ch-end li { margin: 4px 0; }
+.ch-end .ch-next { margin: 0; font-weight: 700; padding-top: 10px; border-top: 1px solid var(--rule); }
+
+/* ---- 第 3b 階段：流程鏈、我們選徽章、收合區、第 4 章回顧 ---- */
+ol.chain { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 0; margin: 8px 0 12px; max-width: none; }
+ol.chain > li { position: relative; background: #fff; border: 1px solid var(--rule); border-radius: var(--radius-s); padding: 5px 10px; font-size: 13.5px; line-height: 1.5; }
+ol.chain > li + li::before { content: "→"; position: absolute; left: -17px; top: 50%; transform: translateY(-50%); color: var(--ink-3); }
+ol.chain.read-order > li { background: var(--sheet); font-weight: 700; }
+ol.chain.sys-chain { gap: 8px 24px; }
+ol.chain.sys-chain > li { display: flex; flex-direction: column; gap: 2px; max-width: 190px; }
+ol.chain.sys-chain > li span { font-size: 12.5px; color: var(--ink-2); }
+ol.chain.sys-chain > li em { font-style: normal; font-size: 12px; color: var(--ink-3); }
+.step-pick { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin: 6px 0 10px; padding: 8px 14px; border: 1px solid var(--olive-2); border-left: 5px solid var(--olive); border-radius: var(--radius-m); background: #eef2e4; font-size: 15px; scroll-margin-top: 56px; }
+.step-pick .sp-l { font-weight: 700; color: var(--olive-3); }
+.step-pick .sp-v { font-weight: 700; color: var(--ink); }
+.cv1-row { margin: 0 0 4px; }
+.cv1-list { margin: 4px 0 8px; padding-left: 1.3em; font-size: 15px; }
+.cv1-list li { margin: 2px 0; }
+.step-choice ol.chain { margin-top: 4px; }
+.tbl.cfg tr.cfg-key td { background: #fbfcf7; }
+details.cfg-rest { margin-top: 8px; }
+details.more > .more-body > .plate { margin: 8px 0 0; }
+.rest-more { margin-top: 12px; }
+.btn-legend ul { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 0; margin: 8px 0 14px; }
+.btn-legend li { display: inline-flex; align-items: baseline; gap: 8px; }
+.btn-legend .bl-b { display: inline-block; padding: 1px 10px; border: 1px solid var(--olive-2); border-radius: 999px; background: #fff; font-size: 13px; font-weight: 700; color: var(--olive-3); white-space: nowrap; }
+ol.recap { margin: 8px 0 14px; padding-left: 1.4em; max-width: none; }
+ol.recap li { margin: 6px 0; }
+.srv-concl { margin: 4px 0 12px; padding: 10px 14px; border-left: 5px solid var(--olive); background: var(--sheet); border-radius: var(--radius-s); max-width: none; }
+.lstate { display: inline-block; padding: 0 8px; border-radius: 10px; font-size: 12px; font-weight: 700; border: 1px solid var(--rule-2); background: #fff; }
+.lstate.adopt { border-color: #0c8a0c; color: #0c8a0c; }
+.lstate.test { border-color: #b97e00; color: #8a5d00; }
+.sys-ruler { margin: 6px 0; }
+.oth-group h3, #oth-groups h3 { margin-top: 26px; }
+@media (max-width: 820px) { ol.chain.sys-chain > li { max-width: none; } }
+.mcard .mhow { margin: 8px 0 0; }
+.mcard .mhow > summary { cursor: pointer; font-size: 13.5px; font-weight: 700; color: var(--ink-2); }
+.mcard .mhow > summary:hover { color: var(--ink); }
+.mcard .mhow > .flow { margin-top: 6px; }
+.mcard .mkey { margin-top: 0; }
+#cue-decision td:first-child { white-space: nowrap; }
+#cue-decision td.num { white-space: nowrap; }
+#cue-decision { min-width: 860px; }
+
+/* ======================= Phase 4b：圖（主圖、系統尺、步驟條、迷你地圖、槽位表、流程圖） ======================= */
+.xref { text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+.xref:hover { text-decoration-color: var(--c-app); }
+/* 主圖：詳情區的三個連結、ours 模式每步的關鍵設定 */
+.pv-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 10px 0 0; }
+.pv-link { font-weight: 700; font-size: 14px; }
+.pv-links .fp-btn { margin-left: 0; }
+.mk { font: 11px/1.4 var(--sans); color: var(--ink-2); }
+.mk p { margin: 0 0 3px; }
+.mk b { display: block; font-size: 11px; color: var(--ink); }
+/* D2 系統步驟尺 */
+.sr-scroll { min-width: 820px; }
+.sr-grid { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px 10px; margin: 6px 0 4px; }
+.sr-cap { margin: 6px 0 0; font-size: 12.5px; font-weight: 700; color: var(--ink-3); }
+.sr-c { position: relative; background: #fff; border: 1px solid var(--rule); border-radius: var(--radius-m); padding: 8px 9px; font-size: 12.5px; line-height: 1.5; display: flex; flex-direction: column; gap: 3px; }
+.sr-c:not(:last-child)::after { content: ""; position: absolute; right: -9px; top: 50%; border: 5px solid transparent; border-left: 6px solid var(--ink-3); transform: translateY(-50%); }
+.sr-c b { font-size: 13.5px; }
+.sr-c span { color: var(--ink-2); }
+.sr-c em { font-style: normal; color: var(--ink-3); font-size: 12px; margin-top: auto; }
+.sr-o { display: block; text-align: center; padding: 6px 4px; border: 1.5px solid var(--olive); border-radius: var(--radius-m); background: #eef2e4; color: var(--ink); font-weight: 700; font-size: 13.5px; text-decoration: none; }
+.sr-o:hover { background: #e3e9d2; }
+.sr-o .num { color: var(--olive); }
+.ss-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; margin: 8px 0 12px; color: var(--ink-2); }
+.ss-key { display: inline-block; min-width: 2.4em; text-align: center; padding: 0 8px; border-radius: var(--radius-s); border: 1px solid var(--rule); background: #fff; font-size: 12px; font-weight: 700; margin-right: 2px; }
+/* D3 步驟條（9 欄；多出的「額外」會插一條窄欄） */
+.sysstrip { display: grid; gap: 4px; min-width: 760px; align-items: stretch; font-size: 12.5px; line-height: 1.45; margin: 4px 0 8px; }
+.ss-h { font-size: 11px; color: var(--ink-3); text-align: center; padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ss-c { position: relative; background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 5px 7px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.ss-c:hover, .ss-c:focus-visible { border-color: var(--ink-3); background: #fff; }
+.ss-c b { font-size: 12.5px; color: var(--ink); }
+.ss-d { display: none; color: var(--ink-2); font-size: 12px; margin-top: 2px; }
+.ss-c.open .ss-d { display: block; }
+.ss-c.open { background: #fff; border-color: var(--ink-3); }
+.ss-skip { background: repeating-linear-gradient(45deg, #f1f2ee, #f1f2ee 5px, #e9ebe5 5px, #e9ebe5 10px); color: var(--ink-3); align-items: center; justify-content: center; cursor: default; border-style: dashed; font-weight: 700; }
+.ss-merge { background: #eef2e4; border: 1.5px dashed var(--olive); }
+.ss-extra { background: #fbf1e2; border: 1.5px dashed #eb6834; }
+.ss-x { border: 2px solid var(--c-skel); box-shadow: 0 0 0 1px #fff inset; }
+.ss-tag { font-style: normal; align-self: flex-start; font-size: 10.5px; line-height: 1.5; padding: 0 5px; border-radius: 8px; background: var(--olive); color: #fff; font-weight: 700; }
+.ss-extra .ss-tag { background: #eb6834; }
+.ss-star { font-style: normal; align-self: flex-start; font-size: 11px; color: #b4421a; font-weight: 700; }
+.ss-key.ss-merge { border: 1.5px dashed var(--olive); } .ss-key.ss-extra { border: 1.5px dashed #eb6834; } .ss-key.ss-x { border: 2px solid var(--c-skel); color: #b4421a; }
+.ss-key.ss-skip { background: repeating-linear-gradient(45deg, #f1f2ee, #f1f2ee 4px, #e9ebe5 4px, #e9ebe5 8px); }
+.patterns { grid-template-columns: minmax(0, 1fr); }
+/* D4 組合條：顏色＝來自哪種架構 */
+.pc-mtmc { --pc: #2a78d6; } .pc-bio { --pc: #6250d6; } .pc-archive { --pc: #1baf7a; } .pc-anchor { --pc: #4f5c30; } .pc-bind { --pc: #9a7b12; } .pc-search { --pc: #d55181; }
+.ss-c[class*="pc-"] { background: color-mix(in srgb, var(--pc) 14%, #fff); border: 1.5px solid var(--pc); }
+.ss-c[class*="pc-"] b { color: var(--ink); }
+.combo-strip { margin: 6px 0 14px; }
+.combo-list { list-style: none; margin: 4px 0 0; padding: 0; font-size: 14px; }
+.combo-list li { margin: 5px 0; }
+.combo-list .cp { display: inline-block; background: var(--pc); color: #fff; padding: 0 9px; border-radius: var(--radius-s); font-size: 13px; line-height: 1.7; text-decoration: none; margin-right: 6px; }
+.combo-list .num { color: var(--ink-2); margin-right: 6px; }
+/* D5 迷你地圖與黏頂列 */
+.minimap { margin: 6px 0 8px; padding: 8px 10px 6px; border: 1px solid var(--rule); border-radius: var(--radius-m); background: var(--sheet); }
+.mm-steps, .mm-slots { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.mm-steps li { flex: 1 1 0; min-width: 62px; }
+.mm-steps a { display: block; text-align: center; padding: 3px 4px; border: 1px solid var(--rule); border-radius: var(--radius-s); background: #fff; color: var(--ink-2); text-decoration: none; font-size: 12.5px; line-height: 1.35; }
+.mm-steps a b { display: block; font-size: 12.5px; }
+.mm-steps a small { display: block; font-size: 10.5px; color: var(--ink-3); }
+.mm-steps a:hover { border-color: var(--ink-3); }
+.mm-steps .num { font-weight: 700; color: var(--olive); }
+.mm-steps li.cur a { background: var(--ink); color: var(--sheet); border-color: var(--ink); }
+.mm-steps li.cur a small, .mm-steps li.cur .num { color: #dfe4d8; }
+.mm-slots { margin-top: 7px; align-items: center; }
+.mm-slots::before { content: "這一步的固定槽位"; font-size: 11.5px; color: var(--ink-3); margin-right: 4px; }
+.mm-slots li { font-size: 12.5px; }
+.mm-slots li + li::before { content: "→"; color: var(--ink-3); margin-right: 4px; }
+.mm-slots a { color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+.minimap-sticky { display: none; }
+@media (min-width: 1100px) {
+  .minimap-sticky { position: fixed; z-index: 30; top: 0; left: var(--rail-w); right: 0; height: 40px; padding: 4px 28px; background: rgba(246, 247, 243, .96); border-bottom: 1px solid var(--rule); backdrop-filter: blur(3px); transform: translateY(-110%); opacity: 0; pointer-events: none; transition: transform .15s, opacity .15s; display: block; }
+  .minimap-sticky.on { transform: none; opacity: 1; pointer-events: auto; }
+  .minimap-sticky .mm-steps { flex-wrap: nowrap; max-width: 1180px; }
+  .minimap-sticky .mm-steps li { min-width: 0; }
+  .minimap-sticky .mm-steps a { padding: 1px 4px; display: flex; gap: 6px; justify-content: center; align-items: baseline; }
+  .minimap-sticky .mm-steps a b { display: inline; }
+  .minimap-sticky .mm-steps a small { display: none; }
+}
+section.step, section.step h2 { scroll-margin-top: 48px; }
+/* D6 槽位表：表格本身可橫向內捲，不撐出整頁 */
+table.slot-tbl { display: block; overflow-x: auto; max-width: 100%; margin: 6px 0 16px; font-size: 13px; border-collapse: collapse; }
+.slot-tbl caption { display: block; text-align: left; font-size: 12.5px; color: var(--ink-3); padding: 2px 0 6px; caption-side: top; }
+.slot-tbl th, .slot-tbl td { min-width: 8.5em; max-width: 15em; }
+.slot-tbl th.slot-name, .slot-tbl thead th:first-child { min-width: 10em; position: sticky; left: 0; background: var(--sheet); z-index: 1; }
+.slot-tbl th.slot-name { font-size: 13px; }
+.slot-tbl .mtag { margin-left: 6px; }
+.slot-tbl tr.slot-first td, .slot-tbl tr.slot-first th { background: #eef2e4; }
+.slot-tbl td { color: var(--ink-3); }
+.slot-tbl td.slot-base { color: var(--ink); }
+.slot-tbl td.slot-diff { background: #eef0cf; color: var(--ink); box-shadow: inset 0 0 0 1px #c9cf94; }
+.slot-tbl tr:hover td.slot-diff { background: #e6e9bd; }
+.slot-tbl .st { font-style: normal; color: #7a6a00; font-weight: 700; margin-right: 3px; }
+.slot-tbl td.slot-skip { color: var(--ink-3); }
+.slot-tbl .sk { font-weight: 700; margin-right: 4px; }
+.slot-tbl .mg { font-weight: 700; color: var(--olive-3); }
+.slot-tbl small { display: block; color: var(--ink-3); font-size: 11.5px; line-height: 1.4; }
+.slot-tbl small.from { margin-top: 2px; }
+.slot-tbl .ex { display: block; font-size: 12px; color: #b4421a; }
+.slot-tbl tr.slot-grp th { background: #e4e8dc; border-bottom: 1px solid var(--rule); position: static; font-size: 13.5px; }
+.slot-tbl tr.slot-grp th a { color: var(--ink); }
+.slot-tbl .col-hl, .slot-tbl th.col-hl { box-shadow: inset 0 0 0 2px var(--c-app); background: #e4effb; transition: background .3s; }
+.mcard.mc-hl { box-shadow: 0 0 0 2px var(--c-app); }
+.cmp-bar + .slot-tbl { margin-top: -6px; }
+/* D7–D10 流程圖 */
+.flowchart svg { display: block; width: 100%; height: auto; margin: 0 auto; }
+.flowchart g[role="button"] { outline: none; }
+.flowchart g[role="button"]:hover > rect, .flowchart g[role="button"]:focus-visible > rect { stroke-width: 2.6; }
+.flow-info { margin-top: 10px; font-size: 14px; min-height: 3.2em; }
+@media (max-width: 820px) { .flow-info { min-height: 0; } .sr-scroll { min-width: 760px; } }
+.osys-list { grid-template-columns: minmax(0, 1fr); }
+.osys, .pat { min-width: 0; }
+
+.slot-tbl th.slot-name { white-space: normal; word-break: break-word; overflow-wrap: anywhere; width: 11em; max-width: 11em; }
+.slot-tbl th.slot-name .mtag { display: table; margin: 4px 0 0; }
+.slot-tbl td.slot-skip { text-align: center; cursor: help; }
+
+/* 第 5 階段：按鈕圖例（左欄直列版）、按鈕文字自帶 ▶ */
+.fp-btn { padding: 3px 12px; }
+.fp-btn.big { padding: 7px 16px; }
+.legend-box .btn-legend ul { flex-direction: column; flex-wrap: nowrap; gap: 8px; margin: 0 0 12px; }
+.legend-box .btn-legend li { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin: 0; }
+.legend-box .btn-legend .bl-b { font-size: 12px; padding: 0 9px; }
+.legend-box .btn-legend .small { font-size: 11.5px; line-height: 1.45; }
+
+.master-cap { margin: 0 0 8px; font-size: 1em; color: var(--ink, inherit); }

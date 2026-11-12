@@ -74,7 +74,7 @@
     g += g_(o, T(40, 160, '連續 10 秒沒人 → 降到 1 fps', { size: 13, a: 'start', w: 1, c: OLIVE }));
     for (i = 0; i < 20; i++) g += g_(o, tick(40 + i * 28, 172, i % 5 === 0 ? 30 : 16, i % 5 === 0 ? OLIVE : '#dde2da', i % 5 === 0 ? 3 : 1));
     g += g_(seg(t, 0.75, 0.9), R(40, 230, 560 * 0.2, 18, { f: '#2a78d6', op: 0.75 }) + R(40, 230, 560, 18, { s: '#c5ccc2' }) + T(40 + 560 * 0.2 + 8, 244, '偵測算力只需約 20%（營區多數時段畫面沒人，實際更省）', { size: 12, a: 'start' }));
-    return g + caption(320, 288, '偵測、追蹤用低幀率；步態需要的連續畫面，到第 3 步再回原始影片取');
+    return g + caption(320, 288, '偵測、追蹤用低幀率；步態需要的連續畫面，到{{step:3|short}}再回原始影片取');
   };
   S.o1_minh = function (t) {
     var g = camera(60, 60, 1.3) + '<path d="M80,70 L630,30 L630,280 L80,95Z" fill="#2a78d6" fill-opacity=".05"/>' + Ln(100, 260, 620, 210, '#dde2da', 3);
@@ -110,7 +110,7 @@
     else g += chip(x - 26, 112, 52, IDC[0], 'ID 1');
     g += tree(330, 170, 62);
     if (x >= 390) g += T(x, 100, '接回同一個 ID ✓', { size: 12, c: GOOD, w: 1 });
-    g += g_(seg(t, 0.85, 0.95), T(320, 268, '超過 2 秒才出現 → 開新片段（之後由第 6 步分群接回）', { size: 13, w: 1 }));
+    g += g_(seg(t, 0.85, 0.95), T(320, 268, '超過 2 秒才出現 → 開新片段（之後由{{step:6|short}}接回）', { size: 13, w: 1 }));
     return g + caption(320, 290, '軌跡保留 2 秒（5 fps 下 10 幀）：短暫遮擋接回；太長會把不同人接在一起');
   };
   S.o2_purify = function (t) {
@@ -195,7 +195,7 @@
     return g + caption(320, 290, '先分「好／差」兩級各估一組分布：畫面差時兩分布靠在一起，證據自動變小，不必手調權重');
   };
   S.o4_sum = function (t) {
-    var E = [['外觀（同日）', 1.2, '#2a78d6'], ['換裝 CAL', 0.8, '#2a78d6'], ['步態', 2.1, '#d55181'], ['臉', 0, '#6250d6', '看不到：0（不加不扣）'], ['身高', -0.4, '#9a7b12'], ['時空（第 5 步）', 1.5, '#eb6834'], ['刷卡', 1, '#4f5c30', '上限 +2']];
+    var E = [['外觀（同日）', 1.2, '#2a78d6'], ['換裝 CAL', 0.8, '#2a78d6'], ['步態', 2.1, '#d55181'], ['臉', 0, '#6250d6', '看不到：0（不加不扣）'], ['身高', -0.4, '#9a7b12'], ['時空（{{step:5|sym}}）', 1.5, '#eb6834'], ['刷卡', 1, '#4f5c30', '上限 +2']];
     var cx = 320, u = 24, g = Ln(cx, 40, cx, 250, INK3, 1) + Ln(cx + 6 * u, 40, cx + 6 * u, 250, BAD, 1, { dash: '3 3' }) + Ln(cx - 6 * u, 40, cx - 6 * u, 250, BAD, 1, { dash: '3 3' }) + T(cx + 6 * u, 34, '+6 上限', { size: 10, c: BAD }) + T(cx - 6 * u, 34, '−6 下限', { size: 10, c: BAD }), sum = 0;
     E.forEach(function (e, i) {
       var y = 48 + i * 26, o = seg(t, 0.05 + i * 0.07, 0.12 + i * 0.07), w = e[1] * u * o;
@@ -388,19 +388,19 @@
   var SPECS = {
     all: { title: '第一版系統：從錄影到交出成果', sub: '白天照常錄影，夜間依序跑完七步；前六步不需名冊，名冊與刷卡只在最後一步參與。', keyLabel: '整體邏輯', key: '先分類、再識別：前六步回答「今天有幾個不同的人、各去過哪裡」，第七步才對到名冊。名冊不完整或刷卡被代刷時，路徑仍然成立。',
       flow: [['營區的一天', '10 台路邊攝影機照常錄影，晚上一次處理', 0, 'o_day'], ['偵測', 'YOLOX-S；畫面縮到 640；5 fps', 1, 'o1_resize'], ['追蹤成片段', 'ByteTrack 兩輪匹配，撿回被擋住的人', 2, 'o2_bytetrack'], ['身分線索', '每段片段先檢查哪些線索可用', 3, 'o3_gates'], ['融合成證據', '各線索換成同一把尺再相加', 4, 'o4_sum'], ['時空約束', '走不到的就不可能是同一人', 5, 'o5_walk'], ['分群', '約束式平均連結凝聚分群', 6, 'o6_merge'], ['比對名冊', '第一名明顯領先才接受', 7, 'o7_margin'], ['交出成果', '每人的時間與地點；低信心待覆核', 0, 'o_output']] },
-    s1: { title: '① 攝影機與偵測：YOLOX-S', sub: '每一幀找出畫面中的人。設定：輸入 640、5 fps、信心 ≥ 0.1、人高 ≥ 40 像素、空場降頻。', keyLabel: '這一步的重點', key: '寧可多給低分框，讓追蹤去撿；太小的人形直接不送，省算力也少錯誤。',
+    s1: { title: '{{step:1}}：YOLOX-S', sub: '每一幀找出畫面中的人。設定：輸入 640、5 fps、信心 ≥ 0.1、人高 ≥ 40 像素、空場降頻。', keyLabel: '這一步的重點', key: '寧可多給低分框，讓追蹤去撿；太小的人形直接不送，省算力也少錯誤。',
       flow: [['縮放與偵測', '1080p 縮到 640×640；信心 ≥ 0.1 都輸出', 1, 'o1_resize'], ['抽幀', '偵測與追蹤用 5 fps；空場 10 秒降到 1 fps', 1, 'o1_fps'], ['最小人高', '人框高 < 40 像素不送後續步驟', 1, 'o1_minh']] },
-    s2: { title: '② 追蹤成片段：ByteTrack＋片段淨化', sub: '同一台攝影機裡把同一人的框串成片段。設定：高分 0.5、低分 0.1、保留 2 秒、片段淨化寧可多切。', keyLabel: '這一步的重點', key: '同制服時外觀幫不上忙，追蹤只靠位置與運動；寧可多切幾段，也不讓一段片段混兩個人。',
+    s2: { title: '{{step:2}}：ByteTrack＋片段淨化', sub: '同一台攝影機裡把同一人的框串成片段。設定：高分 0.5、低分 0.1、保留 2 秒、片段淨化寧可多切。', keyLabel: '這一步的重點', key: '同制服時外觀幫不上忙，追蹤只靠位置與運動；寧可多切幾段，也不讓一段片段混兩個人。',
       flow: [['兩輪匹配', '高分框先配，剩下的軌跡再配低分框', 2, 'o2_bytetrack'], ['短暫遮擋接回', '軌跡保留 2 秒（10 幀）', 2, 'o2_buffer'], ['片段淨化', '前後窗比身高、外觀、位置，突變就切開', 2, 'o2_purify']] },
-    s3: { title: '③ 身分線索特徵', sub: '外觀 SOLIDER Swin-S、換裝 CAL、步態 DeepGaitV2＋RTMPose、臉 AdaFace＋MagFace、身高、名牌。', keyLabel: '這一步的重點', key: '每條線索都有「可用條件」，看不到就不算；外觀只在同一天內可信，換裝靠 CAL、步態、臉、身高。',
+    s3: { title: '{{step:3}}', sub: '外觀 SOLIDER Swin-S、換裝 CAL、步態 DeepGaitV2＋RTMPose、臉 AdaFace＋MagFace、身高、名牌。', keyLabel: '這一步的重點', key: '每條線索都有「可用條件」，看不到就不算；外觀只在同一天內可信，換裝靠 CAL、步態、臉、身高。',
       flow: [['挑好幀算外觀', '每段取品質最好的 8 幀', 3, 'o3_quality'], ['步態回原始影片', '取連續 30 幀（≥ 15 fps）', 3, 'o3_gaitwin'], ['線索的可用條件', '臉：兩眼間距 ≥ 10 像素；名牌：人高 ≥ 300 像素', 3, 'o3_gates'], ['換裝怎麼連', '外觀失效時靠 CAL、步態、身高', 3, 'o3_cal']] },
-    s4: { title: '④ 換成同一種證據（融合）', sub: '品質加權片段聚合 → 各線索校準成似然比 → 依品質分層 → 相加。', keyLabel: '這一步的重點', key: '把不同單位的分數換成同一把尺；缺的線索為 0，品質差的自動變小；每一項貢獻多少一目了然。',
+    s4: { title: '{{step:4}}', sub: '品質加權片段聚合 → 各線索校準成似然比 → 依品質分層 → 相加。', keyLabel: '這一步的重點', key: '把不同單位的分數換成同一把尺；缺的線索為 0，品質差的自動變小；每一項貢獻多少一目了然。',
       flow: [['分數換成證據', '同人／不同人兩個分布的高度比，取對數', 4, 'o4_kde'], ['依品質分層', '好、差兩級各估一組分布', 4, 'o4_strata'], ['相加與上限', '每項 ±6；看不到為 0；刷卡最多 +2', 4, 'o4_sum']] },
-    s5: { title: '⑤ 時空約束', sub: '不可能配對規則＋攝影機兩兩的轉移時間分布。', keyLabel: '這一步的重點', key: '時空規則只排除不可能的配對，不會引入新錯誤；轉移時間分布從資料自動學，當作第 4 步的一項證據。',
+    s5: { title: '{{step:5}}', sub: '不可能配對規則＋攝影機兩兩的轉移時間分布。', keyLabel: '這一步的重點', key: '時空規則只排除不可能的配對，不會引入新錯誤；轉移時間分布從資料自動學，當作{{step:4|short}}的一項證據。',
       flow: [['走不到', '時間差 < 距離 ÷ 3 m/s → 不可能', 5, 'o5_walk'], ['同時出現在兩處', '重疊 > 1 秒、視野不重疊 → 不可能', 5, 'o5_overlap'], ['轉移時間分布', '每 10 秒一格，自動統計 2 週', 5, 'o5_hist']] },
-    s6: { title: '⑥ 分群：片段聚成人', sub: '約束式平均連結凝聚分群；門檻 τ 用標註資料掃描。', keyLabel: '這一步的重點', key: '每步合併證據最強的兩群，違反時空約束的不准合併；低信心片段最後才處理；成果用四個數一起報。',
+    s6: { title: '{{step:6}}', sub: '約束式平均連結凝聚分群；門檻 τ 用標註資料掃描。', keyLabel: '這一步的重點', key: '每步合併證據最強的兩群，違反時空約束的不准合併；低信心片段最後才處理；成果用四個數一起報。',
       flow: [['合併過程', '平均連結；約束擋下不可能的合併', 6, 'o6_merge'], ['門檻 τ 怎麼定', '一天的標註掃描，取 BCubed F 最高', 6, 'o6_tau'], ['低信心片段', '最後才併；併不進去保留為未歸群', 6, 'o6_late'], ['成果怎麼評', '準確率、召回率、擴散率、人數誤差', 6, 'o6_rates']] },
-    s7: { title: '⑦ 比對名冊（刷卡輔助）', sub: '整群多證據比對＋第一第二名間隔＋刷卡輔助與一致性檢查。', keyLabel: '這一步的重點', key: '先縮小名單、用整群比；前兩名太接近就交人工；刷卡只能加分，和影像不符時以影像為準並列入待查。',
+    s7: { title: '{{step:7}}', sub: '整群多證據比對＋第一第二名間隔＋刷卡輔助與一致性檢查。', keyLabel: '這一步的重點', key: '先縮小名單、用整群比；前兩名太接近就交人工；刷卡只能加分，和影像不符時以影像為準並列入待查。',
       flow: [['縮小比對名單', '只和當日在營或刷卡進營的人比', 7, 'o7_gallery'], ['間隔門檻', '第一名 − 第二名 ≥ 2 才接受', 7, 'o7_margin'], ['刷卡證據', '±2 分鐘、同門口；依時間接近程度分配', 7, 'o7_card'], ['尾隨與代刷', '只標記、不自動判定', 7, 'o7_tail'], ['三種結果', '確認、未知-#N、待確認', 7, 'o7_out']] },
     layers: { title: '身分的四層：從片段到真實身分', sub: '片段 → 日內匿名 ID → 全域匿名 ID → 身分。前三層是分類，最後一層才是識別。', keyLabel: '為什麼要分層', key: '分類不需名冊，所以名冊不完整、刷卡被代刷時，系統照樣能數人、畫軌跡；識別用整群多段證據，比單段穩定。',
       flow: [['片段', '單攝影機追蹤的輸出', 2, 'o_layer1'], ['日內匿名 ID', '同一天的同一人', 6, 'o_layer2'], ['全域匿名 ID', '跨日的同一人', 6, 'o_layer3'], ['身分', '比對名冊；不足就是未知', 7, 'o_layer4']] },
@@ -408,7 +408,7 @@
       flow: [['路徑總覽', '平面圖上的每人軌跡', 0, 'o_output'], ['事後查詢', '指定人員與日期，列出時間與地點', 0, 'o_query'], ['人工覆核', '低信心連結交人工，結果回饋訓練', 0, 'o_review']] }
   };
   function play(id) { var s = SPECS[id]; if (s) FlowPlay.open({ title: s.title, sub: s.sub, flow: s.flow, keyLabel: s.keyLabel, key: s.key, ours: true }); }
-  function btn(id, label, cls) { return '<button type="button" class="fp-btn' + (cls ? ' ' + cls : '') + '" data-op="' + id + '" title="用動畫逐步說明"><i></i>' + label + '</button>'; }
+  function btn(id) { return global.PipeView.btn('anim', 'data-op="' + id + '"'); }
 
   var CH = global.CH = global.CH || {};
   CH.ourplay = {
@@ -416,15 +416,15 @@
       var sec = document.getElementById('ch-approach');
       if (!sec || sec.getAttribute('data-op-ready')) return;
       sec.setAttribute('data-op-ready', '1');
+      // 「從頭到尾」只有一顆：在一頁回顧的主圖標題列（index.html 的 data-op="all"）；這裡只加每一步的按鈕
       var t = document.getElementById('v1-table');
-      if (t) t.insertAdjacentHTML('beforebegin', '<div class="op-hero">' + btn('all', '動畫：第一版系統從頭到尾（約 1.5 分鐘）', 'big') + '<span class="small muted">每一步的細節，點下表各列右邊的「細看」</span></div>');
       if (t && t.tHead) {
         t.tHead.rows[0].insertAdjacentHTML('beforeend', '<th>動畫</th>');
-        Array.prototype.forEach.call(t.tBodies[0].rows, function (r, i) { r.insertAdjacentHTML('beforeend', '<td>' + btn('s' + (i + 1), '細看') + '</td>'); });
+        Array.prototype.forEach.call(t.tBodies[0].rows, function (r, i) { r.insertAdjacentHTML('beforeend', '<td>' + btn('s' + (i + 1)) + '</td>'); });
       }
       var L = document.getElementById('sys-layers'), O = document.getElementById('out-map');
-      if (L) L.closest('figure').querySelector('.plate-head').insertAdjacentHTML('beforeend', btn('layers', '動畫說明'));
-      if (O) O.closest('figure').querySelector('.plate-head').insertAdjacentHTML('beforeend', btn('output', '動畫說明'));
+      if (L) L.closest('figure').querySelector('.plate-head').insertAdjacentHTML('beforeend', btn('layers'));
+      if (O) O.closest('figure').querySelector('.plate-head').insertAdjacentHTML('beforeend', btn('output'));
       sec.addEventListener('click', function (e) { var b = e.target.closest('[data-op]'); if (b) play(b.getAttribute('data-op')); });
     }
   };
