@@ -30,7 +30,7 @@
       '<p class="mi">' + c.idea + '</p>' +
       '<div class="mw">' +
         '<div>' + (h.key ? '<p class="mkey"><b>關鍵差異：</b>' + h.key + '</p>' : '') +
-          '<details class="mhow"><summary>怎麼運作：輸入 → 處理 → 訓練 → 輸出</summary><ol class="flow">' + flow.map(function (r) { return '<li><span>' + r[0] + '</span>' + r[1] + '</li>'; }).join('') + '</ol></details></div>' +
+          '<details class="mhow"' + (c.tag === 'use' || c.tag === 'base' ? ' open' : '') + '><summary>怎麼運作：輸入 → 處理 → 訓練 → 輸出</summary><ol class="flow">' + flow.map(function (r) { return '<li><span>' + r[0] + '</span>' + r[1] + '</li>'; }).join('') + '</ol></details></div>' +
         '<div><h4>在我們的條件下</h4><table class="us">' + DIMS.map(function (d) {
             var v = us[d[0]] || ['n', '—'];
             return '<tr class="u-' + v[0] + '"><th>' + d[1] + '</th><td class="ul" title="' + LV[v[0]][1] + '">' + LV[v[0]][0] + '</td><td>' + v[1] + '</td></tr>';
