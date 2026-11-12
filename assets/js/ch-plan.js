@@ -170,6 +170,7 @@
     init: function () {
       drawSetup(); drawSched(); drawCov(); drawSplit(); drawExp('E1');
       table('val-metrics', ['功能', '指標', '注意'], R.METRICS);
+      table('plan-tbl', ['月份', '查核點', '可驗證的交付物', '推進的成熟度'], R.PLAN6);
     }
   };
   function drawSetup() {
@@ -313,7 +314,6 @@
       $('#fw-tbl').innerHTML = '<thead><tr><th>框架</th><th>內容</th><th>對你的用途</th><th>證據</th></tr></thead><tbody>' +
         R.FRAMEWORKS.map(function (f) { return '<tr><td><b><a href="' + f.src + '" target="_blank" rel="noopener">' + f.n + '</a></b></td><td>' + f.d + '</td><td>' + f.use + '</td><td>' + evBadge(f.lv) + '</td></tr>'; }).join('') + '</tbody>';
       table('gate-tbl', ['縮寫', '中文（常見譯法）', '目的', '對 TRL 1–3 研究專案'], R.GATES);
-      table('plan-tbl', ['月份', '查核點', '可驗證的交付物', '推進的成熟度'], R.PLAN6);
       $('#report-tpl').textContent = REPORT;
       $('#copy-report').addEventListener('click', function () {
         var btn = this;
