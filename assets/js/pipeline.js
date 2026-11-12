@@ -224,7 +224,7 @@
       { id: 'maybe', kind: 'end', t: '待確認（交人工覆核）', col: 4, row: 1 },
       { id: 'unk', kind: 'end', t: '未知-#N', col: 4, row: 2 },
       { id: 'card', kind: 'test', t: '刷卡與影像一致？', cfg: { cfg: [7, '刷卡證據'] }, col: 2, row: 3 },
-      { id: 'flag', kind: 'flag', t: '疑似代刷／疑似尾隨（只標記）', cfg: { cfg: [7, '尾隨與代刷'] }, col: 3, row: 3 },
+      { id: 'flag', kind: 'flag', t: '尾隨與刷卡疑點（只標記）', cfg: { cfg: [7, '尾隨與代刷'] }, col: 3, row: 3 },
       { id: 'mis', kind: 'flag', t: '與刷卡不符（列入待查）', col: 4, row: 3 }
     ], edges: [
       { from: 'list', to: 'grp' }, { from: 'grp', to: 'acc' },

@@ -57,7 +57,7 @@ window.SLOTDATA = {
   slots: {
    predict: "卡爾曼＋觀測回補虛擬軌跡",
    cue: "框重疊＋運動方向一致性",
-   assign: "待確認",
+   assign: "匈牙利匹配＋運動方向一致性",
    reconnect: "重新被看到時回補並校正",
    clean: {"v":"—","mark":"skip"}
   },
@@ -69,7 +69,7 @@ window.SLOTDATA = {
    rep: "RGB 外觀影像",
    backbone: "Swin Transformer＋語意值 λ",
    loss: "LUPerson 自監督；ID＋三元組",
-   agg: "待確認",
+   agg: {"v":"單張；片段聚合由系統做（見④）","mark":"skip"},
    out: "人物嵌入向量"
   },
   diff: []
@@ -80,7 +80,7 @@ window.SLOTDATA = {
    rep: "RGB 外觀影像",
    backbone: "CLIP ViT-B/16 影像編碼器",
    loss: "文字 token 圖文對比；ID＋三元組",
-   agg: "待確認",
+   agg: {"v":"單張；片段聚合由系統做（見④）","mark":"skip"},
    out: "視覺嵌入向量"
   },
   diff: ["backbone","loss"]
@@ -91,7 +91,7 @@ window.SLOTDATA = {
    rep: "RGB 外觀影像",
    backbone: "ViT-S/16（約 22M 參數）",
    loss: "MIM＋對比預訓練；ID＋三元組",
-   agg: "待確認",
+   agg: {"v":"單張；片段聚合由系統做（見④）","mark":"skip"},
    out: "嵌入向量"
   },
   diff: ["backbone","loss"]
@@ -102,7 +102,7 @@ window.SLOTDATA = {
    rep: "RGB 外觀影像",
    backbone: "多尺度殘差塊＋聚合閘門",
    loss: "ID＋三元組；可由 SOLIDER 蒸餾",
-   agg: "待確認",
+   agg: {"v":"單張；片段聚合由系統做（見④）","mark":"skip"},
    out: "512 維嵌入"
   },
   diff: ["backbone","loss","out"]
@@ -113,7 +113,7 @@ window.SLOTDATA = {
    rep: "RGB（去衣服化）",
    backbone: "ResNet-50＋衣服分類器",
    loss: "衣服對抗損失，交替訓練",
-   agg: "待確認",
+   agg: {"v":"單張；片段聚合由系統做（見④）","mark":"skip"},
    out: "2048 維去衣服化嵌入"
   },
   diff: []
@@ -124,22 +124,22 @@ window.SLOTDATA = {
    rep: "RGB＋體型（3D、文字監督）",
    backbone: "教師 CLIP＋SMPL→ResNet-50",
    loss: "文字描述＋3D 體型雙重蒸餾",
-   agg: "待確認",
+   agg: {"v":"單張；片段聚合由系統做（見④）","mark":"skip"},
    out: "偏向體型的嵌入"
   },
   diff: ["prep","rep","backbone","loss","out"]
  },
  "DeepGaitV2-P3D": {
   slots: {
-   prep: "分割成 64×44 剪影，約 30 幀",
-   rep: "黑白剪影序列",
+   prep: "人形分割取剪影，約 30 幀 64×44",
+   rep: "黑白剪影序列；骨架為輔",
    backbone: "深層殘差＋偽 3D 卷積",
    loss: "三元組＋ID 分類損失",
    agg: "時間最大池化＋水平切帶",
    out: "多水平帶串接的步態嵌入"
   },
-  diff: ["prep"],
-  part: ["rep","backbone","loss","agg","out"]
+  diff: [],
+  part: ["prep","rep","backbone","loss","agg","out"]
  },
  "RTMPose（MMPose）": {
   slots: {
@@ -150,8 +150,7 @@ window.SLOTDATA = {
    agg: {"v":"—","mark":"skip"},
    out: "17 點座標＋信心值"
   },
-  diff: ["rep","backbone","loss","out"],
-  part: ["prep"]
+  diff: ["prep","rep","backbone","loss","out"]
  },
  "GaitBase": {
   slots: {
@@ -170,7 +169,7 @@ window.SLOTDATA = {
    rep: "剪影＋骨架熱圖",
    backbone: "DeepGaitV2 類骨幹",
    loss: "三元組＋ID 損失",
-   agg: "待確認",
+   agg: "時間池化（同 DeepGaitV2 骨幹）",
    out: "步態嵌入"
   },
   diff: ["prep","rep"]
@@ -181,7 +180,7 @@ window.SLOTDATA = {
    rep: "關節點序列＋關節骨段角度描述子",
    backbone: "部位感知圖卷積",
    loss: "三元組＋ID 損失",
-   agg: "待確認",
+   agg: "整段骨架序列一起編碼",
    out: "步態嵌入"
   },
   diff: ["prep","rep","backbone"]
@@ -192,11 +191,11 @@ window.SLOTDATA = {
    rep: "對齊人臉 RGB",
    backbone: "IResNet-100",
    loss: "自適應邊界（依品質調難度）",
-   agg: "待確認",
+   agg: {"v":"單張；片段聚合由系統做（見④）","mark":"skip"},
    out: "512 維臉部特徵"
   },
-  diff: [],
-  part: ["rep","backbone","loss","agg","out"]
+  diff: ["out"],
+  part: ["rep","backbone","loss"]
  },
  "MagFace": {
   slots: {
@@ -204,10 +203,11 @@ window.SLOTDATA = {
    rep: "對齊人臉 RGB",
    backbone: "IResNet",
    loss: "長度感知邊界損失",
-   agg: "待確認",
+   agg: "單張；特徵長度可當品質權重",
    out: "512 維特徵＋品質分數"
   },
-  diff: ["loss","out"]
+  diff: ["loss"],
+  part: ["agg","out"]
  },
  "SCRFD-2.5GF": {
   slots: {
@@ -253,7 +253,7 @@ window.SLOTDATA = {
    out: "總證據（可換成同人機率）"
   },
   diff: ["combine"],
-  part: ["in","calib","missing","out"]
+  part: ["calib","missing","out"]
  },
  "品質條件化（依品質調整證據）": {
   slots: {
@@ -276,7 +276,8 @@ window.SLOTDATA = {
    missing: {"v":"—","mark":"skip"},
    out: "每段每線索一個特徵"
   },
-  diff: ["in","quality","out"]
+  diff: ["quality","out"],
+  part: ["in"]
  },
  "相關線索合組（避免重複計算）": {
   slots: {
@@ -296,7 +297,7 @@ window.SLOTDATA = {
    quality: {"v":"—","mark":"skip"},
    calib: "Z-score 或 Min-Max 縮放",
    combine: "依固定權重相加",
-   missing: "待確認",
+   missing: "無內建，要另外處理",
    out: "融合分數"
   },
   diff: ["calib","combine","out"]
@@ -320,8 +321,8 @@ window.SLOTDATA = {
    use: "時間差機率與外觀分數合成",
    out: "加入時空資訊的比對分數"
   },
-  diff: ["where"],
-  part: ["model","param","use"]
+  diff: ["where","model","use","out"],
+  part: ["param"]
  },
  "不可能配對規則（cannot-link）": {
   slots: {
@@ -331,8 +332,8 @@ window.SLOTDATA = {
    use: "只排除、不加分",
    out: "不可能配對清單（交給⑥）"
   },
-  diff: ["where","model","param","out"],
-  part: ["use","out"]
+  diff: ["where","param"],
+  part: ["model","use","out"]
  },
  "畫面座標轉平面圖（單應性）": {
   slots: {
@@ -342,7 +343,7 @@ window.SLOTDATA = {
    use: "視野重疊時可直接用位置連結",
    out: "平面圖座標"
   },
-  diff: ["param","out"],
+  diff: ["param","use"],
   part: ["where"]
  },
  "約束式平均連結凝聚分群": {
@@ -435,12 +436,12 @@ window.SLOTDATA = {
  },
  "SapiensID": {
   slots: {
-   gallery: "待確認",
+   gallery: {"v":"沿用整群比對","mark":"skip"},
    unit: "單張全身影像（384×384）",
    score: "臉＋全身統一嵌入",
-   decide: "待確認",
+   decide: {"v":"沿用整群比對","mark":"skip"},
    aux: {"v":"—","mark":"skip"},
-   out: "待確認"
+   out: "臉＋全身統一嵌入"
   },
   diff: ["unit","score"]
  }

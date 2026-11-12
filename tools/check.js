@@ -222,7 +222,7 @@ function checkSlots() {
       if (v === undefined) f.push(k + '：缺槽位 ' + s + '（缺格須明確 mark:\'skip\'）');
       else if (!isTxt(v)) f.push(k + '：槽位 ' + s + ' 格式不對');
     });
-    walkStrings(e.slots, (v, pth) => { if (/待確認/.test(v)) infos.push(k + pth + '：' + v); });
+    walkStrings(e.slots, (v, pth) => { if (/^\s*待確認\s*$/.test(v)) infos.push(k + pth + '：' + v); });
   });
   Object.keys(cards).forEach((k) => {
     if (cards[k].c.how && Object.keys(SD).length && !SD[k]) f.push('主要卡「' + k + '」沒有 SLOTDATA 條目');
