@@ -30,11 +30,15 @@
   /* ======================= 共用場景 ======================= */
   S.m_in = function (t, st) {
     var p = st.p || {}, k = p.kind, g = '', o = function (i) { return seg(t, i * 0.08, i * 0.08 + 0.2); };
+    var sz = +(((p.text || '').match(/(\d{3,4})(?:[×x–-]\d{3,4})?/) || [])[1] || 0);
     if (k === 'frame' || k === 'boxes') {
-      g += R(90, 40, 460, 210, { f: '#fff', s: '#c5ccc2' }) + T(320, 34, k === 'frame' ? '整張畫面' : '每一幀的偵測框', { size: 12, c: INK3 });
-      [[200, 230, 1.6], [330, 220, 1.3], [460, 200, 0.9]].forEach(function (q, i) { g += g_(o(i), person(q[0], q[1], q[2], 0.5 + i, { mark: IDC[i] }) + (k === 'boxes' ? R(q[0] - 14 * q[2], q[1] - 54 * q[2], 28 * q[2], 58 * q[2], { s: IDC[i], sw: 2 }) + T(q[0], q[1] - 58 * q[2], (0.9 - i * 0.2).toFixed(2), { size: 10, c: IDC[i], w: 1 }) : '')); });
+      var fw = sz ? Math.max(150, Math.min(460, 460 * sz / 1080 * 1.6)) : 460, fs = fw / 460, fx = 320 - fw / 2, fh = 210 * fs;
+      if (sz) g += R(90, 40, 460, 210, { s: '#dde2da', dash: '4 4' }) + T(548, 262, '原始 1080p', { size: 10, a: 'end', c: INK3 });
+      g += R(fx, 40, fw, fh, { f: '#fff', s: '#c5ccc2' }) + T(320, 34, (k === 'frame' ? '整張畫面' : '每一幀的偵測框') + (sz ? '，縮到 ' + sz : ''), { size: 12, c: INK3 });
+      [[200, 230, 1.6], [330, 220, 1.3], [460, 200, 0.9]].map(function (q) { return [320 + (q[0] - 320) * fs, 40 + (q[1] - 40) * fs, q[2] * fs]; }).forEach(function (q, i) { g += g_(o(i), person(q[0], q[1], q[2], 0.5 + i, { mark: IDC[i] }) + (k === 'boxes' ? R(q[0] - 14 * q[2], q[1] - 54 * q[2], 28 * q[2], 58 * q[2], { s: IDC[i], sw: 2 }) + T(q[0], q[1] - 58 * q[2], (0.9 - i * 0.2).toFixed(2), { size: 10, c: IDC[i], w: 1 }) : '')); });
     } else if (k === 'crop') {
-      g += R(270, 40, 100, 200, { f: '#fff', s: '#c5ccc2' }) + person(320, 232, 3.7, 0.4, { mark: IDC[0] }) + T(320, 258, '128 像素', { size: 11, c: INK3 }) + T(386, 144, '256 像素', { size: 11, a: 'start', c: INK3 }) + T(320, 30, '人形裁切（由第 1 步的框切出）', { size: 12, c: INK3 });
+      var sq = /384×384/.test(p.text || ''), cw = sq ? 200 : 100;
+      g += R(320 - cw / 2, 40, cw, 200, { f: '#fff', s: '#c5ccc2' }) + person(320, 232, 3.7, 0.4, { mark: IDC[0] }) + T(320, 258, sq ? '384 像素' : '128 像素', { size: 11, c: INK3 }) + T(326 + cw / 2, 144, sq ? '384 像素' : '256 像素', { size: 11, a: 'start', c: INK3 }) + T(320, 30, sq ? '全身影像（正方形，含臉）' : '人形裁切（由第 1 步的框切出）', { size: 12, c: INK3 });
     } else if (k === 'seq') {
       for (var i = 0; i < 7; i++) g += g_(o(i), R(70 + i * 72, 70, 60, 120, { f: '#111' }) + person(100 + i * 72, 180, 1.9, i * 0.9, { sil: 1, body: '#fff' }).replace(/fill="#1c251f"/g, 'fill="#fff"').replace(/stroke="#1c251f"/g, 'stroke="#fff"'));
       g += T(320, 216, '同一片段連續的黑白剪影（64×44）', { size: 12, c: INK3 });
@@ -69,7 +73,7 @@
     var p = st.p || {}, k = p.kind, c = p.c || BLUE, u = seg(t, 0.1, 0.7), g = '';
     if (k === 'boxes') { g += R(120, 50, 400, 190, { f: '#fff', s: '#c5ccc2' }); [[220, 220, 1.5], [340, 210, 1.2], [450, 190, 0.8]].forEach(function (q, i) { g += person(q[0], q[1], q[2], 0.5, { mark: IDC[i] }) + R(q[0] - 14 * q[2], q[1] - 54 * q[2], 28 * q[2], 58 * q[2], { s: IDC[i], sw: 2.5, op: seg(t, i * 0.15, i * 0.15 + 0.2) }) + T(q[0], q[1] - 58 * q[2], '人 ' + (0.92 - i * 0.06).toFixed(2), { size: 11, c: IDC[i], w: 1, op: seg(t, i * 0.15, i * 0.15 + 0.2) }); }); }
     else if (k === 'tracklets') { for (var i = 0; i < 3; i++) g += T(150, 90 + i * 50, 'ID ' + (i + 1), { size: 13, a: 'end', w: 1, c: IDC[i] }) + R(160, 76 + i * 50, 380 * u * (0.7 + i * 0.1), 18, { f: IDC[i] }); }
-    else if (k === 'vec') { g += bars(170, 200, 20, 12, 120, c, u, 9) + T(320, 228, p.label || '特徵向量（一串數字）', { size: 13, c: INK3 }); }
+    else if (k === 'vec') { var dm = +(((p.text || '').match(/(\d+)\s*維/) || [])[1] || 0), nb = dm ? Math.max(8, Math.min(32, Math.round(dm / 64))) : 18; g += bars(320 - nb * 7.5, 190, nb, 12, 120, c, u, 9) + T(320, 222, dm ? dm + ' 維向量' : (p.text ? p.text.replace(/（.*?）/g, '') : '特徵向量（一串數字）'), { size: 14, w: 1 }); }
     else if (k === 'kp') { g += stick(320, 240, 3.8, 0.4, ORNG, u) + T(320, 270, '17 個關節點座標＋信心值', { size: 12, c: INK3 }); }
     else if (k === 'evidence') { g += Ln(320, 60, 320, 230, INK3, 1) + R(320, 120, 180 * u, 34, { f: INK }) + T(330 + 180 * u, 143, '+' + (5 * u).toFixed(1), { size: 18, a: 'start', w: 1 }) + T(320, 256, '一個總證據值：正數支持同一人，負數支持不同人', { size: 12, c: INK3 }); }
     else if (k === 'prob') { var a = Math.PI * (1 - 0.93 * u); g += '<path d="M220,200 A100,100 0 0,1 420,200" fill="none" stroke="#dde2da" stroke-width="16"/>' + '<path d="M220,200 A100,100 0 0,1 ' + (320 + 100 * Math.cos(a)).toFixed(1) + ',' + (200 - 100 * Math.sin(a)).toFixed(1) + '" fill="none" stroke="' + GOOD + '" stroke-width="16"/>' + T(320, 190, (0.93 * u).toFixed(2), { size: 26, w: 1 }) + T(320, 236, '同一人的機率', { size: 13, c: INK3 }); }
@@ -81,6 +85,10 @@
     else if (k === 'constraints') { [['片段 12 × 片段 40', '同時出現'], ['片段 7 × 片段 33', '走不到'], ['片段 18 × 片段 21', '同時出現']].forEach(function (q, j) { g += g_(seg(t, j * 0.15, j * 0.15 + 0.2), R(170, 70 + j * 50, 300, 36, { f: '#fff', s: BAD }) + T(190, 93 + j * 50, '✗ ' + q[0], { size: 13, a: 'start', w: 1 }) + T(450, 93 + j * 50, q[1], { size: 12, a: 'end', c: BAD })); }); g += T(320, 250, '不可能配對清單（交給第 6 步分群）', { size: 12, c: INK3 }); }
     else if (k === 'model') { g += R(250, 90, 140, 80, { f: '#fff', s: PURP, sw: 2.5 }) + T(320, 136, '更新後的模型', { size: 14, w: 1, c: PURP }) + '<path d="M250,190 A80,40 0 0,0 390,190" fill="none" stroke="' + PURP + '" stroke-width="2" stroke-dasharray="5 4"/>' + T(320, 250, '用分群結果再訓練，反覆幾輪', { size: 12, c: INK3, op: u }); }
     else g += T(320, 140, p.label || '輸出', { size: 16, w: 1 });
+    var chips = [];
+    if (p.res && p.res !== '—') chips.push(['成績', p.res]);
+    if (p.cost && p.cost !== '—') chips.push(['算力', p.cost]);
+    chips.forEach(function (q, i) { var y = 6 + i * 24; g += g_(seg(t, 0.55 + i * 0.1, 0.7 + i * 0.1), R(80, y, 480, 20, { f: '#fff', s: '#c5ccc2', rx: 10 }) + T(96, y + 14, q[0], { size: 11, a: 'start', w: 1, c: q[0] === '成績' ? GOOD : ORNG }) + T(130, y + 14, q[1].length > 40 ? q[1].slice(0, 39) + '…' : q[1], { size: 11, a: 'start' })); });
     return g;
   };
   S.m_train = function (t, st) {
@@ -428,6 +436,134 @@
     return g + caption(320, 288, '分部位比對，只比雙方都看得到的部位');
   };
 
+  /* ======================= 其他方法的專屬圖解 ======================= */
+  function hard(s, n) { var out = [], cur = '', P = '，。；、：）」』！？,.;:)'; String(s || '').split('').forEach(function (ch) { if (cur.length >= n && P.indexOf(ch) < 0 && !(/[A-Za-z0-9.\-+]/.test(ch) && /[A-Za-z0-9.\-+]$/.test(cur) && cur.length < n + 5)) { out.push(cur); cur = ''; } cur += ch; }); if (cur) out.push(cur); return out; }
+  function hl(x, y, s, n, o) { o = o || {}; var L = hard(s, n); if (L.length > (o.max || 4)) { L = L.slice(0, o.max || 4); L[L.length - 1] = L[L.length - 1].slice(0, -1) + '…'; } return L.map(function (l, k) { return T(x, y + k * (o.lh || 15), l, { size: o.size || 11, a: o.a || 'middle', c: o.c || INK, w: o.w }); }).join(''); }
+  function badge(x, y, txt, c) { return R(x, y, txt.length * 12 + 18, 22, { f: c, rx: 11 }) + T(x + (txt.length * 12 + 18) / 2, y + 15, txt, { size: 11.5, c: '#fff', w: 1 }); }
+
+  S.m_aim = function (t) {
+    var g = T(320, 30, '因果圖：衣服同時影響「看起來」與特徵', { size: 13, w: 1 });
+    var N = [['身分', 160, 90, GOOD], ['衣服', 160, 210, ORNG], ['特徵', 400, 150, BLUE]];
+    N.forEach(function (n) { g += Ci(n[1], n[2], 34, { f: '#fff', s: n[3], sw: 2.5 }) + T(n[1], n[2] + 5, n[0], { size: 14, w: 1, c: n[3] }); });
+    g += arrow(194, 100, 366, 140, GOOD) + arrow(194, 200, 366, 160, ORNG);
+    var cutO = seg(t, 0.35, 0.5);
+    g += g_(cutO, Ln(270, 165, 290, 195, BAD, 4) + Ln(290, 165, 270, 195, BAD, 4) + T(280, 225, '因果介入：扣掉衣服這條路', { size: 12, c: BAD, w: 1 }));
+    g += g_(seg(t, 0.6, 0.75), R(460, 90, 160, 120, { f: '#fff', s: '#c5ccc2' }) + T(540, 114, 'PRCC 換衣 R1', { size: 12, c: INK3 }) + T(500, 146, 'AIM', { size: 12, a: 'end' }) + R(506, 134, 57.9 * 1.5, 14, { f: BLUE }) + T(500, 176, 'CAL', { size: 12, a: 'end' }) + R(506, 164, 55.2 * 1.5, 14, { f: '#9aa39a' }) + T(540, 200, '只小幅勝過', { size: 11, c: INK3 }));
+    return g + caption(320, 288, '想法漂亮，但增益小，不值得多花成本');
+  };
+  S.m_crfiqa = function (t) {
+    var g = star(180, 120, 14, GOOD) + T(180, 98, '自己類別的中心', { size: 11, c: GOOD }) + star(460, 120, 14, '#9aa39a') + T(460, 98, '最近的別人中心', { size: 11, c: INK3 });
+    var A = [[205, 135, '清楚的臉', GOOD, '品質高'], [330, 150, '模糊的臉', WARN, '品質低']];
+    A.forEach(function (a, i) {
+      var o = seg(t, 0.15 + i * 0.25, 0.3 + i * 0.25);
+      g += g_(o, Ci(a[0], a[1], 7, { f: a[3] }) + Ln(a[0], a[1], 180, 120, GOOD, 1.5, { dash: '3 3' }) + Ln(a[0], a[1], 460, 120, '#9aa39a', 1.5, { dash: '3 3' }) + T(a[0], a[1] + 24, a[2] + ' → ' + a[4], { size: 12, w: 1, c: a[3] }));
+    });
+    g += g_(seg(t, 0.65, 0.8), T(320, 220, '品質＝離自己中心多近、離別人中心多遠的比例', { size: 13, w: 1 }) + badge(258, 240, '授權：非商用', BAD));
+    return g;
+  };
+  S.m_kpr = function (t) {
+    var g = R(220, 40, 200, 220, { f: '#fff', s: ORNG, sw: 2 }) + T(320, 34, '一個框裡有兩個人', { size: 12, c: INK3 });
+    var f = seg(t, 0.4, 0.6);
+    g += person(290, 250, 3.6, 0.3, { mark: IDC[0] }) + person(360, 250, 3.4, 1.2, { mark: IDC[3], op: 1 - f * 0.75 });
+    [[290, 100], [290, 150], [275, 200], [305, 200], [290, 240]].forEach(function (q, i) { g += Ci(q[0], q[1], 6, { f: '#fff', s: GOOD, sw: 3, op: seg(t, 0.1 + i * 0.05, 0.15 + i * 0.05) }); });
+    g += g_(seg(t, 0.15, 0.3), T(470, 110, '綠點＝關鍵點提示', { size: 13, a: 'start', w: 1, c: GOOD }) + T(470, 132, '告訴模型「要看的是這個人」', { size: 12, a: 'start' }));
+    g += g_(seg(t, 0.6, 0.75), T(470, 180, '後面那個人被淡化', { size: 12, a: 'start', c: INK3 }) + badge(470, 210, '授權含軍事限制', BAD));
+    return g + caption(320, 290, '只有出入口人群擠在一起時才需要');
+  };
+  S.m_hamobe = function (t) {
+    var g = R(30, 100, 110, 90, { f: '#e9ece6', s: INK3, sw: 2 }) + T(85, 140, 'CLIP ViT-L/14', { size: 11, w: 1 }) + T(85, 160, '（凍結、很大）', { size: 10, c: INK3 }) + R(118, 106, 16, 12, { f: INK3, rx: 2 });
+    var E = [['外觀專家', BLUE, 0.2], ['體型專家', GOLD, 0.35], ['步態專家', PINK, 0.45]];
+    E.forEach(function (e, i) { var y = 50 + i * 80, o = seg(t, 0.1 + i * 0.08, 0.2 + i * 0.08); g += g_(o, arrow(144, 145, 194, y + 24) + R(200, y, 120, 48, { f: '#fff', s: e[1], sw: 2 }) + T(260, y + 29, e[0], { size: 13, w: 1, c: e[1] })); var w = 120 * e[2] * seg(t, 0.5, 0.7); g += g_(seg(t, 0.45, 0.55), arrow(324, y + 24, 364, y + 24) + R(370, y + 14, w, 20, { f: e[1] }) + T(376 + w, y + 29, '權重 ' + e[2], { size: 11, a: 'start', c: INK3 })); });
+    g += g_(seg(t, 0.4, 0.5), T(440, 30, '雙輸入門控：依這段影片決定信哪位專家', { size: 12, c: INK3 }));
+    g += g_(seg(t, 0.7, 0.85), badge(470, 250, '需要大 GPU', BAD));
+    return g + caption(260, 290, '最接近「依情況選線索」的研究；真實跨日換衣（MEVID）R1 仍只有約兩成', {});
+  };
+  S.m_botr50 = function (t) {
+    var g = R(40, 80, 130, 120, { f: '#fff', s: BLUE, sw: 2 }) + T(105, 136, 'ResNet-50', { size: 14, w: 1, c: BLUE }) + T(105, 158, '約 25M 參數', { size: 11, c: INK3 });
+    var L = ['學習率預熱', '隨機擦除', '標籤平滑', '最後一層不降採樣', 'BNNeck', '中心點損失'];
+    L.forEach(function (s, i) { var o = seg(t, 0.1 + i * 0.08, 0.18 + i * 0.08); g += g_(o, T(230, 60 + i * 30, '✓ ' + s, { size: 13, a: 'start', c: GOOD })); });
+    g += g_(seg(t, 0.65, 0.8), R(440, 90, 180, 90, { f: '#fff', s: '#c5ccc2' }) + T(530, 118, 'Market R1 94.5', { size: 14, w: 1 }) + T(530, 144, '你們已有', { size: 12 }) + T(530, 166, '新方法至少要贏它', { size: 12, c: GOOD, w: 1 }));
+    return g + caption(320, 290, '一組訓練技巧讓普通骨幹變成強基準——當回歸基準');
+  };
+  S.m_yolo26 = function (t) {
+    var g = R(40, 70, 170, 130, { f: '#fff', s: '#c5ccc2' }) + person(90, 190, 1.6, 0.4, { mark: IDC[0] }) + person(160, 180, 1.2, 1, { mark: IDC[1] }) + R(77, 104, 26, 90, { s: BLUE, sw: 2 }) + R(150, 116, 20, 68, { s: BLUE, sw: 2 });
+    g += T(125, 222, 'COCO 40.9 · 2.4M · CPU 38.9 ms', { size: 11, c: INK3 });
+    g += g_(seg(t, 0.25, 0.4), arrow(220, 135, 270, 135) + R(280, 105, 120, 60, { f: '#fff', s: INK3 }) + T(340, 131, '以網路服務', { size: 12 }) + T(340, 150, '提供給使用者', { size: 12 }));
+    g += g_(seg(t, 0.5, 0.65), arrow(406, 135, 446, 135, BAD) + R(452, 95, 170, 80, { f: '#fff3f3', s: BAD, sw: 2 }) + T(537, 122, 'AGPL-3.0', { size: 14, w: 1, c: BAD }) + T(537, 144, '可能要公開', { size: 12 }) + T(537, 162, '整個系統的原始碼', { size: 12 }));
+    return g + caption(320, 280, '技術不差，但有乾淨的替代品（YOLOX），就不必冒授權風險');
+  };
+  S.m_botsort = function (t) {
+    var C = [['卡爾曼＋框重疊', '和 ByteTrack 相同', GOOD, '✓'], ['相機運動補償', '攝影機會動時才有用；營區固定 → 無益', BAD, '✗'], ['外觀 ReID', '同制服時幫助小，還多一個模型', WARN, '△']], g = T(320, 30, 'BoT-SORT ＝ 三個零件', { size: 14, w: 1 });
+    C.forEach(function (c, i) { var y = 50 + i * 72, o = seg(t, 0.1 + i * 0.2, 0.25 + i * 0.2); g += g_(o, R(60, y, 520, 60, { f: '#fff', s: c[2], sw: 2 }) + T(80, y + 26, c[0], { size: 14, a: 'start', w: 1 }) + T(80, y + 47, c[1], { size: 12, a: 'start', c: INK3 }) + T(555, y + 38, c[3], { size: 24, w: 1, c: c[2] })); });
+    return g + caption(320, 284, 'MOT17 分數較高，但多出來的兩個零件在營區用不上');
+  };
+  S.m_mobileface = function (t) {
+    var u = ease(seg(t, 0.1, 0.5)), g = R(60, 60, 200 * u, 200 * u, { f: PURP, op: 0.15, s: PURP }) + T(160, 280, 'R100（AdaFace 等）', { size: 12, c: PURP, op: u });
+    g += R(300, 230 - 20, 20, 20, { f: GOOD }) + T(310, 280, 'MobileFaceNet', { size: 12, w: 1, c: GOOD }) + T(310, 198, '0.99M', { size: 12, w: 1, c: GOOD });
+    g += g_(seg(t, 0.5, 0.65), T(470, 100, '不到 100 萬參數', { size: 15, w: 1 }) + T(470, 126, 'LFW 99.55（清楚的臉）', { size: 12 }) + T(470, 160, '近距點位臉很多、', { size: 12, c: INK3 }) + T(470, 180, '算力不夠時的備案', { size: 12, c: INK3 }));
+    return g;
+  };
+  S.m_pplr = function (t) {
+    var g = R(40, 60, 100, 190, { f: '#fff', s: '#c5ccc2' }) + person(90, 240, 3.2, 0.3, { mark: IDC[0] });
+    [['頭', 70, 105], ['上身', 108, 170], ['下身', 172, 245]].forEach(function (p, i) { g += R(44, p[1], 92, p[2] - p[1], { s: IDC[i], sw: 1.5, dash: '3 3', op: seg(t, 0.1 + i * 0.08, 0.2 + i * 0.08) }); });
+    var V = [['整體：群 4', GOOD], ['頭：群 4', GOOD], ['上身：群 4', GOOD], ['下身：群 7', BAD]];
+    V.forEach(function (v, i) { var o = seg(t, 0.3 + i * 0.08, 0.4 + i * 0.08); g += g_(o, R(200, 60 + i * 40, 150, 30, { f: '#fff', s: v[1] }) + T(275, 80 + i * 40, v[0], { size: 13, c: v[1], w: 1 })); });
+    g += g_(seg(t, 0.7, 0.85), T(480, 120, '多數部位同意 → 保留標籤', { size: 13, w: 1, c: GOOD }) + T(480, 150, '不一致的部位 → 降低權重', { size: 13, w: 1, c: BAD }));
+    return g + caption(320, 290, '用身體各部位互相校正偽標籤的無監督訓練');
+  };
+  S.m_instruct = function (t) {
+    var A = t < 0.5, g = R(60, 60, 120, 190, { f: '#fff', s: '#c5ccc2' }) + person(120, 240, 3.4, 0.3, { mark: IDC[0] });
+    g += A ? Ci(120, 100, 26, { s: PURP, sw: 3 }) + R(92, 196, 56, 46, { s: PURP, sw: 2.5, dash: '4 3' }) : R(90, 120, 60, 86, { s: ORNG, sw: 3 });
+    g += R(220, 90, 360, 50, { f: '#fff', s: A ? PURP : ORNG, sw: 2 }) + T(240, 121, '指令：' + (A ? '找同一個人，忽略衣服' : '找穿同樣衣服的人'), { size: 14, a: 'start', w: 1 });
+    g += T(400, 180, A ? '→ 模型看臉、髮型、鞋' : '→ 模型看衣服', { size: 13, c: A ? PURP : ORNG, w: 1 });
+    g += g_(seg(t % 0.5 * 2, 0.4, 0.7), badge(340, 220, '訓練資料限非商用', BAD));
+    return g + caption(320, 290, '一個模型、用文字切換要比對的屬性');
+  };
+  S.m_3dinvar = function (t) {
+    var g = R(40, 60, 110, 190, { f: '#fff', s: '#c5ccc2' }) + person(95, 240, 3.2, 0.3, { mark: IDC[0] }) + T(95, 270, '單張照片', { size: 11, c: INK3 });
+    g += g_(seg(t, 0.15, 0.3), arrow(156, 150, 196, 150) + R(200, 70, 120, 170, { f: '#fff', s: GOLD }) + person(260, 230, 3, 0.3, { op: 0.5 }) + '<ellipse cx="260" cy="150" rx="34" ry="78" fill="none" stroke="' + GOLD + '" stroke-dasharray="4 3"/>' + T(260, 260, '重建 3D 穿衣人體', { size: 11, c: INK3 }));
+    g += g_(seg(t, 0.4, 0.55), arrow(326, 150, 366, 150) + R(370, 70, 110, 170, { f: '#fff', s: GOLD, sw: 2 }) + person(425, 230, 3, 0, { sil: 1 }) + T(425, 260, '拆掉衣服、姿態', { size: 11, c: INK3 }));
+    g += g_(seg(t, 0.6, 0.75), arrow(486, 150, 516, 150) + T(570, 140, '只留體型', { size: 14, w: 1, c: GOLD }) + T(570, 164, 'CCVID R1 70.2', { size: 11, c: INK3 }) + T(570, 182, '與 CAL 融合 84.3', { size: 11, c: GOOD }));
+    return g + caption(320, 290, '訓練需要 3D 重建，流程複雜，暫作參考');
+  };
+  S.m_ccaf = function (t) {
+    var g = R(60, 50, 130, 210, { f: '#fff', s: '#c5ccc2' }) + person(125, 250, 3.8, 0.3, { mark: IDC[0] });
+    var P = [['頭', 90, 72, 70, '#6250d6'], ['上衣', 120, 102, 80, ORNG], ['褲', 190, 104, 50, GOLD], ['鞋', 240, 106, 14, '#555']];
+    P.forEach(function (p, i) { g += R(125 - p[3] / 2, p[1] - 22, p[3], 40, { f: p[4], op: 0.3 * seg(t, 0.1 + i * 0.08, 0.2 + i * 0.08), rx: 4 }) + T(210, p[1] + 2, p[0], { size: 12, a: 'start', c: p[4], w: 1, op: seg(t, 0.1 + i * 0.08, 0.2 + i * 0.08) }); });
+    g += g_(seg(t, 0.4, 0.55), arrow(260, 150, 310, 150) + R(316, 110, 120, 80, { f: '#fff', s: INK3 }) + T(376, 146, 'CLIP＋人體解析', { size: 12, w: 1 }) + T(376, 166, '壓低衣服區域', { size: 11, c: INK3 }));
+    g += g_(seg(t, 0.65, 0.8), T(530, 130, 'PRCC 換衣 R1 70.4', { size: 13, w: 1, c: GOOD }) + T(530, 154, '（目前最高）', { size: 11, c: INK3 }) + badge(470, 180, '沒有釋出程式碼', BAD));
+    return g + caption(320, 290, '先把人分成頭、上衣、褲、鞋，再讓模型少看衣服');
+  };
+  S.m_dskc = function (t) {
+    var g = T(320, 30, '新場域一個接一個來，模型跟著更新', { size: 13, w: 1 });
+    for (var i = 0; i < 3; i++) {
+      var x = 70 + i * 190, o = seg(t, i * 0.25, i * 0.25 + 0.2), gone = t > i * 0.25 + 0.3 && i < 2;
+      g += g_(o, R(x, 60, 130, 80, { f: '#fff', s: '#c5ccc2' }) + T(x + 65, 84, ['第 1 個月', '第 2 個月', '第 3 個月'][i], { size: 12, w: 1 }) + thumb(x + 20, 92, 26, 40, i) + thumb(x + 52, 92, 26, 40, i + 1) + thumb(x + 84, 92, 26, 40, i + 2));
+      if (gone) g += R(x, 60, 130, 80, { f: PAPER, op: 0.75 }) + T(x + 65, 108, '舊影像已刪除', { size: 11, c: INK3 });
+      g += g_(o, arrow(x + 65, 146, x + 65, 176) + R(x + 15, 180, 100, 40, { f: '#fff', s: PURP }) + T(x + 65, 205, '模型 v' + (i + 1), { size: 12, w: 1, c: PURP }));
+      if (i < 2) g += g_(o, arrow(x + 118, 200, x + 202, 200, PURP));
+    }
+    return g + caption(320, 262, '不保留舊影像也能累積知識：契合隱私需求，但仍屬研究', {});
+  };
+
+  /* ======================= 在我們的條件下：闖關 ======================= */
+  S.m_gauntlet = function (t, st) {
+    var us = (st.p && st.p.us) || {}, G = [], stop = -1, g = '';
+    DIMS.forEach(function (d, i) { var v = us[d[0]] || ['n', '—']; G.push(v); if (stop < 0 && v[0] === 'b') stop = i; });
+    var X = function (i) { return 90 + i * 115; }, endX = stop >= 0 ? X(stop) - 34 : 600;
+    var px = lerp(20, endX, ease(seg(t, 0, 0.7)));
+    g += Ln(10, 150, 630, 150, '#dde2da', 6);
+    DIMS.forEach(function (d, i) {
+      var v = G[i], c = LV[v[0]][1], reached = px >= X(i) - 36 || (stop === i && t > 0.68), after = stop >= 0 && i > stop && t > 0.72, o = after ? 0.45 : 1;
+      g += g_(o, R(X(i) - 18, 90, 36, 120, { f: reached || after ? c : '#dde2da', op: reached || after ? 0.25 : 1, s: reached || after ? c : '#c5ccc2', sw: 2, rx: 4 }) + T(X(i), 80, d[1], { size: 12, w: 1 }));
+      if (reached || after) g += g_(o, T(X(i), 158, LV[v[0]][0], { size: 22, w: 1, c: c }) + hl(X(i), 230, v[1], 7, { size: 10.5, max: 4, lh: 14, c: INK }));
+    });
+    g += person(px, 172, 1.2, t * 30, { mark: IDC[0] }) + chip(Math.max(4, Math.min(566, px - 34)), 40, 68, OLIVE, (st.p.name || '').replace(/（.*?）/g, '').slice(0, 9));
+    if (stop >= 0 && t > 0.7) g += g_(seg(t, 0.7, 0.8), R(X(stop) - 60, 2, 120, 26, { f: BAD, rx: 13 }) + T(X(stop), 20, '卡在這一關', { size: 13, w: 1, c: '#fff' }));
+    else if (t > 0.72) g += g_(seg(t, 0.72, 0.82), R(250, 2, 140, 26, { f: GOOD, rx: 13 }) + T(320, 20, '全部通過（△ 要注意）', { size: 12, w: 1, c: '#fff' }));
+    return g;
+  };
+
   /* ======================= 每張卡要播什麼 ======================= */
   var CORE = {
     'YOLOX-S': 'm_yolox', 'YOLOv7（你現有）': 'm_yolov7', 'NanoDet-Plus-m': 'm_nanodet', 'ByteTrack': 'o2_bytetrack', '片段淨化（自行實作）': 'o2_purify', 'OC-SORT': 'm_ocsort',
@@ -439,10 +575,10 @@
     '約束式平均連結凝聚分群': 'o6_merge', 'Cluster Contrast': 'm_clustercontrast', 'HDBSCAN': 'm_hdbscan', 'ISE': 'm_ise', 'OGMC 線上分群': 'm_online',
     '整群多證據比對＋第一第二名間隔': 'o7_margin', '刷卡紀錄當輔助證據與一致性檢查': 'o7_card', '在營區攝影機下建立註冊資料': 'm_enroll', 'SapiensID': 'm_sapiens',
     // 其他方法（一句話）
-    'YOLO26n': 'cam', 'DanceTrack（外觀一樣時的追蹤基準）': 'x_dance', 'BoT-SORT': 'track', 'PU-ReID（穿制服的人員再辨識）': 'x_ortho', 'SC-ReID（同衣服人員再辨識）': 'x_sameclothes',
-    'TransReID': 'm_transreid', 'BoT（BagTricks）R50': 'feat', 'AIM': 'm_cal', 'BigGait（ViT-S）': 'x_frozen', 'MobileFaceNet': 'face', 'CR-FIQA': 'm_magface',
-    'BPBreID': 'm_parts', 'KPR': 'm_parts', '姓名條文字辨識（偵測＋OCR）': 'x_tag', '階級章與臂章分類': 'x_tag', 'FarSight／BRIAR 融合': 'x_quality_gate', 'HAMoBE': 'm_gate',
-    'AI City Challenge 多攝影機追蹤方法': 'x_anchor_cluster', 'PPLR': 'train', '圖神經網路分群（Linkage-GCN、STAR-FC 等）': 'm_gnn', '門禁防尾隨與刷卡比臉': 'x_cardface', '開放世界 ReID': 'o7_out'
+    'YOLO26n': 'm_yolo26', 'DanceTrack（外觀一樣時的追蹤基準）': 'x_dance', 'BoT-SORT': 'm_botsort', 'PU-ReID（穿制服的人員再辨識）': 'x_ortho', 'SC-ReID（同衣服人員再辨識）': 'x_sameclothes',
+    'TransReID': 'm_transreid', 'BoT（BagTricks）R50': 'm_botr50', 'AIM': 'm_aim', 'BigGait（ViT-S）': 'x_frozen', 'MobileFaceNet': 'm_mobileface', 'CR-FIQA': 'm_crfiqa',
+    'BPBreID': 'm_parts', 'KPR': 'm_kpr', '姓名條文字辨識（偵測＋OCR）': 'x_tag', '階級章與臂章分類': 'x_tag', 'FarSight／BRIAR 融合': 'x_quality_gate', 'HAMoBE': 'm_hamobe',
+    'AI City Challenge 多攝影機追蹤方法': 'x_anchor_cluster', 'PPLR': 'm_pplr', '圖神經網路分群（Linkage-GCN、STAR-FC 等）': 'm_gnn', '門禁防尾隨與刷卡比臉': 'x_cardface', '開放世界 ReID': 'o7_out', 'Instruct-ReID': 'm_instruct', '3DInvarReID': 'm_3dinvar', 'CCAF': 'm_ccaf', 'DSKC': 'm_dskc'
   };
   var IN = { 1: 'frame', 2: 'boxes', 4: 'scores', 5: 'tracklets', 6: 'tracklets', 7: 'group' };
   var INX = { app: 'crop', cc: 'crop', gait: 'seq', face: 'face', body: 'tracklets' };
@@ -454,7 +590,7 @@
   };
   var GC = { app: BLUE, cc: BLUE, gait: PINK, face: PURP, body: GOLD };
   var STEPN = ['', '攝影機與偵測', '追蹤成片段', '身分線索特徵', '融合成證據', '時空約束', '分群', '比對名冊'];
-  var DK = FlowPlay.DURK; DK.m_in = 5000; DK.m_out = 5000; DK.m_train = 6000; DK.m_us = 7500; DK.m_verdict = 6500; DK.m_idea = 6000;
+  var DK = FlowPlay.DURK; DK.m_in = 5000; DK.m_out = 5000; DK.m_train = 6000; DK.m_us = 7500; DK.m_gauntlet = 9500; DK.m_verdict = 6500; DK.m_idea = 6000;
 
   function spec(st, g, c) {
     var m = CH.steps.info(c), nm = c.m || (c.x && c.x.n) || m.n, h = c.how, core = CORE[nm], gk = g.key;
@@ -462,11 +598,11 @@
     if (h) {
       var io = OVR[nm] || [INX[gk] || IN[st.id], OUTX[gk] || OUT[st.id]];
       var flow = [];
-      if (h.in) flow.push(['輸入', h.in, st.id, 'm_in', { kind: io[0] }]);
+      if (h.in) flow.push(['輸入', h.in, st.id, 'm_in', { kind: io[0], text: h.in }]);
       flow.push(['處理', h.proc || c.idea, st.id, core || 'm_idea', { name: m.n, v: m.v, idea: c.idea }]);
       if (h.train) flow.push(['訓練', h.train, st.id, 'm_train', { text: h.train }]);
-      if (h.out) flow.push(['輸出', h.out, st.id, 'm_out', { kind: io[1], c: GC[gk] || BLUE }]);
-      if (c.us) flow.push(['在我們的條件下', '路邊俯角、換裝、5 人交錯、CPU 算力、軍用授權', st.id, 'm_us', { us: c.us }]);
+      if (h.out) flow.push(['輸出', h.out, st.id, 'm_out', { kind: io[1], c: GC[gk] || BLUE, text: h.out, res: m.res, cost: m.cost }]);
+      if (c.us) flow.push(['在我們的條件下', '依序闖五關：路邊俯角、換裝、5 人交錯、CPU 算力、軍用授權；遇到 ✗ 就卡住', st.id, 'm_gauntlet', { us: c.us, name: m.n }]);
       return { title: m.n, sub: c.idea, flow: flow, keyLabel: '關鍵差異', key: h.key || c.idea, m: mline };
     }
     return { title: m.n, sub: c.idea, m: mline, keyLabel: '判定理由', key: c.fit || '',
