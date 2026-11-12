@@ -19,11 +19,12 @@
   }
 
   /** 主要方法：怎麼運作 ＋ 在我們的條件下 */
-  function wide(c) {
+  function pbtn(id) { return '<button type="button" class="fp-btn" data-mp="' + id + '" title="用動畫說明這個方法怎麼運作"><i></i>動畫</button>'; }
+  function wide(c, id) {
     var m = info(c), h = c.how || {}, us = c.us || {};
     var flow = [['輸入', h.in], ['處理', h.proc], ['訓練', h.train], ['輸出', h.out]].filter(function (r) { return r[1]; });
     return '<article class="mcard wide t-' + c.tag + '">' +
-      '<header><b>' + name(m) + '</b>' + (m.v ? '<span class="mv">' + m.v + '</span>' : '') + tag(c.tag) + '</header>' +
+      '<header><b>' + name(m) + '</b>' + (m.v ? '<span class="mv">' + m.v + '</span>' : '') + tag(c.tag) + (id ? pbtn(id) : '') + '</header>' +
       '<p class="mi">' + c.idea + '</p>' +
       '<div class="mw">' +
         '<div><h4>怎麼運作</h4><ol class="flow">' + flow.map(function (r) { return '<li><span>' + r[0] + '</span>' + r[1] + '</li>'; }).join('') + '</ol>' +
@@ -36,13 +37,13 @@
       '</div>' + impl(c.impl || {}) + '</article>';
   }
   /** 次要方法：一句話 */
-  function small(c) {
+  function small(c, id) {
     var m = info(c);
-    return '<article class="mcard t-' + c.tag + '"><header><b>' + name(m) + '</b>' + (m.v ? '<span class="mv">' + m.v + '</span>' : '') + tag(c.tag) + '</header>' +
+    return '<article class="mcard t-' + c.tag + '"><header><b>' + name(m) + '</b>' + (m.v ? '<span class="mv">' + m.v + '</span>' : '') + tag(c.tag) + (id ? pbtn(id) : '') + '</header>' +
       '<p class="mi">' + c.idea + '</p>' + (m.res ? '<p class="small muted" style="margin:0 0 4px">' + m.res + '</p>' : '') + '<p class="mfit"><b>判定理由：</b>' + c.fit + '</p></article>';
   }
 
-  CH.steps = {
+  CH.steps = { info: info,
     init: function () {
       S.forEach(function (st) {
         var q = $('.step-q[data-s="' + st.id + '"]');
@@ -57,8 +58,8 @@
           if (!box) return;
           var main = g.cards.filter(function (c) { return c.how; }), rest = g.cards.filter(function (c) { return !c.how; });
           box.innerHTML = (g.n ? '<h3>' + g.n + '</h3>' : '') + (g.lead ? '<p>' + g.lead + '</p>' : '') +
-            main.map(wide).join('') +
-            (rest.length ? (main.length ? '<h4 class="rest-h">其他方法</h4>' : '') + '<div class="mgrid">' + rest.map(small).join('') + '</div>' : '');
+            main.map(function (c) { return wide(c, st.id + '-' + gi + '-' + g.cards.indexOf(c)); }).join('') +
+            (rest.length ? (main.length ? '<h4 class="rest-h">其他方法</h4>' : '') + '<div class="mgrid">' + rest.map(function (c) { return small(c, st.id + '-' + gi + '-' + g.cards.indexOf(c)); }).join('') + '</div>' : '');
         });
         var ch = $('.step-choice[data-s="' + st.id + '"]');
         if (ch) {
