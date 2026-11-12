@@ -2,13 +2,12 @@
    每章由一個或多個模組組成，第一次進入時才初始化；另負責自動圖號、章內目錄與名詞解釋。 */
 (function () {
   'use strict';
-  var ORDER = ['home', 'problem', 'methods', 'others', 'approach', 'plan', 'appendix', 'refs'];
-  var MODS = {
-    home: ['home', 'intro', 'steps'], problem: ['problem', 'primer'], methods: ['fusion', 'cues', 'methods', 'openset', 'steps', 'methodplay', 'cmpplay'],
-    others: ['others'], approach: ['system', 'steps', 'ourplay', 'server'], plan: ['roadmap', 'validation', 'camera'], appendix: ['datasets', 'methods', 'roadmap', 'qc', 'camera'], refs: ['refs']
-  };
-  // 舊網址（舊版 13 章）導到新章節
-  var ALIAS = { cues: 'methods', fusion: 'methods', openset: 'methods', system: 'approach', camera: 'plan', deploy: 'plan', validation: 'plan', datasets: 'appendix', qc: 'appendix', roadmap: 'plan' };
+  // 章節順序、模組、舊網址別名、章號全部讀 PIPE（assets/js/pipeline.js）
+  var PIPE = window.PIPE;
+  var ORDER = PIPE.CHAPTERS.map(function (c) { return c.id; });
+  var MODS = {};
+  PIPE.CHAPTERS.forEach(function (c) { MODS[c.id] = c.mods; });
+  var ALIAS = PIPE.ALIAS;
   var inited = {}, current = null;
 
   function each(id, fn) { (MODS[id] || []).forEach(function (k) { var m = window.CH[k]; if (m) fn(m, k); }); }
@@ -20,14 +19,16 @@
     U.$$('#toc a').forEach(function (a) {
       if (a.getAttribute('href') === '#/' + id) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
+    var sec = document.getElementById('ch-' + id);
     each(id, function (m, k) {
       if (inited[k]) return;
       inited[k] = true;
       try { m.init(); } catch (e) { console.error('模組初始化失敗：' + k, e); }
     });
+    PIPE.resolve(sec); // 模組畫出來的內容裡的 {{token}}
     each(id, function (m) { if (m.enter) m.enter(); });
+    PIPE.resolve(sec);
     current = id;
-    var sec = document.getElementById('ch-' + id);
     document.title = sec.getAttribute('data-title') + '｜同制服跨攝影機辨識';
     pager(id);
     window.scrollTo(0, 0);
@@ -42,14 +43,28 @@
     p.innerHTML = h;
   }
 
-  /* ---------- 圖號：每章依出現順序自動編號（總覽頁不編） ---------- */
+  /* ---------- 目錄與章號：由 PIPE.CHAPTERS 產生 ---------- */
+  function buildNav() {
+    var toc = document.getElementById('toc'), h = '', grp = false;
+    PIPE.CHAPTERS.forEach(function (c) {
+      var sec = document.getElementById('ch-' + c.id);
+      if (!sec) return;
+      if (c.ref && !grp) { h += '<li class="grp">參考</li>'; grp = true; }
+      h += '<li><a href="#/' + c.id + '"><span class="n">' + c.num + '</span>' + sec.getAttribute('data-title') + '</a></li>';
+      var cn = sec.querySelector('.ch-num');
+      if (cn) cn.textContent = c.label;
+    });
+    if (toc) toc.innerHTML = h;
+  }
+
+  /* ---------- 圖號：每章依出現順序自動編號，前綴取自章號（總覽頁不編） ---------- */
   function numberFigures() {
-    ORDER.forEach(function (k, ci) {
+    PIPE.CHAPTERS.forEach(function (c) {
       var n = 0;
-      U.$$('#ch-' + k + ' .plate-title .fig').forEach(function (f) {
+      U.$$('#ch-' + c.id + ' .plate-title .fig').forEach(function (f) {
         if (f.textContent.trim() && f.textContent.indexOf('圖') < 0) return; // 例如「範本」
-        if (ci === 0) { f.textContent = ''; return; }
-        f.textContent = '圖 ' + (k === 'appendix' ? 'A' : ci) + '.' + (++n);
+        if (c.id === 'home') { f.textContent = ''; return; }
+        f.textContent = '圖 ' + c.num + '.' + (++n);
       });
     });
   }
@@ -118,14 +133,14 @@
     if (ALIAS[id]) { location.replace('#/' + ALIAS[id]); return; }
     if (id !== current) show(id);
     if (id === current && /o=/.test(parts[1] || '') && window.CH.others) window.CH.others.enter();
-    var m = (parts[1] || '').match(/s=(\d)/);
-    if (m) {
-      var t = document.getElementById('step-' + m[1]);
-      // 剛切換章節時版面還在排，先跳一次、稍後再對齊一次
-      if (t) { setTimeout(function () { t.scrollIntoView({ block: 'start' }); }, 30); setTimeout(function () { t.scrollIntoView({ block: 'start' }); }, 400); }
-    }
+    var m = (parts[1] || '').match(/(?:^|&)s=(\d)/), a = (parts[1] || '').match(/(?:^|&)a=([^&]+)/);
+    // ?s=N 捲到步驟；?a=元素id 捲到該元素
+    var t = m ? document.getElementById('step-' + m[1]) : a ? document.getElementById(decodeURIComponent(a[1])) : null;
+    // 剛切換章節時版面還在排，先跳一次、稍後再對齊一次
+    if (t) { setTimeout(function () { t.scrollIntoView({ block: 'start' }); }, 30); setTimeout(function () { t.scrollIntoView({ block: 'start' }); }, 400); }
   }
-  numberFigures(); chapterTOC(); glossify();
+  PIPE.resolve(document.body); // 靜態 HTML 的 {{token}}、data-xref（要在圖號、章內目錄、名詞標示之前）
+  buildNav(); numberFigures(); chapterTOC(); glossify();
   window.addEventListener('hashchange', route);
   route();
 })();

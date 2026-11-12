@@ -7,8 +7,18 @@
   var W = 640, H = 300;
   var SC = ['#8a948a', '#2a78d6', '#1baf7a', '#6250d6', '#d55181', '#eb6834', '#9a7b12', '#4f5c30'];
   var IDC = ['#2a78d6', '#eb6834', '#1baf7a', '#d55181', '#9a7b12'];
-  var NUM = ['額外', '①', '②', '③', '④', '⑤', '⑥', '⑦'];
-  var STEPN = ['我們的七步沒有這一步', '攝影機與偵測', '追蹤成片段', '身分線索特徵', '融合成證據', '時空約束', '分群', '比對名冊'];
+  // 步驟符號與名稱讀 PIPE.OURS（0 = 我們的七步沒有這一步）；字幕與動畫文字裡的 {{token}} 用 X() 換成純文字
+  var PIPE = global.PIPE;
+  function X(s) { return PIPE.text(s); }
+  // 動畫文字會被切行再畫，所以 token 要在開視窗時就整份換成純文字
+  function deepX(v) {
+    if (typeof v === 'string') return X(v);
+    if (Array.isArray(v)) return v.map(deepX);
+    if (v && typeof v === 'object' && Object.getPrototypeOf(v) === Object.prototype) { var o = {}; Object.keys(v).forEach(function (k) { o[k] = deepX(v[k]); }); return o; }
+    return v;
+  }
+  var NUM = { get: function (i) { return i ? PIPE.step(i).sym : '額外'; } };
+  var STEPN = { get: function (i) { return i ? PIPE.step(i).n : '我們的七步沒有這一步'; } };
   var INK = '#1c251f', INK3 = '#6f7a71', OLIVE = '#4f5c30', SKIN = '#c99b78', PAPER = '#f6f7f3';
   var NAMES = ['王大明', '李志強', '陳建宏', '林俊傑'];
 
@@ -324,7 +334,7 @@
   };
   SCN.generic = function (t, st, i) {
     var c = SC[st.s] || SC[0];
-    return Ci(320, 120, 52 * ease(seg(t, 0, 0.3)), { f: c, op: 0.15 }) + T(320, 136, NUM[st.s], { size: st.s ? 46 : 22, c: c, w: 1, op: seg(t, 0.1, 0.3) }) +
+    return Ci(320, 120, 52 * ease(seg(t, 0, 0.3)), { f: c, op: 0.15 }) + T(320, 136, NUM.get(st.s), { size: st.s ? 46 : 22, c: c, w: 1, op: seg(t, 0.1, 0.3) }) +
       wrap(st.n, 18).map(function (l, k) { return T(320, 214 + k * 24, l, { size: 18, w: 1, op: seg(t, 0.2, 0.4) }); }).join('');
   };
   SCN.intro = function (t, f) {
@@ -333,10 +343,10 @@
     f.steps.forEach(function (s, k) {
       var x = 320 - (n * w) / 2 + k * w, o = seg(t, 0.3 + k * 0.08, 0.4 + k * 0.08), c = SC[s[2]];
       var xs = /^x_/.test(s[3] || '');
-      g += '<g' + op(o) + '>' + R(x + 4, 190, w - 8, 56, { f: xs ? '#fff8e1' : '#fff', s: c, sw: xs ? 3 : 2 }) + (xs ? star(x + w - 10, 194, 8, '#e8a600') : '') + T(x + w / 2, 212, NUM[s[2]], { size: s[2] ? 18 : 11, c: c, w: 1 }) + T(x + w / 2, 236, s[0].length > Math.floor((w - 10) / 11) ? s[0].slice(0, Math.floor((w - 10) / 11) - 1) + '…' : s[0], { size: 11 }) + '</g>';
+      g += '<g' + op(o) + '>' + R(x + 4, 190, w - 8, 56, { f: xs ? '#fff8e1' : '#fff', s: c, sw: xs ? 3 : 2 }) + (xs ? star(x + w - 10, 194, 8, '#e8a600') : '') + T(x + w / 2, 212, NUM.get(s[2]), { size: s[2] ? 18 : 11, c: c, w: 1 }) + T(x + w / 2, 236, s[0].length > Math.floor((w - 10) / 11) ? s[0].slice(0, Math.floor((w - 10) / 11) - 1) + '…' : s[0], { size: 11 }) + '</g>';
       if (k < n - 1) g += arrow(x + w - 4, 218, x + w + 4, 218, INK3, { op: o });
     });
-    return g + caption(320, 280, mline ? '' : ours ? '圓圈數字＝我們系統的第幾步' : '圓圈數字＝對應我們的第幾步　★＝它和別人不同的地方（會放慢講解）', { op: seg(t, 0.6, 0.8) });
+    return g + caption(320, 280, mline ? '' : ours ? '圓圈數字＝我們系統的哪一步' : '圓圈數字＝對應我們的哪一步　★＝它和別人不同的地方（會放慢講解）', { op: seg(t, 0.6, 0.8) });
   };
   SCN.key = function (t, f) {
     var g = '<g' + op(seg(t, 0, 0.2)) + '><path d="M320,40 a30,30 0 0,1 18,54 v12 h-36 v-12 a30,30 0 0,1 18,-54Z" fill="#f2c94c" stroke="#9a7b12" stroke-width="2"/>' + R(304, 110, 32, 6, { f: '#9a7b12' }) + '</g>';
@@ -864,22 +874,22 @@
   function go(i) { idx = i; last = 0; t0 = performance.now(); caption2(); render(playing ? 0 : 1); }
   function caption2() {
     var f = frames[idx], c = SC[f.s || 0];
-    M.querySelector('.fp-sb').textContent = f.type === 'step' ? NUM[f.s] : f.type === 'intro' ? '開始' : '重點';
+    M.querySelector('.fp-sb').textContent = f.type === 'step' ? NUM.get(f.s) : f.type === 'intro' ? '開始' : '重點';
     M.querySelector('.fp-sb').style.cssText = 'color:' + (f.type === 'step' ? c : '#9a7b12') + ';border-color:' + (f.type === 'step' ? c : '#9a7b12');
-    M.querySelector('.fp-n').textContent = f.type === 'step' ? f.n : f.type === 'intro' ? f.title : f.label;
-    M.querySelector('.fp-d').textContent = f.type === 'step' ? (f.d || '') : f.type === 'intro' ? f.sub : f.text;
-    M.querySelector('.fp-m').textContent = f.type !== 'step' ? '' : mline ? mline : ours ? (f.s ? '我們的第 ' + f.s + ' 步：' + STEPN[f.s] : '整體流程') : '對應我們的' + (f.s ? '第 ' + f.s + ' 步：' + STEPN[f.s] : '：' + STEPN[0]) + (f.x ? '' : '　（各系統做法相近，快速帶過）');
+    M.querySelector('.fp-n').textContent = X(f.type === 'step' ? f.n : f.type === 'intro' ? f.title : f.label);
+    M.querySelector('.fp-d').textContent = X(f.type === 'step' ? (f.d || '') : f.type === 'intro' ? f.sub : f.text);
+    M.querySelector('.fp-m').textContent = f.type !== 'step' ? '' : X(mline ? mline : ours ? (f.s ? '我們的 {{step:' + f.s + '|short}}' : '整體流程') : '對應我們的' + (f.s ? ' {{step:' + f.s + '|short}}' : '：' + STEPN.get(0)) + (f.x ? '' : '　（各系統做法相近，快速帶過）'));
     M.querySelector('.fp-x-badge').hidden = !f.x || !!mline || ours;
     M.querySelector('.fp-cap').classList.toggle('xs', !!f.x && !mline && !ours);
     M.querySelector('.fp-prog').innerHTML = frames.map(function (g, k) {
       var col = g.type === 'step' ? SC[g.s] : '#9a7b12';
-      return '<button type="button" data-i="' + k + '" class="' + (k === idx ? 'on' : k < idx ? 'done' : '') + (g.x ? ' x' : '') + '" style="--c:' + col + '" title="' + esc(g.type === 'step' ? g.n : g.type === 'intro' ? '開始' : '重點') + '"><i></i></button>';
+      return '<button type="button" data-i="' + k + '" class="' + (k === idx ? 'on' : k < idx ? 'done' : '') + (g.x ? ' x' : '') + '" style="--c:' + col + '" title="' + esc(X(g.type === 'step' ? g.n : g.type === 'intro' ? '開始' : '重點')) + '"><i></i></button>';
     }).join('');
   }
   function render(t) {
     var f = frames[idx];
     var svg = f.type === 'intro' ? SCN.intro(t, f) : f.type === 'key' ? SCN.key(t, f) : (SCN[f.kind] || SCN.generic)(t, f, idx);
-    M.querySelector('.fp-stage').innerHTML = '<rect width="' + W + '" height="' + H + '" fill="' + PAPER + '"/>' + svg;
+    M.querySelector('.fp-stage').innerHTML = '<rect width="' + W + '" height="' + H + '" fill="' + PAPER + '"/>' + X(svg);
     var bar = M.querySelector('.fp-prog .on i'); if (bar) bar.style.width = (cl(t) * 100) + '%';
   }
   function loop() {
@@ -896,11 +906,12 @@
   }
   function open(spec) {
     if (!M) build();
+    spec = deepX(spec);
     ours = !!spec.ours; mline = spec.m || '';
     frames = [{ type: 'intro', title: spec.title, sub: spec.sub, steps: spec.flow }]
       .concat(spec.flow.map(function (f) { var k = pick(f); return { type: 'step', n: f[0], d: f[1], s: f[2], kind: k, x: /^x_/.test(k), o: /^o_/.test(k), p: f[4] }; }))
       .concat([{ type: 'key', label: spec.keyLabel, text: spec.key }]);
-    M.querySelector('#fp-title').textContent = spec.title;
+    M.querySelector('#fp-title').textContent = X(spec.title);
     M.hidden = false; document.body.classList.add('fp-open');
     playing = false; go(0); setPlay(true);
     M.querySelector('.fp-play').focus();

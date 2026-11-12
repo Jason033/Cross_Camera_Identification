@@ -28,34 +28,13 @@
   function evB(lv) { return { proven: '<span class="ev proven"><i></i>文獻證實</span>', inferred: '<span class="ev inferred"><i></i>合理推論</span>', open: '<span class="ev open"><i></i>待驗證</span>' }[lv]; }
 
   /* ======================= 整體技術架構（全站共用，總覽頁也用） ======================= */
-  var ST = [
-    { n: '多台攝影機', tok: '影格', grp: 0,
-      one: '營區各處的攝影機錄下一整天的影片，夜間批次處理。',
-      io: '影片 → 每秒抽 2–5 幀', why: '同一個人會在不同攝影機、不同時間出現；角度、光線、距離都不同，所以同一人看起來可能像另一個人。', ev: 'proven' },
-    { n: '追蹤成片段', tok: '片段 #17', grp: 0,
-      one: '偵測器框出每個人，追蹤器把同一台攝影機裡連續的框串成一段「片段」。片段內一定是同一人，之後都以片段為單位處理。',
-      io: '人框 → 片段（數秒到數十秒）', why: '單一幀的資訊太少，也算不出步態；片段可以累積多幀，並挑出畫質最好的幾幀。', ev: 'proven' },
-    { n: '三位專家＋品質', tok: '3 份特徵', grp: 1,
-      one: '每段片段分別送進外觀、輪廓步態、骨架步態等專家，各得一個特徵；同時估計這段畫面對每種線索「可不可信」的品質分數 q。',
-      io: '片段 → {外觀, 輪廓, 骨架, 臉…} 特徵＋品質 q', why: '沒有一種線索在所有畫面都可靠（見本章第 3 步的方法解剖台）。品質 q 讓後面的步驟知道該信誰：解析度、遮擋、幀數、俯角都會影響。', ev: 'inferred' },
-    { n: '換成同一種證據', tok: '證據 +4.0', grp: 1,
-      one: '兩段片段比對時，各專家給的相似度單位不同。先換算成「證據」：同一人時看到這個分數的機率，比上不同人時的機率（取對數）。各項證據可以直接相加；看不到的線索該項為 0。',
-      io: '各線索相似度＋品質 q → 一個總證據值（可換成「同一人的機率」）', why: '直接把 0.8 的外觀分數和 12 的步態距離相加沒有意義；換成證據後，每一項都代表「多支持同一人幾分」。', ev: 'proven' },
-    { n: '時空約束', tok: '通過約束', grp: 2,
-      one: '同一個人不可能同時在兩處，也不可能比最短步行時間更快地從一台攝影機走到另一台。違反的配對直接否決，不論長得多像。',
-      io: '攝影機位置＋時間戳 → 「不可能是同一人」的配對清單', why: '這條線索完全不看衣服，所以同制服時特別值錢。公開資料上只加時間與相機 ID，Rank-1 就從 91.2 升到 97.2（st-ReID）。', ev: 'proven' },
-    { n: '約束式分群', tok: '匿名 #2', grp: 2,
-      one: '把一天所有片段，由最像的一對開始逐步合併成群；違反約束的合併跳過。最後每一群就是一個「匿名的人」。',
-      io: '所有片段的兩兩證據＋約束 → 今日人數、每人的片段與軌跡', why: '這一步不需要資料庫，就能回答「今天出現過幾個不同的人、各自去過哪裡」。要同時報純度：人數數對不代表沒有把兩個人併在一起。', ev: 'inferred' },
-    { n: '比對名冊', tok: '人員 C', grp: 3,
-      one: '把整群（多段證據）拿去和人員名冊比對，門禁刷卡當輔助證據。分數不夠高、或第一名和第二名太接近，就標「未知」，不硬配；刷卡與影像證據不一致時，以影像為準並列入待查（可能是代刷）。',
-      io: '匿名的人（＋刷卡紀錄）→ 已註冊身分、「未知-#N」，或「與刷卡不符」', why: '用整群比對比單段穩定；營區會有訪客與新進人員，系統必須能說「不認識」。刷卡可能被代刷，所以只能加分、不能直接決定身分。', ev: 'inferred' }
-  ];
+  // 七站的名稱與說明讀 PIPE.OURS（one／io／why／ev／tok 在 pipeline.js）；大階段讀 PIPE.STAGE_GROUPS
+  var PIPE = global.PIPE;
+  var ST = PIPE.OURS.filter(function (o) { return o.id !== 'Q'; });
   // 每一步在哪一章詳細介紹，以及對應的系統階段（研究資料 R.STAGES，含演算法選項與評估指標）
-  var CHN = { methods: '第 2 章 方法總覽' };
   var WHERE = ['methods', 'methods', 'methods', 'methods', 'methods', 'methods', 'methods'];
   var SIDS = [['s1'], ['s2'], ['s3'], ['s4'], ['s5'], ['s6', 's7'], ['s8', 's9']];
-  var GRP = [['感知', 'var(--ink-3)'], ['融合', C.app], ['分類', '#1baf7a'], ['識別', 'var(--ink)']];
+  var GRPC = ['var(--ink-3)', C.app, '#1baf7a', 'var(--ink)', 'var(--ink-3)']; // 與 PIPE.STAGE_GROUPS 同序
   var AR = null; // 目前操作中的架構圖實例（各站小圖畫進它）
   var BX = 4, BW = 122, GAP = 20, BY = 58, BH = 276;
   function bx(i) { return BX + i * (BW + GAP); }
@@ -68,7 +47,7 @@
       if (o.steps) {
         var steps = $(o.steps);
         ST.forEach(function (s, i) {
-          var b = U.h('button', { 'data-i': String(i), 'aria-pressed': i === 0 ? 'true' : 'false' }, '<span class="num">' + (i + 1) + '</span> ' + s.n);
+          var b = U.h('button', { 'data-i': String(i), 'aria-pressed': i === 0 ? 'true' : 'false' }, '<span class="num">' + (i + 1) + '</span> ' + s.short);
           b.addEventListener('click', function () { use(inst, function () { AR.tour = false; syncTourBtn(); selectSt(i, true); }); });
           steps.appendChild(b);
         });
@@ -94,19 +73,19 @@
         '<dt>評估指標</dt><dd>' + stg.map(function (x) { return (stg.length > 1 ? '<b>' + x.n + '：</b>' : '') + x.m; }).join('<br>') + '</dd>';
     }
     var link = AR.o.anchor ? '<dt>候選方法</dt><dd><a href="#/methods?s=' + (i + 1) + '" class="jump">往下看這一步有哪些方法、我們選哪個 ↓</a></dd>'
-      : '<dt>候選方法</dt><dd><a href="#/methods?s=' + (i + 1) + '">' + CHN.methods + '：第 ' + (i + 1) + ' 步 →</a></dd>';
-    $(AR.o.detail).innerHTML = '<div class="arch-num num">' + (i + 1) + '</div><div><h3 style="margin:0 0 4px">' + s.n + '　' + evB(s.ev) + '</h3><p style="margin:0 0 8px">' + s.one + '</p><dl>' +
-      '<dt>輸入 → 輸出</dt><dd>' + s.io + '</dd><dt>為什麼需要</dt><dd>' + s.why + '</dd>' + more + link + '</dl></div>';
+      : '<dt>候選方法</dt><dd><a href="#/methods?s=' + (i + 1) + '">' + PIPE.text('{{ch:methods}}：{{step:' + (i + 1) + '|short}} →') + '</a></dd>';
+    $(AR.o.detail).innerHTML = '<div class="arch-num num">' + (i + 1) + '</div><div><h3 style="margin:0 0 4px">' + s.n + '　' + evB(s.ev) + '</h3><p style="margin:0 0 8px">' + PIPE.fmt(s.one) + '</p><dl>' +
+      '<dt>輸入 → 輸出</dt><dd>' + PIPE.fmt(s.io) + '</dd><dt>為什麼需要</dt><dd>' + PIPE.fmt(s.why) + '</dd>' + more + link + '</dl></div>';
   }
 
   function drawArch() {
     var svg = U.clear($(AR.o.svg)), inst = AR;
     AR.boxes = []; AR.frames = [];
     ST.forEach(function (s, i) {
-      var x = bx(i), g = el('g', { tabindex: 0, role: 'button', 'aria-label': (i + 1) + ' ' + s.n, style: 'cursor:pointer' }, svg);
+      var x = bx(i), g = el('g', { tabindex: 0, role: 'button', 'aria-label': (i + 1) + ' ' + s.short, style: 'cursor:pointer' }, svg);
       el('circle', { cx: x + BW / 2, cy: 16, r: 11, fill: 'var(--ink)' }, g);
       txt(g, x + BW / 2, 20.5, String(i + 1), { 'text-anchor': 'middle', fill: '#fff', 'font-weight': 700, 'font-size': 13, class: 'num' });
-      txt(g, x + BW / 2, 47, s.n, { 'text-anchor': 'middle', 'font-weight': 700, 'font-size': 13.5 });
+      txt(g, x + BW / 2, 47, s.short, { 'text-anchor': 'middle', 'font-weight': 700, 'font-size': 13.5 });
       var fr = el('rect', { x: x + 0.5, y: BY, width: BW, height: BH, rx: 8, fill: '#fff', stroke: 'var(--rule)' }, g);
       AR.frames.push(fr);
       var inner = el('g', {}, g);
@@ -121,10 +100,12 @@
       g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
     });
     // 分組括號
-    [[0, 1, 0], [2, 3, 1], [4, 5, 2], [6, 6, 3]].forEach(function (b) {
-      var x1 = bx(b[0]) + 4, x2 = bx(b[1]) + BW - 4, gg = GRP[b[2]];
-      el('path', { d: 'M' + x1 + ' ' + (BY + BH + 10) + 'v6H' + x2 + 'v-6', fill: 'none', stroke: gg[1], 'stroke-width': 1.6 }, svg);
-      txt(svg, (x1 + x2) / 2, BY + BH + 32, gg[0], { 'text-anchor': 'middle', 'font-weight': 700, fill: gg[1], 'font-size': 12.5 });
+    PIPE.STAGE_GROUPS.forEach(function (gp, gi) {
+      var ids = gp[1].filter(function (x) { return x !== 'Q'; });
+      if (!ids.length) return; // 輸出（Q）在這張圖沒有方塊
+      var x1 = bx(ids[0] - 1) + 4, x2 = bx(ids[ids.length - 1] - 1) + BW - 4, col = GRPC[gi];
+      el('path', { d: 'M' + x1 + ' ' + (BY + BH + 10) + 'v6H' + x2 + 'v-6', fill: 'none', stroke: col, 'stroke-width': 1.6 }, svg);
+      txt(svg, (x1 + x2) / 2, BY + BH + 32, gp[0], { 'text-anchor': 'middle', 'font-weight': 700, fill: col, 'font-size': 12.5 });
     });
     // 片段的旅程
     var ty = 420;

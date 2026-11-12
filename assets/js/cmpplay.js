@@ -212,7 +212,7 @@
       ['它們怎麼做', 'c_idea'], ['st-ReID 的實證', 'c_bars', { metric: 'st-ReID：加入時空後的 Rank-1', ev: 'proven', rows: [['Market：只用外觀', 91.2, '91.2', BLUE], ['Market：加時空', 97.2], ['Duke：只用外觀', 83.8, '83.8', BLUE], ['Duke：加時空', 94.0, '94.0', GOOD]], max: 100, note: '同一套外觀模型，只多查一張轉移時間表就大幅提升' }],
       ['需要什麼', 'c_req', { cols: ['需要什麼', '作用', '會引入錯誤嗎'], rows: [['不可能配對規則（cannot-link）', 'g 步行時間表', '排除不可能', 'g 不會（只排除）'], ['st-ReID', 'm 轉移時間統計', '加減分', 'm 分布不準時會'], ['畫面座標轉平面圖（單應性）', 'b 每台 4 點對應', '畫平面圖路徑', 'm 校正誤差']] }],
       ['在我們的條件下', 'c_matrix']],
-      key: '不可能配對規則只排除、不加分，最安全；轉移時間分布當第 4 步的一項證據；單應性只在需要畫平面圖路徑時再加——三者是搭配，不是互斥。' },
+      key: '不可能配對規則只排除、不加分，最安全；轉移時間分布當{{step:4|short}}的一項證據；單應性只在需要畫平面圖路徑時再加——三者是搭配，不是互斥。' },
     '6-0': { title: '分群方法並排比較', names: ['約束式平均連結凝聚分群', 'HDBSCAN', 'OGMC 線上分群', '圖神經網路分群（Linkage-GCN、STAR-FC 等）'], frames: [
       ['它們怎麼做', 'c_idea'], ['同一批片段', 'c_clu'],
       ['無監督訓練方法', 'c_bars', { metric: '用分群結果訓練模型：MSMT17 mAP（無標註）', ev: 'proven', rows: [['Cluster Contrast', 38.2], ['ISE', 35.0], ['PPLR', 42.2]], max: 60, note: '這三個是「用分群結果再訓練外觀模型」，和上面的分群演算法搭配使用' }],
@@ -223,11 +223,10 @@
       key: '封閉集一定會說出一個名字，陌生人會被認錯；開放集能說「不認識」；再用整群多段證據比，才不會因單段角度差而漏認。刷卡與註冊資料是搭配的元件。' }
   };
   var DK = FlowPlay.DURK; ['c_idea', 'c_req', 'c_matrix'].forEach(function (k) { DK[k] = 9000; }); DK.c_bars = 8000; ['c_det', 'c_trk', 'c_facepipe', 'c_fuse', 'c_clu', 'c_routes', 'c_shape'].forEach(function (k) { DK[k] = 9500; });
-  var STEPN = ['', '攝影機與偵測', '追蹤成片段', '身分線索特徵', '融合成證據', '時空約束', '分群', '比對名冊'];
 
   function spec(id) {
     var c = CMP[id], sid = +id.split('-')[0], st = (global.STEPS || []).filter(function (s) { return s.id === sid; })[0], g = st && st.groups[+id.split('-')[1]];
-    return { title: c.title, sub: '同一組方法放在一起比：' + c.names.map(short).join('、'), keyLabel: '結論', key: c.key, m: '第 ' + sid + ' 步「' + STEPN[sid] + '」' + (g && g.n ? '・' + g.n : '') + '・並排比較',
+    return { title: c.title, sub: '同一組方法放在一起比：' + c.names.map(short).join('、'), keyLabel: '結論', key: c.key, m: '{{step:' + sid + '}}' + (g && g.n ? '・' + g.n : '') + '・並排比較',
       flow: c.frames.map(function (f) { var p = f[2] || {}; if (f[1] === 'c_idea') p = { cols: cols(c.names) }; if (f[1] === 'c_matrix' && !p.names) p = { names: c.names }; return [f[0], '', sid, f[1], p]; }) };
   }
 

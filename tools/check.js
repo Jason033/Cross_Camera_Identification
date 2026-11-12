@@ -6,7 +6,7 @@
    輸出：PASS/WARN/FAIL [id] 訊息；有 FAIL 則 exit 1。
    每項檢查有 since（階段）；since > PHASE 的檢查只會印 WARN（不會 FAIL）。 */
 'use strict';
-const PHASE = 1;
+const PHASE = 2;
 
 const fs = require('fs'), path = require('path');
 const ROOT = path.resolve(__dirname, '..');
@@ -26,7 +26,7 @@ function skip(id, since, why) { emit('WARN', id, 'SKIP' + (since > PHASE ? ' (si
 
 /* ---------------- 載入資料（node 內以 window = global 執行） ---------------- */
 global.window = global;
-const DATA_FILES = ['data', 'research', 'glossary', 'steps', 'others', 'pipeline'];
+const DATA_FILES = ['data', 'research', 'glossary', 'steps', 'slots', 'others', 'pipeline'];
 const loaded = {};
 DATA_FILES.forEach((f) => {
   const p = J('assets/js/' + f + '.js');
@@ -116,7 +116,7 @@ function checkChapters() {
     else expect = '第 ' + (++n) + ' 章';
     if (PIPE && CHNUM[i] !== undefined) { // Phase 2 起以 PIPE 為準
       const c = PIPE.CHAPTERS[i];
-      if (/^\d+$/.test(c.num)) expect = '第 ' + c.num + ' 章';
+      if (/^\d+$/.test(c.num) && c.num !== '0') expect = '第 ' + c.num + ' 章';
     }
     if (expect === null) { if (cn) f.push('ch-' + s.id + ' 不應有 .ch-num'); } else if (cn !== expect && !(PIPE && /^[AB]$/.test(PIPE.CHAPTERS[i].num))) f.push('ch-' + s.id + ' .ch-num「' + cn + '」應為「' + expect + '」');
     if (lk) {
@@ -181,22 +181,17 @@ function checkRefs() {
   if (!PIPE) return skip('refs', 2, 'pipeline.js 尚未建立');
   const f = [];
   const tokRe = /\{\{([a-z]+):([^}|]*)(?:\|([^}]*))?\}\}/g;
-  const resolve = (kind, val) => {
-    try {
-      if (kind === 'ch') return !!PIPE.ch(val);
-      if (kind === 'step') return !!PIPE.step(val);
-      if (kind === 'exp') return (G.R.EXPS || []).some((e) => e.id === val);
-      if (kind === 'count') return { exps: 1, methods: 1, cards: 1, systems: 1, patterns: 1, lessons: 1, facets: 1 }[val] === 1;
-      if (kind === 'sys') return PIPE.SYS.some((s) => s.id === val);
-      if (kind === 'pat') return G.PATTERNS.some((p) => p.id === val);
-      if (kind === 'cav') return PIPE.CAVEATS.some((c) => c.id === val);
-      return true;
-    } catch (e) { return false; }
-  };
-  textSources().forEach((s) => { let m; tokRe.lastIndex = 0; while ((m = tokRe.exec(s.text))) if (!resolve(m[1], m[2])) f.push(s.file + '：token ' + m[0] + ' 無法解析'); });
-  [...html.matchAll(/data-xref="([a-z]+):([^"|]*)/g)].forEach((m) => { if (!resolve(m[1], m[2])) f.push('index.html：data-xref ' + m[0] + ' 無法解析'); });
+  const resolve = (tok) => { try { return !!PIPE.ref(tok); } catch (e) { return false; } };
+  textSources().forEach((s) => { let m; tokRe.lastIndex = 0; while ((m = tokRe.exec(s.text))) if (!resolve(m[0])) f.push(s.file + '：token ' + m[0] + ' 無法解析'); });
+  [...html.matchAll(/data-xref="([^"]*)"/g)].forEach((m) => { if (!resolve(m[1])) f.push('index.html：data-xref ' + m[0] + ' 無法解析'); });
   const stepIds = new Set((G.STEPS || []).map((s) => String(s.id)));
   (PIPE.OURS || []).forEach((o) => { if (o.id !== 'Q' && !stepIds.has(String(o.id))) f.push('OURS ' + o.id + ' 對不到 steps.js'); });
+  (PIPE.OURS || []).forEach((o) => { // 長名＝steps.js 的 n；key 指向的 cfg 項目要存在
+    const st = (G.STEPS || []).filter((x) => String(x.id) === String(o.id))[0];
+    if (!st) return;
+    if (o.n !== st.n) f.push('OURS ' + o.id + ' 的長名「' + o.n + '」與 steps.js「' + st.n + '」不同');
+    (o.key || []).forEach((k) => { if (!(st.choice.cfg || []).some((r) => r[0] === k)) f.push('OURS ' + o.id + ' 的 key「' + k + '」不在 steps.js choice.cfg'); });
+  });
   (PIPE.SYS || []).forEach((s) => { if (!(PIPE.OURS || []).some((o) => (o.sys || []).indexOf(s.id) >= 0)) f.push('SYS ' + s.id + ' 沒有被任何 OURS 使用'); });
   report('refs', 2, f, 'token、xref、OURS、SYS 全部可解析');
 }
@@ -204,6 +199,7 @@ function checkRefs() {
 // slots（Phase 4 起）
 function checkSlots() {
   if (!PIPE || !PIPE.SLOTS) return skip('slots', 4, '槽位資料（PIPE.SLOTS）尚未建立');
+  if (!G.SLOTDATA || !Object.keys(G.SLOTDATA).length) return skip('slots', 4, 'SLOTDATA 尚未填入（第 4 階段）');
   const f = [];
   const VALID = ['acquire', 'detect', 'track', 'feature', 'score', 'st', 'cluster', 'identify', 'query'];
   (G.STEPS || []).forEach((st) => {
@@ -413,6 +409,6 @@ async function smoke() {
   checkChapters(); checkHardref(); checkCounts(); checkRefs(); checkSlots();
   checkOffline(); checkButtons(); checkCaveats(); checkHeadings();
   try { await smoke(); } catch (e) { emit('FAIL', 'smoke', '例外：' + e.message); }
-  console.log('---- PASS ' + out.PASS + ' / WARN ' + out.WARN + ' / FAIL ' + out.FAIL);
+  console.log('SUMMARY: ' + out.PASS + ' PASS, ' + out.WARN + ' WARN, ' + out.FAIL + ' FAIL');
   process.exit(out.FAIL ? 1 : 0);
 })();

@@ -1,10 +1,12 @@
 /* ch-steps.js — 依 steps.js 的資料，產生第 2 章的路線地圖、方法卡片與各步結論、第 4 章的第一版元件表、總覽的一頁摘要 */
 (function (global) {
   'use strict';
-  var $ = U.$, R = global.R, S = global.STEPS, TAG = global.TAGS;
+  var $ = U.$, R = global.R, S = global.STEPS, TAG = global.TAGS, PIPE = global.PIPE;
   var CH = global.CH = global.CH || {};
   var BY = {}; R.METHODS2.forEach(function (m) { BY[m.n] = m; });
-  var NUM = ['①', '②', '③', '④', '⑤', '⑥', '⑦'];
+  // 符號與步驟名稱讀 PIPE.OURS（全站唯一寫法）
+  function sym(id) { return PIPE.step(id).sym; }
+  function nm(id) { return PIPE.step(id).n; }
   var DIMS = [['ang', '路邊俯角'], ['cloth', '換裝'], ['grp', '5 人交錯'], ['cpu', 'CPU 算力'], ['lic', '軍用授權']];
   var LV = { g: ['✓', '有利'], m: ['△', '有條件'], b: ['✗', '不利'], n: ['—', '不適用'] };
 
@@ -75,14 +77,14 @@
       var t = $('#v1-table');
       if (t) t.innerHTML = '<thead><tr><th>步驟</th><th>第一版用什麼</th><th>授權</th><th>現況</th><th>算力</th><th>之後再加</th></tr></thead><tbody>' +
         S.map(function (st) {
-          return '<tr><td><a href="#/methods?s=' + st.id + '"><b>' + NUM[st.id - 1] + ' ' + st.n + '</b></a></td><td>' + st.table.use + '</td><td>' + st.table.lic + '</td><td>' + st.table.have + '</td><td>' + st.table.cost + '</td><td class="small">' + st.choice.later + '</td></tr>';
+          return '<tr><td><a href="#/methods?s=' + st.id + '"><b>' + sym(st.id) + ' ' + nm(st.id) + '</b></a></td><td>' + st.table.use + '</td><td>' + st.table.lic + '</td><td>' + st.table.have + '</td><td>' + st.table.cost + '</td><td class="small">' + st.choice.later + '</td></tr>';
         }).join('') + '</tbody>';
       var nl = $('#not-list');
-      if (nl) nl.innerHTML = S.map(function (st) { return '<li><b>' + NUM[st.id - 1] + ' ' + st.n + '：</b>' + st.choice.not + '</li>'; }).join('');
+      if (nl) nl.innerHTML = S.map(function (st) { return '<li><b>' + sym(st.id) + ' ' + nm(st.id) + '：</b>' + st.choice.not + '</li>'; }).join('');
       // 總覽：一頁摘要
       var hv = $('#home-v1');
       if (hv) hv.innerHTML = S.map(function (st) {
-        return '<a class="hv" href="#/methods?s=' + st.id + '"><span class="num">' + NUM[st.id - 1] + '</span><b>' + st.n + '</b><span>' + st.table.use + '</span></a>';
+        return '<a class="hv" href="#/methods?s=' + st.id + '"><span class="num">' + sym(st.id) + '</span><b>' + nm(st.id) + '</b><span>' + st.table.use + '</span></a>';
       }).join('');
       // 標籤說明
       U.$$('.tag-legend').forEach(function (el) {

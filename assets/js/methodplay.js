@@ -38,7 +38,7 @@
       [[200, 230, 1.6], [330, 220, 1.3], [460, 200, 0.9]].map(function (q) { return [320 + (q[0] - 320) * fs, 40 + (q[1] - 40) * fs, q[2] * fs]; }).forEach(function (q, i) { g += g_(o(i), person(q[0], q[1], q[2], 0.5 + i, { mark: IDC[i] }) + (k === 'boxes' ? R(q[0] - 14 * q[2], q[1] - 54 * q[2], 28 * q[2], 58 * q[2], { s: IDC[i], sw: 2 }) + T(q[0], q[1] - 58 * q[2], (0.9 - i * 0.2).toFixed(2), { size: 10, c: IDC[i], w: 1 }) : '')); });
     } else if (k === 'crop') {
       var sq = /384×384/.test(p.text || ''), cw = sq ? 200 : 100;
-      g += R(320 - cw / 2, 40, cw, 200, { f: '#fff', s: '#c5ccc2' }) + person(320, 232, 3.7, 0.4, { mark: IDC[0] }) + T(320, 258, sq ? '384 像素' : '128 像素', { size: 11, c: INK3 }) + T(326 + cw / 2, 144, sq ? '384 像素' : '256 像素', { size: 11, a: 'start', c: INK3 }) + T(320, 30, sq ? '全身影像（正方形，含臉）' : '人形裁切（由第 1 步的框切出）', { size: 12, c: INK3 });
+      g += R(320 - cw / 2, 40, cw, 200, { f: '#fff', s: '#c5ccc2' }) + person(320, 232, 3.7, 0.4, { mark: IDC[0] }) + T(320, 258, sq ? '384 像素' : '128 像素', { size: 11, c: INK3 }) + T(326 + cw / 2, 144, sq ? '384 像素' : '256 像素', { size: 11, a: 'start', c: INK3 }) + T(320, 30, sq ? '全身影像（正方形，含臉）' : '人形裁切（由{{step:1|short}}的框切出）', { size: 12, c: INK3 });
     } else if (k === 'seq') {
       for (var i = 0; i < 7; i++) g += g_(o(i), R(70 + i * 72, 70, 60, 120, { f: '#111' }) + person(100 + i * 72, 180, 1.9, i * 0.9, { sil: 1, body: '#fff' }).replace(/fill="#1c251f"/g, 'fill="#fff"').replace(/stroke="#1c251f"/g, 'stroke="#fff"'));
       g += T(320, 216, '同一片段連續的黑白剪影（64×44）', { size: 12, c: INK3 });
@@ -82,7 +82,7 @@
     else if (k === 'height') { g += person(240, 250, 3.8, 0.2, { mark: IDC[1] }) + Ln(300, 250, 300, lerp(250, 70, u), GOLD, 3) + T(330, 150, (lerp(0, 172, u)).toFixed(0) + ' cm ± 5', { size: 24, a: 'start', w: 1, c: GOLD }) + T(330, 180, '片段的身高中位數與不確定度', { size: 12, a: 'start', c: INK3 }); }
     else if (k === 'plan') { g += R(220, 50, 200, 200, { f: '#fff', s: '#c5ccc2' }); for (i = 1; i < 4; i++) g += Ln(220 + i * 50, 50, 220 + i * 50, 250, '#eee', 1) + Ln(220, 50 + i * 50, 420, 50 + i * 50, '#eee', 1); g += Ci(lerp(250, 380, u), lerp(220, 90, u), 7, { f: ORNG }) + T(320, 272, '平面圖座標（公尺）', { size: 12, c: INK3 }); }
     else if (k === 'protos') { for (i = 0; i < 4; i++) g += g_(seg(t, i * 0.12, i * 0.12 + 0.2), bars(80 + i * 140, 170, 8, 9, 60, IDC[i % 5], 1, 30 + i) + T(120 + i * 140, 196, ['迷彩小帽', '鋼盔', '運動服', '冬季外套'][i], { size: 11, c: INK3 })); g += T(320, 70, '王大明的 4 個「原型」（每種服裝一個）', { size: 14, w: 1 }); }
-    else if (k === 'constraints') { [['片段 12 × 片段 40', '同時出現'], ['片段 7 × 片段 33', '走不到'], ['片段 18 × 片段 21', '同時出現']].forEach(function (q, j) { g += g_(seg(t, j * 0.15, j * 0.15 + 0.2), R(170, 70 + j * 50, 300, 36, { f: '#fff', s: BAD }) + T(190, 93 + j * 50, '✗ ' + q[0], { size: 13, a: 'start', w: 1 }) + T(450, 93 + j * 50, q[1], { size: 12, a: 'end', c: BAD })); }); g += T(320, 250, '不可能配對清單（交給第 6 步分群）', { size: 12, c: INK3 }); }
+    else if (k === 'constraints') { [['片段 12 × 片段 40', '同時出現'], ['片段 7 × 片段 33', '走不到'], ['片段 18 × 片段 21', '同時出現']].forEach(function (q, j) { g += g_(seg(t, j * 0.15, j * 0.15 + 0.2), R(170, 70 + j * 50, 300, 36, { f: '#fff', s: BAD }) + T(190, 93 + j * 50, '✗ ' + q[0], { size: 13, a: 'start', w: 1 }) + T(450, 93 + j * 50, q[1], { size: 12, a: 'end', c: BAD })); }); g += T(320, 250, '不可能配對清單（交給{{step:6|short}}）', { size: 12, c: INK3 }); }
     else if (k === 'model') { g += R(250, 90, 140, 80, { f: '#fff', s: PURP, sw: 2.5 }) + T(320, 136, '更新後的模型', { size: 14, w: 1, c: PURP }) + '<path d="M250,190 A80,40 0 0,0 390,190" fill="none" stroke="' + PURP + '" stroke-width="2" stroke-dasharray="5 4"/>' + T(320, 250, '用分群結果再訓練，反覆幾輪', { size: 12, c: INK3, op: u }); }
     else g += T(320, 140, p.label || '輸出', { size: 16, w: 1 });
     var chips = [];
@@ -643,12 +643,11 @@
     'Cluster Contrast': ['tracklets', 'model'], '在營區攝影機下建立註冊資料': ['videos', 'protos'], 'SapiensID': ['crop', 'vec'], '品質加權片段聚合': ['tracklets', 'vec'], '片段淨化（自行實作）': ['tracklets', 'tracklets']
   };
   var GC = { app: BLUE, cc: BLUE, gait: PINK, face: PURP, body: GOLD, shape: GOLD };
-  var STEPN = ['', '攝影機與偵測', '追蹤成片段', '身分線索特徵', '融合成證據', '時空約束', '分群', '比對名冊'];
   var DK = FlowPlay.DURK; DK.m_in = 5000; DK.m_out = 5000; DK.m_train = 6000; DK.m_us = 7500; DK.m_gauntlet = 9500; DK.m_verdict = 6500; DK.m_idea = 6000;
 
   function spec(st, g, c) {
     var m = CH.steps.info(c), nm = c.m || (c.x && c.x.n) || m.n, h = c.how, core = CORE[nm], gk = g.key;
-    var mline = '第 ' + st.id + ' 步「' + STEPN[st.id] + '」' + (g.n ? '・' + g.n : '') + ' 的候選方法';
+    var mline = '{{step:' + st.id + '}}' + (g.n ? '・' + g.n : '') + ' 的候選方法'; // 字幕由 FlowPlay 以 PIPE.text 換成純文字
     if (h) {
       var io = OVR[nm] || [INX[gk] || IN[st.id], OUTX[gk] || OUT[st.id]];
       var flow = [];
