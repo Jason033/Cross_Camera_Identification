@@ -4,7 +4,7 @@
   'use strict';
   var ORDER = ['home', 'problem', 'methods', 'others', 'approach', 'plan', 'appendix', 'refs'];
   var MODS = {
-    home: ['home', 'intro', 'steps'], problem: ['problem', 'primer'], methods: ['fusion', 'cues', 'methods', 'openset', 'steps'],
+    home: ['home', 'intro', 'steps'], problem: ['problem', 'primer'], methods: ['fusion', 'cues', 'methods', 'openset', 'steps', 'methodplay'],
     others: ['others'], approach: ['system', 'steps', 'ourplay', 'server'], plan: ['roadmap', 'validation', 'camera'], appendix: ['datasets', 'methods', 'roadmap', 'qc', 'camera'], refs: ['refs']
   };
   // 舊網址（舊版 13 章）導到新章節
