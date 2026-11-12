@@ -73,7 +73,7 @@
   function chapterTOC() {
     ORDER.forEach(function (k) {
       var sec = document.getElementById('ch-' + k), head = sec.querySelector('.ch-head');
-      var hs = U.$$('h2', sec).filter(function (h) { return !h.closest('.deep'); });
+      var hs = U.$$('h2', sec).filter(function (h) { return !h.closest('.deep, .ch-end'); });
       if (!head || hs.length < 3) return;
       var nav = U.h('nav', { class: 'ch-toc', 'aria-label': '本章內容' });
       nav.appendChild(U.h('span', { class: 'ch-toc-l' }, '本章內容'));
@@ -95,7 +95,7 @@
     var G = window.GLOSS || [];
     var SKIP = { SCRIPT: 1, BUTTON: 1, A: 1, H1: 1, H2: 1, H3: 1, LABEL: 1, OUTPUT: 1, SUMMARY: 1, B: 0 };
     ORDER.forEach(function (k) {
-      if (k === 'home' || k === 'refs') return;
+      if (k === 'refs') return;
       var sec = document.getElementById('ch-' + k), seen = {};
       var blocks = U.$$('p, li, .plate-note', sec).filter(function (b) { return !b.closest('svg, .ch-toc, .tbl, button'); });
       blocks.forEach(function (b) {

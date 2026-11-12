@@ -575,3 +575,10 @@ body.fp-open { overflow: hidden; }
 .cmp-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 6px 0 14px; padding: 10px 12px; background: #eef2e4; border: 1px solid var(--olive-2); border-radius: var(--radius-m); }
 .cue-map td:first-child { white-space: nowrap; }
 .cue-map .sw-dot { margin-right: 6px; vertical-align: -1px; }
+
+/* 本章小結（每章結尾：重點三條＋轉場句） */
+.ch-end { margin: 44px 0 8px; padding: 18px 20px 16px; border-top: 2px solid var(--ink); background: var(--sheet); border-radius: 0 0 var(--radius-m) var(--radius-m); }
+.ch-end h2 { margin: 0 0 8px; font-size: 18px; }
+.ch-end ul { margin: 0 0 12px; padding-left: 1.3em; }
+.ch-end li { margin: 4px 0; }
+.ch-end .ch-next { margin: 0; font-weight: 700; padding-top: 10px; border-top: 1px solid var(--rule); }

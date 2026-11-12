@@ -15,19 +15,22 @@
       takeaway: '目標是重建「誰、何時、去過哪」；難在同制服＋換裝；系統是一條資料流（影像→…→身分），前段不需名冊；三句結論；需要時打開名詞表。' },
     { id: 'problem', title: '問題定義', h1: '問題定義：我們要做出什麼', mods: ['problem', 'primer'],
       takeaway: '範圍（5 人、白天、會換裝、刷卡只輔助）；ReID 怎麼評分（Rank-1、mAP、FPIR）；怎樣算成功；為什麼外觀跨服裝不可靠。' },
+    { id: 'others', title: '別人怎麼做', mods: ['others'],
+      takeaway: '所有系統都走同一條 9 步線，差別只在跳過、合併、額外與特色；六種架構是在線上強調不同段；沒人同時處理同制服＋換裝；我們組合哪幾種、借了哪幾條做法、{{ch:approach|num}}採用了哪些。' },
     { id: 'methods', title: '方法總覽', mods: ['fusion', 'cues', 'methods', 'openset', 'steps', 'methodplay', 'cmpplay'],
       takeaway: '先懂「線索」；每一步拆成固定槽位，各方法只在一兩個槽位不同，看槽位表就知道差在哪；每步選什麼、為什麼。' },
-    { id: 'others', title: '別人怎麼做', mods: ['others'],
-      takeaway: '所有系統都走同一條 9 步線，差別只在跳過、合併、額外與特色；六種架構是在線上強調不同段；沒人同時處理同制服＋換裝；我們組合哪幾種、借了哪幾條做法、採用了哪些。' },
     { id: 'approach', title: '我們的做法', mods: ['system', 'steps', 'ourplay', 'server'],
       takeaway: '第一版做什麼、為什麼；部署長什麼樣、每天怎麼跑、關鍵判斷怎麼做、身分怎麼一步步確定、存什麼；跑不跑得動；不做什麼與風險。' },
     { id: 'plan', title: '執行計畫', mods: ['roadmap', 'validation', 'camera'],
       takeaway: '哪些已知、哪些未知；資料怎麼拍；{{count:exps}} 個實驗；6 個月查核點。' },
-    { id: 'appendix', num: 'A', title: '附錄', ref: true, mods: ['datasets', 'methods', 'roadmap', 'qc', 'camera'] },
+    { id: 'appendix', num: 'A', title: '技術參考', ref: true, mods: ['datasets', 'methods', 'roadmap', 'camera'],
+      takeaway: '技術參考：公開資料集、方法完整表、研究空缺。' },
+    { id: 'mgmt', num: 'B', title: '專案管理', ref: true, mods: ['qc'],
+      takeaway: '專案管理：TRL、MLTRL 與月報範本。' },
     { id: 'refs', num: 'R', title: '參考文獻', ref: true, mods: ['refs'] }
   ];
   // 舊網址（舊版章節）導到新章節
-  P.ALIAS = { cues: 'methods', fusion: 'methods', openset: 'methods', system: 'approach', camera: 'plan', deploy: 'plan', validation: 'plan', datasets: 'appendix', qc: 'appendix', roadmap: 'plan' };
+  P.ALIAS = { cues: 'methods', fusion: 'methods', openset: 'methods', system: 'approach', camera: 'plan', deploy: 'plan', validation: 'plan', datasets: 'appendix', qc: 'mgmt', roadmap: 'plan' };
 
   /** 依目前順序重新計算章號：總覽 0、其餘正文 1、2、3…；附錄與參考文獻保留字母。改 CHAPTERS 順序後呼叫即可。 */
   P.renumber = function () {

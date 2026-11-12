@@ -6,7 +6,8 @@
    輸出：PASS/WARN/FAIL [id] 訊息；有 FAIL 則 exit 1。
    每項檢查有 since（階段）；since > PHASE 的檢查只會印 WARN（不會 FAIL）。 */
 'use strict';
-const PHASE = 2;
+const PHASE_NAME = '3a'; // 3a＝Phase 3 的第一步（總覽、第 1 章、順序、附錄拆分）；3a+3b 都完成後改成 '3'
+const PHASE = PHASE_NAME === '3a' ? 2.5 : Number(PHASE_NAME);
 
 const fs = require('fs'), path = require('path');
 const ROOT = path.resolve(__dirname, '..');
@@ -270,12 +271,14 @@ function checkHeadings() {
     if (h3 >= 0 && (h2 < 0 || h3 < h2)) f.push('ch-' + s.id + '：第一個 h3（第 ' + lineOf(html, s.start + h3) + ' 行）出現在任何 h2 之前');
   });
   report('headings', 1, f, '各章 h2 先於 h3');
+  const e = [];
+  sections.forEach((s) => { if (s.id !== 'home' && s.id !== 'refs' && s.html.indexOf('class="ch-end"') < 0) e.push('ch-' + s.id + '：缺 .ch-end'); });
+  report('headings-end', 2.5, e, '每章（總覽、參考文獻除外）有 .ch-end');
   const g = [];
-  sections.forEach((s) => { if (s.id !== 'home' && s.id !== 'refs' && s.html.indexOf('class="ch-end"') < 0) g.push('ch-' + s.id + '：缺 .ch-end'); });
   const body = stripTags(html);
   if (/3[A-G] /.test(body)) g.push('文字含 3A–3G 前綴');
   if (/架構[一二三四五六]/.test(body)) g.push('文字含「架構一–六」');
-  report('headings-ch3', 3, g, '每章有 .ch-end；無 3A–3G、架構一–六');
+  report('headings-ch3', 3, g, '無 3A–3G、架構一–六');
 }
 
 /* ================= smoke（Playwright） ================= */
@@ -296,6 +299,7 @@ async function smoke() {
   const fail = (m) => { fails.push(m); };
   const t0 = Date.now();
   let nAnim = 0, nBtn = 0;
+  const stepwords = []; // 渲染文字裡的「第 N 步」：Phase 3（3a+3b 完成）起 FAIL，之前 WARN
 
   async function open(route, errs) {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
@@ -327,11 +331,16 @@ async function smoke() {
           const txt = sec.textContent;
           if (txt.indexOf('{{') >= 0) r.bad += '含「{{」 ';
           if (txt.indexOf('⚠') >= 0) r.bad += '含「⚠」 ';
+          // 「第 N 步」：以渲染後的 innerText（<details> 已展開）檢查；「第一步怎麼試」是小標，不算
+          const vis = (sec.innerText || '').replace(/第一步怎麼試/g, '');
+          const sm = vis.match(/第\s*[0-9一二三四五六七]\s*步/g);
+          r.stepword = sm ? [...new Set(sm)] : [];
           return r;
         }, ch);
         if (!info.active) fail('#/' + ch + ' 沒有切換到該章');
         info.empties.filter((e) => !LAZY_EMPTY.has(e.split('#')[1])).forEach((e) => fail('#/' + ch + '：' + e + ' 是空的'));
         if (info.bad) fail('#/' + ch + '：DOM 文字' + info.bad);
+        if (info.stepword.length) stepwords.push('#/' + ch + '：渲染後文字含「' + info.stepword.join('」「') + '」');
 
         // 2) 動畫按鈕：每章每種抽樣
         const groups = { 'data-fp': '.fp-btn[data-fp]', 'data-mp': '[data-mp]', 'data-op': '[data-op]', 'data-cmp': '[data-cmp]' };
@@ -399,13 +408,14 @@ async function smoke() {
     }
   } finally { await browser.close(); }
   const secs = ((Date.now() - t0) / 1000).toFixed(0);
+  if (stepwords.length) stepwords.forEach((m) => emit(PHASE >= 3 ? 'FAIL' : 'WARN', 'stepword', m)); else emit('PASS', 'stepword', '各章渲染文字沒有「第 N 步」');
   if (fails.length) [...new Set(fails)].forEach((m) => emit('FAIL', id, m));
   else emit('PASS', id, '各章 ' + ORDER.length + ' 路由、動畫視窗 ' + nAnim + ' 次、按鈕 ' + nBtn + ' 次、舊路由／?s=／?o= 皆正常（' + secs + ' 秒' + (ALL ? '，全部按鈕' : '，抽樣') + '）');
 }
 
 /* ================= 執行 ================= */
 (async function main() {
-  console.log('tools/check.js — PHASE ' + PHASE + (PIPE ? '（偵測到 pipeline.js）' : ''));
+  console.log('tools/check.js — PHASE ' + PHASE_NAME + (PIPE ? '（偵測到 pipeline.js）' : ''));
   checkChapters(); checkHardref(); checkCounts(); checkRefs(); checkSlots();
   checkOffline(); checkButtons(); checkCaveats(); checkHeadings();
   try { await smoke(); } catch (e) { emit('FAIL', 'smoke', '例外：' + e.message); }

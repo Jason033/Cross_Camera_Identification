@@ -16,12 +16,13 @@
   <ol class="toc" id="toc">
     <li><a href="#/home"><span class="n">0</span>總覽</a></li>
     <li><a href="#/problem"><span class="n">1</span>問題定義</a></li>
-    <li><a href="#/methods"><span class="n">2</span>方法總覽</a></li>
-    <li><a href="#/others"><span class="n">3</span>別人怎麼做</a></li>
+    <li><a href="#/others"><span class="n">2</span>別人怎麼做</a></li>
+    <li><a href="#/methods"><span class="n">3</span>方法總覽</a></li>
     <li><a href="#/approach"><span class="n">4</span>我們的做法</a></li>
     <li><a href="#/plan"><span class="n">5</span>執行計畫</a></li>
     <li class="grp">參考</li>
-    <li><a href="#/appendix"><span class="n">A</span>附錄</a></li>
+    <li><a href="#/appendix"><span class="n">A</span>技術參考</a></li>
+    <li><a href="#/mgmt"><span class="n">B</span>專案管理</a></li>
     <li><a href="#/refs"><span class="n">R</span>參考文獻</a></li>
   </ol>
   <div class="legend-box">
@@ -52,9 +53,14 @@
 <section class="chapter" id="ch-home" data-title="總覽">
   <div class="hero">
     <h1>當每個人都穿著同一套制服，<br class="br-wide">還能靠什麼認出誰是誰？</h1>
-    <p class="thesis">五位穿同款國軍迷彩服的人。在攝影機眼中他們幾乎一樣；換一個「鏡頭」看，身形比例與走路方式就分開了。同一天裡他們還會換上鋼盔、冬季外套或運動服——系統要分得開不同人，也要連得起換了裝的同一人。</p>
+    <p class="thesis">目標是利用營區既有的監視器，自動重建每個人「誰、在什麼時間、經過哪些地點」。難點是全員穿同款制服、同一天還會換裝：系統要分得開不同的人，也要連得起換了裝的同一人。</p>
   </div>
 
+  <h2>目標：國軍版的「天眼」</h2>
+  <p>利用營區既有的一般光學監視器，自動重建「誰、在什麼時間、經過哪些地點」。三個用途：每天重建每個人的移動路徑、事後查詢特定人員、標出名冊外的人。完整的目標、範圍與成功標準見<a href="#/problem" data-xref="ch:problem|num"></a>。</p>
+
+  <h2>為什麼難：同制服＋換裝</h2>
+  <p>難題有兩個，方向剛好相反。<b>同制服</b>：穿得一樣的不同人，要分得開。<b>換裝</b>：同一個人換上鋼盔、冬季外套或運動服，要連得起來。下圖是五位穿同款制服的人：在攝影機眼中他們幾乎一樣，換一個「鏡頭」看，身形比例與走路方式就分開了。</p>
   <figure class="plate" aria-label="同制服人員與不同身分線索">
     <div class="plate-head">
       <div class="seg" id="lens" role="group" aria-label="切換觀察方式">
@@ -78,21 +84,11 @@
       <svg class="lineup-svg" id="lineup" viewBox="0 0 1000 410" role="img" aria-label="五位穿同款制服、正在行走的人員"></svg>
       <p class="lens-caption" id="lens-caption"></p>
     </div>
-    <div class="plate-note">人物由程序化步行模型產生：五人的身高、腿長比例、肩寬、步幅、擺臂與步頻各不相同；服裝依國軍常見樣式繪製，配色為近似值。<b>這是示意，不是實測資料。</b></div>
+    <div class="plate-note">各種線索怎麼把人分開，見{{ch:methods|num}}的「<a href="#/methods?a=cue-fig">線索入門</a>」。人物由程序化步行模型產生：五人的身高、腿長比例、肩寬、步幅、擺臂與步頻各不相同；服裝依國軍常見樣式繪製，配色為近似值。<b>這是示意，不是實測資料。</b></div>
   </figure>
 
-  <h2>三句話的研究結論</h2>
-  <ul class="findings">
-    <li><span class="ev proven"><i></i>文獻證實</span><p>本專案同時有兩個難題：<b>同制服</b>（不同人穿一樣，要分開）與<b>換裝</b>（同一人換了迷彩服、運動服，要連起來）。公開研究多半只做其中一個；直接研究「不同人同制服」的只有 FGPR 等少數。</p></li>
-    <li><span class="ev inferred"><i></i>合理推論</span><p>沒有一種線索在所有營區場景都可靠。外觀只適合在「同一套服裝之內」連結；跨服裝要靠臉（近距點位）、體型、步態與時空約束，再依每段畫面的條件調整權重。門禁刷卡可當輔助，但可能被代刷，不能當答案。</p></li>
-    <li><span class="ev open"><i></i>待驗證</span><p>這套做法能否在一般路邊監視器、白天、5 人以內的情境下，把每個人的路徑連對、換裝前後也連得起來，沒有論文直接證明——這是下一階段用自建資料與營區試錄要回答的問題。</p></li>
-  </ul>
-
-  <h2>目標：國軍版的「天眼」</h2>
-  <p>利用營區既有的一般光學監視器，自動重建「誰、在什麼時間、經過哪些地點」：每天產出每個人的移動路徑、可事後查詢特定人員、並標出名冊外的人。完整的目標、範圍與成功標準見<a href="#/problem" data-xref="ch:problem|num"></a>。</p>
-
-  <h2>整個系統，一張圖</h2>
-  <p>全站都圍繞這張架構圖：一段影片從攝影機進來，經過七個步驟，變成「這是人員 C」或「不認識的人」。{{ch:methods|num}}就是依這七步，逐步介紹每一步有哪些方法。</p>
+  <h2>系統全貌：一條資料流</h2>
+  <p>一段影片從攝影機進來，經過七個步驟，變成「這是人員 C」或「不認識的人」。前段（{{step:1-6|sym}}）不需要名冊，最後的{{step:7|short}}才把結果對到名冊。{{ch:methods|num}}就是依這七步，逐步介紹每一步有哪些方法。</p>
   <figure class="plate">
     <div class="plate-head">
       <div class="plate-title">系統全景：七個步驟</div>
@@ -105,24 +101,22 @@
     <div class="plate-note">這是根據文獻整理出的<b>系統假說</b>，不是已驗證的系統。每一步的證據等級標在說明的標題旁。</div>
   </figure>
 
-  <h2>建議的第一版系統，一頁看懂</h2>
-  <p>每一步選用的方法如下；點任一步，看它有哪些候選方法、各自的成績與授權，以及為什麼選這個。</p>
-  <div class="home-v1" id="home-v1"></div>
+  <h2>三句話的研究結論</h2>
+  <ul class="findings">
+    <li><span class="ev proven"><i></i>文獻證實</span><p>本專案同時有兩個難題：<b>同制服</b>（不同人穿一樣，要分開）與<b>換裝</b>（同一人換了迷彩服、運動服，要連起來）。公開研究多半只做其中一個；直接研究「不同人同制服」的只有 FGPR 等少數。</p></li>
+    <li><span class="ev inferred"><i></i>合理推論</span><p>沒有一種線索在所有營區場景都可靠。外觀只適合在「同一套服裝之內」連結；跨服裝要靠臉（近距點位）、體型、步態與時空約束，再依每段畫面的條件調整權重。門禁刷卡可當輔助，但可能被代刷，不能當答案。</p></li>
+    <li><span class="ev open"><i></i>待驗證</span><p>這套做法能否在一般路邊監視器、白天、5 人以內的情境下，把每個人的路徑連對、換裝前後也連得起來，沒有論文直接證明——這是下一階段用自建資料與營區試錄要回答的問題。</p></li>
+  </ul>
 
-  <h2>剛接觸這個領域？先認識這幾個名詞</h2>
-  <p>後面各章會一直用到。文中第一次出現時也會加上虛線底線，滑過即可看解釋。</p>
-  <div class="gloss-grid" id="gloss-grid"></div>
-  <details class="more"><summary>完整名詞表</summary><div class="more-body"><dl class="gloss-all" id="gloss-all"></dl></div></details>
+  <h2>讀完每章你會知道</h2>
+  <nav class="chmap" id="chmap" aria-label="各章讀完後你會知道什麼"></nav>
 
-  <h2>閱讀路線</h2>
-  <nav class="chmap" aria-label="章節地圖">
-    <a href="#/problem"><span class="n" data-xref="ch:problem|n">1</span><b>問題定義</b><span class="d">目標、用途、範圍與成功標準；營區場景 × 線索；ReID 怎麼評分</span></a>
-    <a href="#/methods"><span class="n" data-xref="ch:methods|n">2</span><b>方法總覽</b><span class="d">依系統七步：每一步有哪些方法、成績、授權、算力，我們選哪個</span></a>
-    <a href="#/others"><span class="n" data-xref="ch:others|n">3</span><b>別人怎麼做</b><span class="d">{{count:facets|zh}}個面向、{{count:patterns|zh}}種架構、{{count:systems}} 個系統：比賽、聚檔、商用搜尋、同制服研究、軍營與機場門禁、感測器綁定；評估與治理；{{count:lessons|zh}}條可借用的做法</span></a>
-    <a href="#/approach"><span class="n" data-xref="ch:approach|n">4</span><b>我們的做法</b><span class="d">第一版元件清單、系統要交出什麼、跑不跑得動、不做什麼與風險</span></a>
-    <a href="#/plan"><span class="n" data-xref="ch:plan|n">5</span><b>執行計畫</b><span class="d">已知與未知；自建資料怎麼拍；{{count:exps|zh}}個實驗；六個月查核點</span></a>
-    <a href="#/appendix"><span class="n" data-xref="ch:appendix|n">A</span><b>附錄</b><span class="d">資料集、{{count:methods}} 個方法完整表、研究空缺、TRL 與月報範本</span></a>
-  </nav>
+  <h2>名詞表</h2>
+  <details class="more" id="gloss-more"><summary>剛接觸這個領域？名詞表（{{count:gloss}} 個）</summary><div class="more-body">
+    <p>後面各章會一直用到。文中第一次出現時也會加上虛線底線，滑過即可看解釋。</p>
+    <div class="gloss-grid" id="gloss-grid"></div>
+    <dl class="gloss-all" id="gloss-all"></dl>
+  </div></details>
 </section>
 
 <!-- ======================= ch-problem 問題 ======================= -->
@@ -130,7 +124,7 @@
   <header class="ch-head">
     <p class="ch-num">第 1 章</p>
     <h1>問題定義：我們要做出什麼</h1>
-    <p class="thesis">這一章先把目標與範圍定下來：系統要回答什麼問題、在哪些情況下要能用、怎樣才算成功。接著說明人員再辨識（ReID）怎麼認人、怎麼評分，以及「全員同制服、同一天又會換裝」為什麼難。</p>
+    <p class="thesis">這一章先把目標與範圍定下來：系統要回答什麼問題、在哪些情況下要能用。接著說明人員再辨識（ReID）怎麼認人、怎麼評分，再定怎樣才算成功，最後看「全員同制服、同一天又會換裝」為什麼難，以及各種營區場景下哪些線索用得上。</p>
   </header>
 
   <h2>專案目標與範圍</h2>
@@ -165,36 +159,12 @@
     <div class="plate-note">範圍依專案目前的設定整理，屬<span class="ev inferred"><i></i>合理推論</span>；正式範圍以長官核定為準。</div>
   </figure>
 
-  <h3>門禁刷卡在系統裡的角色</h3>
+  <h3 id="role-card">門禁刷卡在系統裡的角色</h3>
   <p>刷卡紀錄很有價值——它告訴系統「某張卡在某時某地被刷過」——但它是一個<b>待驗證的主張</b>，不是答案。系統的做法是：把刷卡當成一條證據，和影像的臉、體型、步態證據一起比對；兩者一致就加強信心，<b>不一致時以影像為準並列入待查</b>（可能是代刷或冒用）。所以系統的影像辨識能力必須能獨立成立，刷卡只是加分。</p>
-
-  <h3>怎樣才算成功（建議的評估方式，目標值待討論）</h3>
-  <div class="tbl-wrap"><table class="tbl">
-    <thead><tr><th>用途</th><th>評估指標</th><th>說明</th><th>第一階段建議起點</th></tr></thead>
-    <tbody>
-      <tr><td><b>路徑重建</b></td><td>跨攝影機連結正確率</td><td>相鄰兩段片段被連成同一人時，真的是同一人的比例</td><td>白天、5 人情境 ≥ 90%（待討論）</td></tr>
-      <tr><td></td><td>路徑完整度</td><td>一個人當天實際經過的攝影機中，被正確串進他路徑的比例</td><td>≥ 70%，其餘標「無法判定」（待討論）</td></tr>
-      <tr><td></td><td>換裝連結率</td><td>同一人換裝前後的兩段路徑，被連成同一人的比例</td><td>先量現況，再訂目標</td></tr>
-      <tr><td><b>事後查詢</b></td><td>Rank-1、mAP</td><td>查詢某人時，系統找回的片段是否正確、是否找得全</td><td>先量現況，再訂目標</td></tr>
-      <tr><td><b>身分對應</b></td><td>誤認率（FPIR）優先</td><td>把 A 認成 B、把陌生人認成某位官兵，比「認不出來」嚴重</td><td>先壓到 ≤ 1%，再看漏認率（待討論）</td></tr>
-      <tr><td><b>未知人員</b></td><td>未知人員偵出率</td><td>名冊外的人被標成「未知」的比例</td><td>先量現況，再訂目標</td></tr>
-    </tbody>
-  </table></div>
-  <p class="small muted">建議起點是依文獻與工程經驗提出的討論基準（<span class="ev inferred"><i></i>合理推論</span>），不是已驗證的可達成值；{{ch:plan|num}}的實驗會量出現況。</p>
-
-  <h3>營區場景 × 可用線索</h3>
-  <p>攝影機可能出現在營區任何地方。下表是每種場景下，各線索大概用不用得上（第一階段範圍內：白天、5 人以內）。點格子看原因。</p>
-  <figure class="plate">
-    <div class="plate-head"><div class="plate-title"><span class="fig"></span>營區場景 × 身分線索</div></div>
-    <div class="plate-body cols cols-7-5">
-      <div class="tbl-wrap"><svg id="scene-mx" viewBox="0 0 640 400" role="img" aria-label="營區場景與身分線索的可用程度" style="min-width:560px"></svg></div>
-      <div id="scene-d" class="detail"></div>
-    </div>
-    <div class="plate-note"><i class="lvd f"></i> 可用　<i class="lvd h"></i> 有限　<i class="lvd"></i> 幾乎用不上。依攝影機幾何、各線索的必要條件與文獻整理，屬<span class="ev inferred"><i></i>合理推論</span>；實際程度要用營區試錄資料量測。換裝通常發生在場景之間（例如寢室換運動服 → 操場），所以跨場景的連結要靠不受衣服影響的線索：臉、體型、步態與時空。</div>
-  </figure>
 
   <h2>ReID 系統怎麼「認人」、怎麼評分</h2>
   <p>給系統一段某人的畫面（查詢），它會把資料庫裡的每段畫面依「像不像」排序。評分看的是：<b>本人有沒有排在第一</b>（Rank-1），以及<b>所有屬於本人的畫面是不是都排在前面</b>（mAP）。切換三種排序，看兩個指標怎麼變。</p>
+  <p>另外有兩種錯要分開看：名冊外的人或別人被認成某位官兵的比例（誤認率 FPIR），與本人沒被認出的比例（漏認率 FNIR）。營區用途下，認錯人比認不出來嚴重，所以誤認率要先壓低。</p>
   <figure class="plate">
     <div class="plate-head">
       <div class="plate-title"><span class="fig"></span>查詢、排序與評分</div>
@@ -211,7 +181,22 @@
     <div class="plate-note">人物由程序化模型產生；排序為示意。真實系統的「資料庫」可能有上千段畫面，同一人通常有很多段——所以 mAP 比 Rank-1 更能反映「找得全不全」。</div>
   </figure>
 
-  <h2>同制服＋換裝：兩個方向相反的難題同時存在</h2>
+  <h2>怎樣才算成功</h2>
+  <p>以下是建議的評估方式，目標值待討論。</p>
+  <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>用途</th><th>評估指標</th><th>說明</th><th>第一階段建議起點</th></tr></thead>
+    <tbody>
+      <tr><td><b>路徑重建</b></td><td>跨攝影機連結正確率</td><td>相鄰兩段片段被連成同一人時，真的是同一人的比例</td><td>白天、5 人情境 ≥ 90%（待討論）</td></tr>
+      <tr><td></td><td>路徑完整度</td><td>一個人當天實際經過的攝影機中，被正確串進他路徑的比例</td><td>≥ 70%，其餘標「無法判定」（待討論）</td></tr>
+      <tr><td></td><td>換裝連結率</td><td>同一人換裝前後的兩段路徑，被連成同一人的比例</td><td>先量現況，再訂目標</td></tr>
+      <tr><td><b>事後查詢</b></td><td>Rank-1、mAP</td><td>查詢某人時，系統找回的片段是否正確、是否找得全</td><td>先量現況，再訂目標</td></tr>
+      <tr><td><b>身分對應</b></td><td>誤認率（FPIR）優先</td><td>把 A 認成 B、把陌生人認成某位官兵，比「認不出來」嚴重</td><td>先壓到 ≤ 1%，再看漏認率（待討論）</td></tr>
+      <tr><td><b>未知人員</b></td><td>未知人員偵出率</td><td>名冊外的人被標成「未知」的比例</td><td>先量現況，再訂目標</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">建議起點是依文獻與工程經驗提出的討論基準（<span class="ev inferred"><i></i>合理推論</span>），不是已驗證的可達成值；{{ch:plan|num}}的實驗會量出現況。</p>
+
+  <h2>為什麼難：同制服＋換裝</h2>
   <p>兩者都說「衣服不可靠」，但難點相反：同制服要<b>把穿一樣的不同人分開</b>，換裝要<b>把換了衣服的同一人連起來</b>。本專案兩個都要，而公開研究多半只做其中一個。</p>
   <figure class="plate">
     <div class="plate-head">
@@ -225,16 +210,118 @@
     <div class="plate-note">列 = 不同的人，欄 = 不同的服裝。<b>換衣</b>是在同一列裡跨欄配對；<b>同制服</b>是在同一欄裡分辨不同列。</div>
   </figure>
 
-  
-
-  <h2>直接研究「不同人、同制服」的文獻很少</h2>
+  <h3>直接研究「不同人、同制服」的文獻很少</h3>
   <div class="tbl-wrap"><table class="tbl" id="direct-tbl"></table></div>
+
+  <h2>營區場景 × 可用線索</h2>
+  <p>攝影機可能出現在營區任何地方。下表是每種場景下，各線索大概用不用得上（第一階段範圍內：白天、5 人以內）。點格子看原因。</p>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>營區場景 × 身分線索</div></div>
+    <div class="plate-body cols cols-7-5">
+      <div class="tbl-wrap"><svg id="scene-mx" viewBox="0 0 640 400" role="img" aria-label="營區場景與身分線索的可用程度" style="min-width:560px"></svg></div>
+      <div id="scene-d" class="detail"></div>
+    </div>
+    <div class="plate-note"><i class="lvd f"></i> 可用　<i class="lvd h"></i> 有限　<i class="lvd"></i> 幾乎用不上。依攝影機幾何、各線索的必要條件與文獻整理，屬<span class="ev inferred"><i></i>合理推論</span>；實際程度要用營區試錄資料量測。換裝通常發生在場景之間（例如寢室換運動服 → 操場），所以跨場景的連結要靠不受衣服影響的線索：臉、體型、步態與時空。</div>
+  </figure>
+
+  <section class="ch-end">
+    <h2>本章小結</h2>
+    <ul>
+      <li>範圍有四個條件：5 人以內的小團體、白天與一般照明、同一天會換裝，以及{{cav:card-aux}}。</li>
+      <li>成功看三件事：跨攝影機連結正確率、路徑完整度，以及誤認率（FPIR）；認錯人比認不出來嚴重。</li>
+      <li>外觀跨服裝不可靠；要連起換了裝的同一人，只能靠臉（近距點位）、體型、步態與時空約束。</li>
+    </ul>
+    <p class="ch-next">別人的完整系統怎麼處理類似問題？見{{ch:others}}。</p>
+  </section>
+</section>
+
+<!-- ======================= ch-others 別人怎麼做 ======================= -->
+<section class="chapter" id="ch-others" data-title="別人怎麼做">
+  <header class="ch-head">
+    <p class="ch-num">第 2 章</p>
+    <h1>別人怎麼做：現有系統、比賽與研究</h1>
+    <p class="thesis">上一章定下問題；這一章看別人怎麼把方法組成系統，下一章（{{ch:methods|num}}）再拆到每個元件。我們從{{count:facets|zh}}個面向搜尋了軍方、警方、機場、零售、工地、運動轉播、手機相簿與學術比賽的做法，歸納成{{count:patterns|zh}}種架構，再逐一拆解 {{count:systems}} 個高相關的系統：它的流程每一步在做什麼、對應我們的哪一步、核心概念是什麼、我們可以借用什麼、哪裡不適合我們。最後整理成{{count:lessons|zh}}條落到我們各步驟的具體做法。</p>
+  </header>
+
+  <h2>先看全貌：別人從哪些面向處理這個問題</h2>
+  <p>「誰、何時、去過哪裡」不只是監視器的問題。下表是這次搜尋涵蓋的{{count:facets|zh}}個面向，每個面向的詳細系統在本章後面。</p>
+  <div class="tbl-wrap"><table class="tbl facets" id="oth-facets"></table></div>
+
+  <h2>{{count:patterns|zh}}種常見架構</h2>
+  <p>現有系統可分成{{count:patterns|zh}}種架構，每一種只解決問題的一部分。標 <span class="xstar">★ 特色</span> 的是這個系統和別人不同的地方；其他步驟各系統做法相近。每張卡片右上角的「動畫說明」會逐步播放流程：相近的步驟快速帶過，特色步驟放慢並用專屬的圖解說明。流程方塊右上角的圓圈數字是「對應我們的哪一步」，標「額外」的是我們七步裡沒有的步驟。</p>
+  <div class="patterns" id="patterns"></div>
+  <div class="combo">
+    <p class="combo-t"><b>本專案的架構是組合：</b></p>
+    <p><span class="cp">架構一 追蹤後關聯</span> 的前段：每台攝影機追蹤出片段（{{step:1,2|short}}）<br>
+    ＋ <span class="cp">架構三 多生物特徵融合</span>：外觀、換裝、步態、臉、身高依品質加權成證據，處理同制服與換裝（{{step:3,4|short}}）<br>
+    ＋ <span class="cp">架構五 聚檔</span> 的後段：加上時空約束，夜間把片段聚成「一人一群」（{{step:5,6|short}}）<br>
+    ＋ <span class="cp">架構四 檢查點錨定</span> 與 <span class="cp">架構六 感測器綁定</span>：在營門、餐廳等必經點用臉、名牌、刷卡把群對到名冊（{{step:7|short}}）<br>
+    ＋ <span class="cp">架構二 先建索引、再查詢</span> 的操作方式，提供「事後查詢特定人員」</p>
+  </div>
+
+  <h2>對照表：每個系統涵蓋了我們的哪幾步</h2>
+  <p>點系統名稱可跳到它的詳細說明。<i class="lvd f"></i> 有　<i class="lvd h"></i> 部分　<i class="lvd"></i> 沒有。</p>
+  <div class="tbl-wrap"><table class="tbl mx omx" id="oth-matrix"></table></div>
+  <p class="small muted">沒有任何一個現有系統同時涵蓋七步、又處理同制服與換裝。涵蓋程度為依公開資料的判斷（<span class="ev inferred"><i></i>合理推論</span>）；本專案那一列是設計目標，尚未驗證。</p>
+
+  <h2>完整的多攝影機系統與比賽</h2>
+  <p>比賽與商用框架的主流都是「片段 → 外觀特徵 → 時空 → 分群」。2024 年 AI City 冠軍的做法與我們{{step:3,6|short}}幾乎相同。</p>
+  <div class="osys-list" id="oth-sys"></div>
+
+  <h2>聚檔與人物聚類</h2>
+  <p>另一條路線不追蹤，而是把每一次出現都抽特徵，再定期聚成「一人一檔」。我們的{{step:6|short}}就是這個概念，只是聚的單位是片段。</p>
+  <div class="osys-list" id="oth-arc"></div>
+
+  <h2>商用影片搜尋與步態產品</h2>
+  <p>商用系統多為「索引後查詢」：對換衣的標準答案是加臉部辨識，同制服時以衣服為主的外觀與屬性搜尋幾乎失效。產品描述多來自廠商，準確度未經獨立驗證。</p>
+  <div class="osys-list" id="oth-com"></div>
+
+  <h2>外觀相同時的研究</h2>
+  <p>直接處理「同制服」或「外觀一樣」的研究很少，以下是這次找到的高相關者。</p>
+  <div class="osys-list" id="oth-res"></div>
+
+  <h2>制服、門禁與檢查點</h2>
+  <p>軍營、機場、監獄、工地、無人商店的共同做法：<b>不追衣服，在必經點確認身分，點與點之間再靠影像或時間</b>。</p>
+  <div class="osys-list" id="oth-uni"></div>
+
+  <h2>影像＋感測器綁定身分</h2>
+  <p>身分來自感測器（刷卡、手機、識別證），影像負責「這個人之後去了哪裡」。我們的刷卡紀錄屬於這一類，但只有時間點、沒有連續訊號。</p>
+  <div class="osys-list" id="oth-fus"></div>
+
+  <h2>支撐技術：自動學攝影機關係、新場域自我調適</h2>
+  <p>兩個讓系統「不校正、不大量標註」也能上線的技術。</p>
+  <div class="osys-list" id="oth-sup"></div>
+
+  <h2>人工判讀與證據等級</h2>
+  <p>系統說不準時交給人；但研究顯示人也會錯，而步態在法庭上只算支持性證據。</p>
+  <div class="osys-list" id="oth-hum"></div>
+
+  <h2>別人怎麼評估、訂了哪些規則</h2>
+  <h3>評估指標</h3>
+  <div class="tbl-wrap"><table class="tbl" id="oth-metrics"></table></div>
+  <h3>治理規則</h3>
+  <p>這些不是技術問題，但每個實際上線的系統都要面對；先訂好可避免日後的爭議。</p>
+  <div class="tbl-wrap"><table class="tbl" id="oth-gov"></table></div>
+
+  <h2>整理：別人的做法落到我們的哪一步</h2>
+  <p>以下十二條是從上面的系統歸納出、可以直接放進我們系統的做法，依步驟排序。</p>
+  <div class="tbl-wrap"><table class="tbl lessons" id="oth-lessons"></table></div>
+
+  <section class="ch-end">
+    <h2>本章小結</h2>
+    <ul>
+      <li>所有系統都走同一條資料流（影像、人框、片段、特徵、證據、身分），差別在跳過、合併、額外與特色。</li>
+      <li>{{count:patterns|zh}}種常見架構各解決問題的一部分；沒有任何系統同時處理同制服與換裝。</li>
+      <li>我們的做法是組合其中幾種：追蹤成片段、多線索融合、時空約束聚檔，再用檢查點與刷卡把群對到名冊。</li>
+    </ul>
+    <p class="ch-next">接下來拆到元件：每一步有哪些方法、各自的差別，見{{ch:methods}}。</p>
+  </section>
 </section>
 
 <!-- ======================= ch-methods 方法總覽 ======================= -->
 <section class="chapter" id="ch-methods" data-title="方法總覽">
   <header class="ch-head">
-    <p class="ch-num">第 2 章</p>
+    <p class="ch-num">第 3 章</p>
     <h1>方法總覽：每一步有哪些方法，我們選哪個</h1>
     <p class="thesis">依系統的七個步驟，逐步列出學界的候選方法：原理、成績、授權、算力，以及對我們適不適合。每一步最後給出「我們的選擇」。點下面架構圖的任一步，可直接跳到那一節。</p>
   </header>
@@ -428,79 +515,16 @@
     <div class="step-cards" data-s="7" data-g="0"></div>
     <div class="step-choice" data-s="7"></div>
   </section>
-</section>
 
-<!-- ======================= ch-others 別人怎麼做 ======================= -->
-<section class="chapter" id="ch-others" data-title="別人怎麼做">
-  <header class="ch-head">
-    <p class="ch-num">第 3 章</p>
-    <h1>別人怎麼做：現有系統、比賽與研究</h1>
-    <p class="thesis">{{ch:methods|num}}是一個一個的方法；這一章看別人怎麼把方法組成系統。我們從{{count:facets|zh}}個面向搜尋了軍方、警方、機場、零售、工地、運動轉播、手機相簿與學術比賽的做法，歸納成{{count:patterns|zh}}種架構，再逐一拆解 {{count:systems}} 個高相關的系統：它的流程每一步在做什麼、對應我們的哪一步、核心概念是什麼、我們可以借用什麼、哪裡不適合我們。最後整理成{{count:lessons|zh}}條落到我們各步驟的具體做法。</p>
-  </header>
-
-  <h2>先看全貌：別人從哪些面向處理這個問題</h2>
-  <p>「誰、何時、去過哪裡」不只是監視器的問題。下表是這次搜尋涵蓋的{{count:facets|zh}}個面向，每個面向的詳細系統在本章後面。</p>
-  <div class="tbl-wrap"><table class="tbl facets" id="oth-facets"></table></div>
-
-  <h2>{{count:patterns|zh}}種常見架構</h2>
-  <p>現有系統可分成{{count:patterns|zh}}種架構，每一種只解決問題的一部分。標 <span class="xstar">★ 特色</span> 的是這個系統和別人不同的地方；其他步驟各系統做法相近。每張卡片右上角的「動畫說明」會逐步播放流程：相近的步驟快速帶過，特色步驟放慢並用專屬的圖解說明。流程方塊右上角的圓圈數字是「對應我們的哪一步」，標「額外」的是我們七步裡沒有的步驟。</p>
-  <div class="patterns" id="patterns"></div>
-  <div class="combo">
-    <p class="combo-t"><b>本專案的架構是組合：</b></p>
-    <p><span class="cp">架構一 追蹤後關聯</span> 的前段：每台攝影機追蹤出片段（{{step:1,2|short}}）<br>
-    ＋ <span class="cp">架構三 多生物特徵融合</span>：外觀、換裝、步態、臉、身高依品質加權成證據，處理同制服與換裝（{{step:3,4|short}}）<br>
-    ＋ <span class="cp">架構五 聚檔</span> 的後段：加上時空約束，夜間把片段聚成「一人一群」（{{step:5,6|short}}）<br>
-    ＋ <span class="cp">架構四 檢查點錨定</span> 與 <span class="cp">架構六 感測器綁定</span>：在營門、餐廳等必經點用臉、名牌、刷卡把群對到名冊（{{step:7|short}}）<br>
-    ＋ <span class="cp">架構二 先建索引、再查詢</span> 的操作方式，提供「事後查詢特定人員」</p>
-  </div>
-
-  <h2>對照表：每個系統涵蓋了我們的哪幾步</h2>
-  <p>點系統名稱可跳到它的詳細說明。<i class="lvd f"></i> 有　<i class="lvd h"></i> 部分　<i class="lvd"></i> 沒有。</p>
-  <div class="tbl-wrap"><table class="tbl mx omx" id="oth-matrix"></table></div>
-  <p class="small muted">沒有任何一個現有系統同時涵蓋七步、又處理同制服與換裝。涵蓋程度為依公開資料的判斷（<span class="ev inferred"><i></i>合理推論</span>）；本專案那一列是設計目標，尚未驗證。</p>
-
-  <h2>完整的多攝影機系統與比賽</h2>
-  <p>比賽與商用框架的主流都是「片段 → 外觀特徵 → 時空 → 分群」。2024 年 AI City 冠軍的做法與我們{{step:3,6|short}}幾乎相同。</p>
-  <div class="osys-list" id="oth-sys"></div>
-
-  <h2>聚檔與人物聚類</h2>
-  <p>另一條路線不追蹤，而是把每一次出現都抽特徵，再定期聚成「一人一檔」。我們的{{step:6|short}}就是這個概念，只是聚的單位是片段。</p>
-  <div class="osys-list" id="oth-arc"></div>
-
-  <h2>商用影片搜尋與步態產品</h2>
-  <p>商用系統多為「索引後查詢」：對換衣的標準答案是加臉部辨識，同制服時以衣服為主的外觀與屬性搜尋幾乎失效。產品描述多來自廠商，準確度未經獨立驗證。</p>
-  <div class="osys-list" id="oth-com"></div>
-
-  <h2>外觀相同時的研究</h2>
-  <p>直接處理「同制服」或「外觀一樣」的研究很少，以下是這次找到的高相關者。</p>
-  <div class="osys-list" id="oth-res"></div>
-
-  <h2>制服、門禁與檢查點</h2>
-  <p>軍營、機場、監獄、工地、無人商店的共同做法：<b>不追衣服，在必經點確認身分，點與點之間再靠影像或時間</b>。</p>
-  <div class="osys-list" id="oth-uni"></div>
-
-  <h2>影像＋感測器綁定身分</h2>
-  <p>身分來自感測器（刷卡、手機、識別證），影像負責「這個人之後去了哪裡」。我們的刷卡紀錄屬於這一類，但只有時間點、沒有連續訊號。</p>
-  <div class="osys-list" id="oth-fus"></div>
-
-  <h2>支撐技術：自動學攝影機關係、新場域自我調適</h2>
-  <p>兩個讓系統「不校正、不大量標註」也能上線的技術。</p>
-  <div class="osys-list" id="oth-sup"></div>
-
-  <h2>人工判讀與證據等級</h2>
-  <p>系統說不準時交給人；但研究顯示人也會錯，而步態在法庭上只算支持性證據。</p>
-  <div class="osys-list" id="oth-hum"></div>
-
-  <h2>別人怎麼評估、訂了哪些規則</h2>
-  <h3>評估指標</h3>
-  <div class="tbl-wrap"><table class="tbl" id="oth-metrics"></table></div>
-  <h3>治理規則</h3>
-  <p>這些不是技術問題，但每個實際上線的系統都要面對；先訂好可避免日後的爭議。</p>
-  <div class="tbl-wrap"><table class="tbl" id="oth-gov"></table></div>
-
-  <h2>整理：別人的做法落到我們的哪一步</h2>
-  <p>以下十二條是從上面的系統歸納出、可以直接放進我們系統的做法，依步驟排序。</p>
-  <div class="tbl-wrap"><table class="tbl lessons" id="oth-lessons"></table></div>
+  <section class="ch-end">
+    <h2>本章小結</h2>
+    <ul>
+      <li>每一步的候選方法放在一起比較，差異集中在少數環節。</li>
+      <li>每一步我們各有一個第一版選擇與理由（{{step:1-7|sym}}），選擇時一起考慮同制服、換裝與算力。</li>
+      <li>這些選擇都來自文獻與推論，全部要在自建資料上驗證（見{{ch:plan|num}}）。</li>
+    </ul>
+    <p class="ch-next">把七步的選擇組成完整系統、怎麼部署與每天怎麼跑，見{{ch:approach}}。</p>
+  </section>
 </section>
 
 <!-- ======================= ch-approach 我們的做法 ======================= -->
@@ -586,6 +610,16 @@
 
   <h2>主要風險與對策</h2>
   <div class="tbl-wrap"><table class="tbl" id="fail-tbl"></table></div>
+
+  <section class="ch-end">
+    <h2>本章小結</h2>
+    <ul>
+      <li>第一版先分類、再識別：先把片段聚成匿名的人，最後才對到名冊，名冊以外的標「未知」。</li>
+      <li>本章交代了系統要交出的成果、營區伺服器跑不跑得動、刻意不做什麼與主要風險。</li>
+      <li>所有選擇都要靠自建資料與{{count:exps|zh}}個實驗驗證。</li>
+    </ul>
+    <p class="ch-next">怎麼驗證、先做哪些實驗，見{{ch:plan}}。</p>
+  </section>
 </section>
 
 <!-- ======================= ch-plan 執行計畫 ======================= -->
@@ -639,15 +673,25 @@
 
   <h2>六個月查核點</h2>
   <div class="tbl-wrap"><table class="tbl" id="plan-tbl"></table></div>
-  <p class="small muted">每個查核點都具體、可驗證、可量化（借用經濟部科專查核點原則）。每月只服務一個主要問題；新工作若答不出「推進哪個模組的哪一級」，就列入待辦，不做。TRL 自評與月報範本見附錄。</p>
+  <p class="small muted">每個查核點都具體、可驗證、可量化（借用經濟部科專查核點原則）。每月只服務一個主要問題；新工作若答不出「推進哪個模組的哪一級」，就列入待辦，不做。TRL 自評與月報範本見{{ch:mgmt}}。</p>
+
+  <section class="ch-end">
+    <h2>本章小結</h2>
+    <ul>
+      <li>已知、推論、未知分開講；目前最重的結論仍是「待驗證」。</li>
+      <li>自建資料（辦公室同制服）、四種評估與{{count:exps|zh}}個實驗，每個都有通過條件。</li>
+      <li>六個月查核點讓每個月只對準一個主要問題；TRL 自評與月報範本見{{ch:mgmt}}。</li>
+    </ul>
+    <p class="ch-next">資料集、方法完整表與研究空缺見{{ch:appendix}}；專案管理見{{ch:mgmt}}。</p>
+  </section>
 </section>
 
-<!-- ======================= ch-appendix 附錄 ======================= -->
-<section class="chapter" id="ch-appendix" data-title="附錄">
+<!-- ======================= ch-appendix 技術參考 ======================= -->
+<section class="chapter" id="ch-appendix" data-title="技術參考">
   <header class="ch-head">
-    <p class="ch-num">附錄</p>
-    <h1>參考資料：資料集、完整方法表、研究空缺、專案管理</h1>
-    <p class="thesis">查詢用的參考資料。主文需要的結論都已寫在方法總覽、別人怎麼做與我們的做法三章。</p>
+    <p class="ch-num">附錄 A</p>
+    <h1>技術參考：資料集、完整方法表、研究空缺</h1>
+    <p class="thesis">查詢用的參考資料；主文的結論在{{ch:others|num}}至{{ch:approach|num}}。</p>
   </header>
 
   <h2>公開資料集</h2>
@@ -712,8 +756,25 @@
     <div class="plate-note">標「研究空缺」的格子，比在 Market-1501 上再跑一個骨幹更貼近你的問題。這是由資料集與方法的缺口推導出的機會，<span class="ev open"><i></i>待驗證</span>。</div>
   </figure>
 
-  <h2>專案管理：TRL、MLTRL 與月報</h2>
-  <p>中科院內部的研發管制與品保文件沒有公開，應以單位內規為準。公開可借用的有三套：對外用 TRL、內部檢查用 AI 專用的 MLTRL、查核點寫法借經濟部科專。</p>
+  <section class="ch-end">
+    <h2>本章小結</h2>
+    <ul>
+      <li>「換衣」的公開資料集很多，「不同人、同制服」的很少；能同時接近軍營情境與真實監視器的多半是新資料，取得方式要先確認。</li>
+      <li>{{count:methods}} 個方法都列出出處、授權與算力；數字不同資料集、協定之間不能互相比較。</li>
+      <li>研究空缺：方法與資料集之間還沒人做過的組合，比再刷一次 Market-1501 更貼近我們的問題。</li>
+    </ul>
+    <p class="ch-next">專案管理（TRL、MLTRL 與月報範本）見{{ch:mgmt}}。</p>
+  </section>
+</section>
+
+<!-- ======================= ch-mgmt 專案管理 ======================= -->
+<section class="chapter" id="ch-mgmt" data-title="專案管理">
+  <header class="ch-head">
+    <p class="ch-num">附錄 B</p>
+    <h1>專案管理：TRL、MLTRL 與月報</h1>
+    <p class="thesis">中科院內部的研發管制與品保文件沒有公開，應以單位內規為準。公開可借用的有三套：對外用 TRL、內部檢查用 AI 專用的 MLTRL、查核點寫法借經濟部科專。</p>
+  </header>
+
   <figure class="plate">
     <div class="plate-head"><div class="plate-title"><span class="fig"></span>模組成熟度自評：系統等級取決於最弱的模組</div><button class="btn ghost" id="mod-reset">還原預設</button></div>
     <div class="plate-body cols cols-7-5">
@@ -739,6 +800,16 @@
     <div class="plate-head"><div class="plate-title"><span class="fig">範本</span>TRL 1–3 AI 研究專案月報</div><button class="btn" id="copy-report">複製範本</button></div>
     <div class="plate-body"><pre id="report-tpl" style="white-space:pre-wrap;font-family:var(--sans);font-size:14px;line-height:1.7;margin:0"></pre></div>
   </figure>
+
+  <section class="ch-end">
+    <h2>本章小結</h2>
+    <ul>
+      <li>公開可借用的有三套：對外用 TRL、內部檢查用 AI 專用的 MLTRL、查核點寫法借經濟部科專；內部規範以單位內規為準。</li>
+      <li>系統等級取決於最弱的模組，所以自評時要逐模組看。</li>
+      <li>月報範本可直接複製使用，每月只對準一個主要問題。</li>
+    </ul>
+    <p class="ch-next">全部引用來源見{{ch:refs}}。</p>
+  </section>
 </section>
 
 <!-- ======================= ch-refs 參考文獻 ======================= -->

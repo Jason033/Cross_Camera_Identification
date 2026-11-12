@@ -10,6 +10,10 @@
   CH.intro = {
     init: function () {
       intro.pano = global.ArchViz.make({ svg: '#pano', tour: '#pano-tour', detail: '#pano-detail', here: 'home' });
+      // 讀完每章你會知道：由 PIPE.CHAPTERS[].takeaway 產生
+      $('#chmap').innerHTML = global.PIPE.CHAPTERS.filter(function (c) { return c.takeaway && c.id !== 'home'; }).map(function (c) {
+        return '<a href="#/' + c.id + '"><span class="n">' + c.num + '</span><b>' + U.esc(c.label + ' ' + c.title) + '</b><span class="d">' + U.esc(global.PIPE.text(c.takeaway)) + '</span></a>';
+      }).join('');
       var G = global.GLOSS || [];
       $('#gloss-grid').innerHTML = G.filter(function (g) { return g.core; }).map(function (g) { return '<div class="gcard"><b>' + g.t + '</b><span>' + g.d + '</span></div>'; }).join('');
       $('#gloss-all').innerHTML = G.map(function (g) { return '<dt>' + g.t + '</dt><dd>' + g.d + '</dd>'; }).join('');
@@ -34,7 +38,7 @@
   var RANKS = {
     good: { ids: 'AABACDEB', note: '本人的三段畫面排在第 1、2、4 名：Rank-1 命中，mAP 也高。' },
     mid: { ids: 'ABCADAEB', note: '第一名是本人，Rank-1 一樣算命中；但另外兩段排到第 4、6 名，AP 就掉了。這就是為什麼兩個指標都要看。' },
-    bad: { ids: 'BCADAEAB', note: '同制服時，最像的常常是穿一樣衣服的別人：第一名是人員 B，Rank-1 失敗，AP 也很低。若查詢的人根本不在資料庫裡，第一名一定是錯的——這是系統第 7 步「比對名冊」要處理的開放集問題。' }
+    bad: { ids: 'BCADAEAB', note: global.PIPE.text('同制服時，最像的常常是穿一樣衣服的別人：第一名是人員 B，Rank-1 失敗，AP 也很低。若查詢的人根本不在資料庫裡，第一名一定是錯的——這是{{step:7|short}}要處理的開放集問題。') }
   };
   var CAMBG = ['#d7dccf', '#d9d2c2', '#cfd6d8'];
   CH.primer = {
