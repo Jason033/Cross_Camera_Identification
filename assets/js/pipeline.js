@@ -188,31 +188,46 @@
 
   /* ---------- D9 決策流程：節點的 cfg 以 {cfg:[步,'項目名']} 引用 steps.js，不複製數值 ---------- */
   P.DECISIONS = {
-    gate: { title: '③ 線索可用條件', nodes: [
-      { id: 'start', kind: 'start', t: '一段片段', col: 0, row: 2 },
-      { id: 'face', kind: 'test', t: '臉夠清楚？', cfg: { cfg: [3, '臉的門檻'] }, col: 1, row: 0 },
-      { id: 'tag', kind: 'test', t: '近距點位、人夠大？', cfg: { cfg: [3, '名牌與階級章'] }, col: 1, row: 1 },
-      { id: 'gait', kind: 'test', t: '連續走夠久？', cfg: { cfg: [3, '步態門檻'] }, col: 1, row: 2 },
-      { id: 'app', kind: 'test', t: '要比的是同一天？', note: '外觀只用在同一天內；換裝後不可靠', col: 1, row: 3 },
-      { id: 'ht', kind: 'test', t: '全身可見？', cfg: { cfg: [3, '身高'] }, col: 1, row: 4 },
-      { id: 'use', kind: 'use', t: '用這條線索', col: 2, row: 1 },
-      { id: 'skip', kind: 'skip', t: '不用（證據設為 0）', col: 2, row: 3 }
+    gate: { title: '③ 線索可用條件：每段片段逐條線索檢查', nodes: [
+      { id: 'face-c', kind: 'cue', color: 'var(--c-face)', t: '臉', col: 0, row: 0 },
+      { id: 'face-t', kind: 'test', t: '兩眼間距、品質夠？', cfg: { cfg: [3, '臉的門檻'] }, col: 1, row: 0 },
+      { id: 'face-u', kind: 'use', t: '✓ 用', col: 2, row: 0 },
+      { id: 'face-s', kind: 'skip', t: '✗ 不用（證據 0）', col: 2, row: 1 },
+      { id: 'tag-c', kind: 'cue', color: 'var(--olive)', t: '名牌', col: 0, row: 2 },
+      { id: 'tag-t', kind: 'test', t: '近距點位、人夠大？', cfg: { cfg: [3, '名牌與階級章'] }, col: 1, row: 2 },
+      { id: 'tag-u', kind: 'use', t: '✓ 用', col: 2, row: 2 },
+      { id: 'tag-s', kind: 'skip', t: '✗ 不用（證據 0）', col: 2, row: 3 },
+      { id: 'gait-c', kind: 'cue', color: 'var(--c-gait)', t: '步態', col: 0, row: 4 },
+      { id: 'gait-t', kind: 'test', t: '連續走夠久？', cfg: { cfg: [3, '步態門檻'] }, col: 1, row: 4 },
+      { id: 'gait-u', kind: 'use', t: '✓ 用', col: 2, row: 4 },
+      { id: 'gait-s', kind: 'skip', t: '✗ 不用（證據 0）', col: 2, row: 5 },
+      { id: 'app-c', kind: 'cue', color: 'var(--c-app)', t: '外觀', col: 0, row: 6 },
+      { id: 'app-t', kind: 'test', t: '要比的是同一天？', note: '外觀只用在同一天內；換裝後不可靠', col: 1, row: 6 },
+      { id: 'app-u', kind: 'use', t: '✓ 用', col: 2, row: 6 },
+      { id: 'app-s', kind: 'skip', t: '✗ 不用（證據 0）', col: 2, row: 7 },
+      { id: 'ht-c', kind: 'cue', color: 'var(--c-3d)', t: '身高', col: 0, row: 8 },
+      { id: 'ht-t', kind: 'test', t: '全身可見？', cfg: { cfg: [3, '身高'] }, col: 1, row: 8 },
+      { id: 'ht-u', kind: 'use', t: '✓ 用', col: 2, row: 8 },
+      { id: 'ht-s', kind: 'skip', t: '✗ 不用（證據 0）', col: 2, row: 9 }
     ], edges: [
-      { from: 'start', to: 'face' }, { from: 'start', to: 'tag' }, { from: 'start', to: 'gait' }, { from: 'start', to: 'app' }, { from: 'start', to: 'ht' },
-      { from: 'face', to: 'use', label: '是' }, { from: 'tag', to: 'use', label: '是' }, { from: 'gait', to: 'use', label: '是' }, { from: 'app', to: 'use', label: '是' }, { from: 'ht', to: 'use', label: '是' },
-      { from: 'face', to: 'skip', label: '否' }, { from: 'tag', to: 'skip', label: '否' }, { from: 'gait', to: 'skip', label: '否' }, { from: 'app', to: 'skip', label: '否' }, { from: 'ht', to: 'skip', label: '否' }
+      { from: 'face-c', to: 'face-t' }, { from: 'face-t', to: 'face-u', label: '是' }, { from: 'face-t', to: 'face-s', label: '否' },
+      { from: 'tag-c', to: 'tag-t' }, { from: 'tag-t', to: 'tag-u', label: '是' }, { from: 'tag-t', to: 'tag-s', label: '否' },
+      { from: 'gait-c', to: 'gait-t' }, { from: 'gait-t', to: 'gait-u', label: '是' }, { from: 'gait-t', to: 'gait-s', label: '否' },
+      { from: 'app-c', to: 'app-t' }, { from: 'app-t', to: 'app-u', label: '是' }, { from: 'app-t', to: 'app-s', label: '否' },
+      { from: 'ht-c', to: 'ht-t' }, { from: 'ht-t', to: 'ht-u', label: '是' }, { from: 'ht-t', to: 'ht-s', label: '否' }
     ] },
     shape: { title: '④ 體型組', nodes: [
       { id: 'gait', kind: 'in', t: '步態', cfg: { cfg: [3, '步態門檻'] }, col: 0, row: 0 },
       { id: 'cal', kind: 'in', t: '換裝（CAL）', cfg: { cfg: [3, '換裝訓練'] }, col: 0, row: 1 },
       { id: 'ht', kind: 'in', t: '身高', cfg: { cfg: [3, '身高'] }, col: 0, row: 2 },
       { id: 'prop', kind: 'in', t: '肢體比例', col: 0, row: 3 },
-      { id: 'best', kind: 'proc', t: '取最強的一項', col: 1, row: 1 },
-      { id: 'rest', kind: 'proc', t: '其餘各取一部分', col: 1, row: 2 },
-      { id: 'cap', kind: 'out', t: '合為體型組證據，並設上限', cfg: { cfg: [4, '體型組'] }, col: 2, row: 1 }
+      { id: 'pool', kind: 'proc', t: '體型組：四項證據放在一起', col: 1, row: 1 },
+      { id: 'best', kind: 'proc', t: '取最強的一項', col: 2, row: 0 },
+      { id: 'rest', kind: 'proc', t: '其餘各取一部分', col: 2, row: 2 },
+      { id: 'cap', kind: 'out', t: '合為體型組證據，並設上限', cfg: { cfg: [4, '體型組'] }, col: 3, row: 1 }
     ], edges: [
-      { from: 'gait', to: 'best' }, { from: 'cal', to: 'best' }, { from: 'ht', to: 'best' }, { from: 'prop', to: 'best' },
-      { from: 'gait', to: 'rest' }, { from: 'cal', to: 'rest' }, { from: 'ht', to: 'rest' }, { from: 'prop', to: 'rest' },
+      { from: 'gait', to: 'pool' }, { from: 'cal', to: 'pool' }, { from: 'ht', to: 'pool' }, { from: 'prop', to: 'pool' },
+      { from: 'pool', to: 'best' }, { from: 'pool', to: 'rest' },
       { from: 'best', to: 'cap' }, { from: 'rest', to: 'cap' }
     ] },
     identify: { title: '⑦ 確認、待確認、未知與刷卡不一致', nodes: [

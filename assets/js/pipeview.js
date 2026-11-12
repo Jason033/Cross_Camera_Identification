@@ -239,6 +239,7 @@
   };
   function toneOf(n) {
     var t = n.t || '';
+    if (n.kind === 'cue') return { f: 'color-mix(in srgb, ' + n.color + ' 18%, #fff)', s: n.color };
     if (n.kind === 'flag') return TONE.bad;
     if (/待確認/.test(t)) return TONE.warn;
     if (/^(已)?確認/.test(t) || n.kind === 'use') return TONE.good;
@@ -358,7 +359,7 @@
   }
   function decision(root, key) {
     var D = PIPE.DECISIONS[key];
-    flow(root, D, { nw: key === 'identify' ? 160 : 150, nh: 44, gx: 70, gy: 24, padR: 0, label: D.title, minw: 600 });
+    flow(root, D, { nw: key === 'identify' ? 160 : 150, nh: key === 'gate' ? 34 : 44, gx: 70, gy: key === 'gate' ? 10 : 24, padR: 0, label: D.title, minw: 600 });
   }
   function daily(root) {
     var A = PIPE.DAILY, W = 960, X0 = 20, hw = (W - 2 * X0) / 24, H = 330;
