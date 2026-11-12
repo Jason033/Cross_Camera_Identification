@@ -735,3 +735,7 @@ table.slot-tbl { display: block; overflow-x: auto; max-width: 100%; margin: 6px 
 @media (max-width: 820px) { .flow-info { min-height: 0; } .sr-scroll { min-width: 760px; } }
 .osys-list { grid-template-columns: minmax(0, 1fr); }
 .osys, .pat { min-width: 0; }
+
+.slot-tbl th.slot-name { white-space: normal; word-break: break-word; overflow-wrap: anywhere; width: 11em; max-width: 11em; }
+.slot-tbl th.slot-name .mtag { display: table; margin: 4px 0 0; }
+.slot-tbl td.slot-skip { text-align: center; cursor: help; }

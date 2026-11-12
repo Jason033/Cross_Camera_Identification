@@ -153,7 +153,7 @@
     if (v && typeof v === 'object') { txt = v.v; mark = v.mark || ''; }
     if (txt === undefined || txt === null || txt === '') txt = '—';
     var cls = o.base ? 'slot-base' : o.diff ? 'slot-diff' : 'slot-same', inner;
-    if (mark === 'skip') inner = '<span class="sk">—</span>' + (txt !== '—' ? '<small>' + esc(txt) + '</small>' : '');
+    if (mark === 'skip') { inner = '<span class="sk">—</span>'; return '<td class="' + cls + ' slot-skip" data-slot="' + slotId + '"' + (txt !== '—' ? ' title="' + esc(txt) + '"' : ' title="這個方法沒有這一格"') + '>' + (o.diff ? '<i class="st">★</i>' : '') + inner + '</td>'; }
     else if (mark === 'merge') inner = '<span class="mg">⇢ 合併：</span>' + esc(txt);
     else inner = esc(txt);
     return '<td class="' + cls + (mark ? ' slot-' + mark : '') + '" data-slot="' + slotId + '">' + (o.diff ? '<i class="st">★</i>' : '') + inner + '</td>';
@@ -299,7 +299,8 @@
         hd = head(x2, y2, 'r');
         lx = xm; ly = (y1 + y2) / 2 - 5;
         if (dy === 0 && e.label && e.label.length * 11 > GX - 6) { lx = xm; ly = Math.min(a.y, b.y) - 5; }
-        if (dy !== 0) { lx = x1 + 6; ly = y1 + (dy > 0 ? 14 : -6); anchor = 'start'; }
+        if (e.label === '是' || e.label === '否') { lx = x1 + 7; ly = y1 + (e.label === '是' ? -6 : 14); anchor = 'start'; } // 是在線上方、否在線下方，貼著起點
+        else if (dy !== 0) { lx = x1 + 7; ly = y1 + (dy > 0 ? 14 : -6); anchor = 'start'; }
       } else if (dx === 0) {
         if (Math.abs(dy) === 1) {
           var sy = dy > 0 ? a.y + a.h : a.y, ty = dy > 0 ? b.y : b.y + b.h;
@@ -357,10 +358,10 @@
   }
   function decision(root, key) {
     var D = PIPE.DECISIONS[key];
-    flow(root, D, { nw: key === 'identify' ? 138 : 150, nh: 44, gx: key === 'identify' ? 44 : 70, gy: 20, padR: key === 'identify' ? 60 : 0, label: D.title, minw: 600 });
+    flow(root, D, { nw: key === 'identify' ? 160 : 150, nh: 44, gx: 70, gy: 24, padR: 0, label: D.title, minw: 600 });
   }
   function daily(root) {
-    var A = PIPE.DAILY, W = 960, X0 = 20, hw = (W - 2 * X0) / 24, H = 306;
+    var A = PIPE.DAILY, W = 960, X0 = 20, hw = (W - 2 * X0) / 24, H = 330;
     function hx(h) { return X0 + h * hw; }
     U.clear(root);
     var wrap = U.h('div', { class: 'tbl-wrap flowchart' }), svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': '一天 24 小時的日常運作與每週回饋（時間為示意）', style: 'min-width:700px' });
@@ -374,7 +375,7 @@
       t(hx(h), 54, (h % 24 < 10 ? '0' : '') + (h % 24) + ':00', { 'text-anchor': 'middle', 'font-size': 10.5, fill: 'var(--ink-3)', class: 'num' });
     }
     el('line', { x1: X0, x2: W - X0, y1: 40, y2: 40, stroke: 'var(--ink-3)' }, svg);
-    var BAND = { day: ['#f3e9bd', '#b97e00', 66], night: ['#d9e0ef', '#2a78d6', 66], morning: ['#e3efe0', '#0c8a0c', 128] };
+    var BAND = { day: ['#f3e9bd', '#b97e00', 66], night: ['#d9e0ef', '#2a78d6', 66], morning: ['#e3efe0', '#0c8a0c', 134] };
     function show(a) {
       var rc = a.cfg ? cfgRow(a) : null;
       info.innerHTML = '<b>' + esc(a.t) + '</b>' + (a.mark ? '　<span class="ev inferred"><i></i>' + a.mark + '</span>' : '') + '<p style="margin:2px 0 0">' + fmt(a.d) + '</p>' +
@@ -386,16 +387,16 @@
       var g = el('g', { tabindex: 0, role: 'button', 'aria-label': a.t, style: 'cursor:pointer' }, svg);
       spans.forEach(function (s, i) {
         el('rect', { x: hx(s[0]), y: b[2], width: (s[1] - s[0]) * hw, height: 34, rx: 4, fill: b[0], stroke: b[1] }, g);
-        if ((s[1] - s[0]) * hw > 90 || a.band === 'morning') t(hx(s[0]) + (s[1] - s[0]) * hw / 2, b[2] + (a.band === 'morning' ? 50 : 22), a.t + (i === 0 && spans.length > 1 ? '（接隔天）' : ''), { 'text-anchor': 'middle', 'font-size': a.band === 'morning' ? 11.5 : 12.5, 'font-weight': 700, fill: 'var(--ink)' });
+        if ((s[1] - s[0]) * hw > 90 || a.band === 'morning') t(hx(s[0]) + (s[1] - s[0]) * hw / 2, b[2] + (a.band === 'morning' ? -7 : 22), a.t + (i === 0 && spans.length > 1 ? '（接隔天）' : ''), { 'text-anchor': 'middle', 'font-size': a.band === 'morning' ? 11.5 : 12.5, 'font-weight': 700, fill: 'var(--ink)' });
       });
       g.addEventListener('click', function () { show(a); }); g.addEventListener('mouseenter', function () { show(a); });
       g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(a); } });
     });
-    t(X0, 176, '每週（回饋）　人工覆核的結果回到系統', { 'font-weight': 700 });
+    t(X0, 200, '每週（回饋）　人工覆核的結果回到系統', { 'font-weight': 700 });
     var wk = A.filter(function (a) { return a.band === 'week'; }), ww = (W - 2 * X0 - (wk.length - 1) * 16) / wk.length;
-    var rv = A.filter(function (a) { return a.id === 'review'; })[0], BUS = 192, WY = 202;
+    var rv = A.filter(function (a) { return a.id === 'review'; })[0], BUS = 216, WY = 226;
     var c0 = X0 + ww / 2, c1 = X0 + (wk.length - 1) * (ww + 16) + ww / 2, rx = rv ? hx((rv.from + rv.to) / 2) : c0;
-    if (rv) el('path', { d: 'M' + rx + ' 162V' + BUS + 'M' + Math.min(c0, rx) + ' ' + BUS + 'H' + Math.max(c1, rx), fill: 'none', stroke: 'var(--olive)', 'stroke-dasharray': '4 3', 'stroke-width': 1.5 }, svg);
+    if (rv) el('path', { d: 'M' + rx + ' 168V' + BUS + 'M' + Math.min(c0, rx) + ' ' + BUS + 'H' + Math.max(c1, rx), fill: 'none', stroke: 'var(--olive)', 'stroke-dasharray': '4 3', 'stroke-width': 1.5 }, svg);
     wk.forEach(function (a, i) {
       var x = X0 + i * (ww + 16), g = el('g', { tabindex: 0, role: 'button', 'aria-label': a.t, style: 'cursor:pointer' }, svg);
       el('path', { d: 'M' + (x + ww / 2) + ' ' + BUS + 'V' + (WY - 1) + 'm-4 -6l4 6l4 -6', fill: 'none', stroke: 'var(--olive)', 'stroke-width': 1.5 }, g);
@@ -404,7 +405,7 @@
       g.addEventListener('click', function () { show(a); }); g.addEventListener('mouseenter', function () { show(a); });
       g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(a); } });
     });
-    t(W - X0, 296, '下一週的模型與門檻更新後，再跑每天的夜間批次', { 'text-anchor': 'end', 'font-size': 11.5, fill: 'var(--ink-3)' });
+    t(W - X0, 320, '下一週的模型與門檻更新後，再跑每天的夜間批次', { 'text-anchor': 'end', 'font-size': 11.5, fill: 'var(--ink-3)' });
   }
   function dataStore(root) {
     var gov = (global.OTHER_GOV || []).filter(function (r) { return r[0] === PIPE.STORE_NOTE.gov; })[0];
