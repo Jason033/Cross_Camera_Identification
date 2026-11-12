@@ -747,3 +747,5 @@ table.slot-tbl { display: block; overflow-x: auto; max-width: 100%; margin: 6px 
 .legend-box .btn-legend li { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin: 0; }
 .legend-box .btn-legend .bl-b { font-size: 12px; padding: 0 9px; }
 .legend-box .btn-legend .small { font-size: 11.5px; line-height: 1.45; }
+
+.master-cap { margin: 0 0 8px; font-size: 1em; color: var(--ink, inherit); }

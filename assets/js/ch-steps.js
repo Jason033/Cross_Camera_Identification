@@ -45,8 +45,10 @@
       '<p class="mi">' + c.idea + '</p>' + (m.res ? '<p class="small muted" style="margin:0 0 4px">' + m.res + '</p>' : '') + '<p class="mfit"><b>判定理由：</b>' + c.fit + '</p></article>';
   }
 
-  /** 「我們選」徽章：choice.v1 的第一個子句（以「；」「（」「。」「→」切），超過 29 字截斷加「…」 */
+  /** 「我們選」徽章：PIPE.OURS[n].pick（完整第一版選擇的短摘要）；缺 pick 時退回 v1 第一子句 */
   function pickText(st) {
+    var o = PIPE.step(st.id);
+    if (o && o.pick) return o.pick;
     var t = PIPE.text(st.choice.v1).split(/[；（。→]/)[0].replace(/[，、\s]+$/, '');
     return t.length > 30 ? t.slice(0, 29) + '…' : t;
   }

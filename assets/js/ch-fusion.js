@@ -140,6 +140,7 @@
   function mcx(i) { return mx(i) + MBW / 2; }
   function oursIdx(sysId) { for (var i = 0; i < STM.length; i++) if ((STM[i].sys || []).indexOf(sysId) >= 0) return i; return -1; }
   function sysFirstVersion(i) { // 第一版選擇：steps.js 的 table.use（Q 沒有）
+    if (STM[i] && STM[i].pick) return STM[i].pick;
     var st = (global.STEPS || [])[i];
     return st && st.table ? st.table.use : '';
   }

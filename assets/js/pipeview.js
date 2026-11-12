@@ -26,6 +26,7 @@
     var svg = el('svg', { viewBox: '0 0 1000 480', role: 'img', 'aria-label': '從攝影機到身分：系統層的 9 步對到我們的 ①–⑦ 與 Q', style: 'min-width:820px' });
     wrap.appendChild(svg);
     var detail = compact ? null : U.h('div', { class: 'detail arch-detail', 'aria-live': 'polite' });
+    root.appendChild(U.h('p', { class: 'master-cap' }, '上排：所有人員追蹤系統共通的 9 步；下排：我們系統的 ①–⑦ 與查詢輸出。括號表示上下對應。'));
     if (steps) root.appendChild(steps);
     root.appendChild(wrap);
     if (detail) root.appendChild(detail);
