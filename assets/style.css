@@ -572,3 +572,4 @@ body.fp-open { overflow: hidden; }
 .fp-btn.big i { border-left-width: 10px; border-top-width: 6px; border-bottom-width: 6px; }
 #v1-table .fp-btn { margin-left: 0; }
 .plate-head .fp-btn { margin-left: auto; }
+.cmp-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 6px 0 14px; padding: 10px 12px; background: #eef2e4; border: 1px solid var(--olive-2); border-radius: var(--radius-m); }
