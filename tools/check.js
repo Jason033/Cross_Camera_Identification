@@ -6,7 +6,7 @@
    輸出：PASS/WARN/FAIL [id] 訊息；有 FAIL 則 exit 1。
    每項檢查有 since（階段）；since > PHASE 的檢查只會印 WARN（不會 FAIL）。 */
 'use strict';
-const PHASE_NAME = '3'; // 3a＝Phase 3 的第一步（總覽、第 1 章、順序、附錄拆分）；3a+3b 都完成後為 '3'
+const PHASE_NAME = '4'; // 4＝Phase 4（4a 資料＋4b 渲染）完成；slots 檢查為 FAIL 級
 const PHASE = PHASE_NAME === '3a' ? 2.5 : Number(PHASE_NAME);
 
 const fs = require('fs'), path = require('path');

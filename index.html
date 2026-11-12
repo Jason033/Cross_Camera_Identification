@@ -47,6 +47,8 @@
   <p class="rail-foot">圖中人物與數值皆為教學示意，由程式產生；論文數字以原文為準。可離線使用。</p>
 </nav>
 
+<nav class="minimap-sticky" id="mm-sticky" aria-label="目前在第幾步（方法總覽）"></nav>
+
 <main id="main">
 
 <!-- ======================= ch-home 總覽 ======================= -->
@@ -91,14 +93,11 @@
   <p>一段影片從攝影機進來，經過七個步驟，變成「這是人員 C」或「不認識的人」。前段（{{step:1-6|sym}}）不需要名冊，最後的{{step:7|short}}才把結果對到名冊。{{ch:methods|num}}就是依這七步，逐步介紹每一步有哪些方法。</p>
   <figure class="plate">
     <div class="plate-head">
-      <div class="plate-title">系統全景：七個步驟</div>
-      <button class="btn ghost" id="pano-tour" aria-pressed="true">暫停導覽</button>
+      <div class="plate-title">系統全景：一段影片如何變成「人員 C」</div>
+      <button class="btn ghost" id="master-home-tour" aria-pressed="true">❚❚ 暫停</button>
     </div>
-    <div class="plate-body">
-      <div class="tbl-wrap"><svg id="pano" viewBox="0 0 1000 440" role="img" aria-label="七個步驟的系統架構，從攝影機到身分" style="min-width:820px"></svg></div>
-      <div id="pano-detail" class="detail arch-detail"></div>
-    </div>
-    <div class="plate-note">這是根據文獻整理出的<b>系統假說</b>，不是已驗證的系統。每一步的證據等級標在說明的標題旁。</div>
+    <div class="plate-body" id="master-home"></div>
+    <div class="plate-note">上排是每個系統都走的系統層 9 步，括號對到下排我們的步驟（①–⑦、Q）；膠囊是一段片段，自動導覽會帶著它走完全程，點任一步可停下來看細節。這是根據文獻整理出的<b>系統假說</b>，不是已驗證的系統；每一步的證據等級標在說明的標題旁。</div>
   </figure>
 
   <h2>三句話的研究結論</h2>
@@ -250,7 +249,6 @@
 
   <h2>一條線看所有系統</h2>
   <p>不論哪一種系統，只要在做「人員追蹤或辨識」，都會走過下面這條資料流。差別只是有的步驟被跳過、有的合併成一步、有的多出額外的步驟，以及各自的特色。</p>
-  <!-- Phase 4b：D2 系統步驟尺（9 欄、產出物、對到我們的步驟）畫進 #sys-ruler，取代 ch-others.js 先放的文字版 -->
   <div id="sys-ruler" class="sys-ruler"></div>
   <p class="small muted">之後每個架構與系統都會對到這條線，用四種標記說明它和這條線的差別：<b>跳過</b>（該步驟沒有）、<b>合併</b>（一個方塊同時做了幾個步驟）、<b>額外</b>（這條線上沒有的步驟）、<b>★ 特色</b>（它和別人不同的地方）。</p>
 
@@ -260,15 +258,6 @@
 
   <h2>{{count:systems}} 個系統，依架構分組</h2>
   <p>下面每個系統都屬於上面其中一類架構；不是完整系統的單項研究與支撐技術放在最後一組。卡片右上的「領域」只是這個系統來自哪個應用場景的標籤。</p>
-  <!-- 以下是原本 8 個類別的導言（逐字保存），供 Phase 4a(b) 併入 PATTERNS[].lead 後刪除 -->
-  <!-- lead:sys 比賽與商用框架的主流都是「片段 → 外觀特徵 → 時空 → 分群」。2024 年 AI City 冠軍的做法與我們{{step:3,6|short}}幾乎相同。 -->
-  <!-- lead:arc 另一條路線不追蹤，而是把每一次出現都抽特徵，再定期聚成「一人一檔」。我們的{{step:6|short}}就是這個概念，只是聚的單位是片段。 -->
-  <!-- lead:com 商用系統多為「索引後查詢」：對換衣的標準答案是加臉部辨識，同制服時以衣服為主的外觀與屬性搜尋幾乎失效。產品描述多來自廠商，準確度未經獨立驗證。 -->
-  <!-- lead:res 直接處理「同制服」或「外觀一樣」的研究很少，以下是這次找到的高相關者。 -->
-  <!-- lead:uni 軍營、機場、監獄、工地、無人商店的共同做法：<b>不追衣服，在必經點確認身分，點與點之間再靠影像或時間</b>。 -->
-  <!-- lead:fus 身分來自感測器（刷卡、手機、識別證），影像負責「這個人之後去了哪裡」。我們的刷卡紀錄屬於這一類，但只有時間點、沒有連續訊號。 -->
-  <!-- lead:sup 兩個讓系統「不校正、不大量標註」也能上線的技術。 -->
-  <!-- lead:hum 系統說不準時交給人；但研究顯示人也會錯，而步態在法庭上只算支持性證據。 -->
   <div id="oth-groups"></div>
 
   <h2>對照表：每個系統涵蓋了我們的哪幾步</h2>
@@ -278,14 +267,7 @@
 
   <h2>我們的組合</h2>
   <p>本專案不是照抄任何單一架構，而是各取所長，接在同一條線上：</p>
-  <!-- Phase 4b：D4 組合條（由 PIPE.COMBO 產生）取代下面的手寫段落 -->
-  <div class="combo">
-    <p><span class="cp">{{pat:mtmc}}</span> 的前段：每台攝影機追蹤出片段（{{step:1,2|short}}）<br>
-    ＋ <span class="cp">{{pat:bio}}</span>：外觀、換裝、步態、臉、身高依品質加權成證據，處理同制服與換裝（{{step:3,4|short}}）<br>
-    ＋ <span class="cp">{{pat:archive}}</span> 的後段：加上時空約束，夜間把片段聚成「一人一群」（{{step:5,6|short}}）<br>
-    ＋ <span class="cp">{{pat:anchor}}</span> 與 <span class="cp">{{pat:bind}}</span>：在營門、餐廳等必經點用臉、名牌、刷卡把群對到名冊（{{step:7|short}}）<br>
-    ＋ <span class="cp">{{pat:search}}</span> 的操作方式，提供「事後查詢特定人員」</p>
-  </div>
+  <div id="combo-strip" class="combo-strip"></div>
 
   <h2>別人怎麼評估、訂了哪些規則</h2>
   <details class="more"><summary>評估指標：每個指標衡量什麼、誰在用、我們用在哪</summary><div class="more-body">
@@ -320,18 +302,12 @@
 
   <h2>怎麼讀這一章</h2>
   <p>先看整條流程在哪裡：點下圖的任一步，可直接跳到那一節。</p>
-  <!-- Phase 4b：#arch 換成精簡版主圖 #master-methods（mode:'compact'，點步驟直接跳到該節） -->
   <figure class="plate">
     <div class="plate-head">
       <div class="plate-title"><span class="fig"></span>整體技術架構：一段影片如何變成「人員 C」</div>
-      <button class="btn ghost" id="arch-tour" aria-pressed="true">暫停導覽</button>
     </div>
-    <div class="plate-body">
-      <div class="seg arch-steps" id="arch-steps" role="group" aria-label="架構步驟"></div>
-      <div class="tbl-wrap"><svg id="arch" viewBox="0 0 1000 440" role="img" aria-label="七個步驟的技術架構，從攝影機到身分" style="min-width:820px"></svg></div>
-      <div id="arch-detail" class="detail arch-detail"></div>
-    </div>
-    <div class="plate-note">下方的膠囊是一段片段，自動導覽會帶著它走完七步；點任一步可停下來看細節，或用說明裡的連結跳到該步的候選方法。整體是根據文獻整理的系統假說，各元件的證據等級標在說明的標題旁。</div>
+    <div class="plate-body" id="master-methods"></div>
+    <div class="plate-note">上排是系統層的 9 步，下排是我們的步驟，箭頭上寫每一步交給下一步的產出物；⑤ 的兩個產出分別回到 ④（轉移時間當證據）與去到 ⑥（不可能配對）。點任一步直接跳到該節。整體是根據文獻整理的系統假說，各元件的證據等級見各節。</div>
   </figure>
   <p>每一節（{{step:1-7|sym}}）的排列順序都一樣，看熟一節就會看每一節：</p>
   <ol class="chain read-order">
@@ -375,6 +351,7 @@
 
   <section class="step" id="step-1">
     <h2>{{step:1}}</h2>
+    <div class="minimap" data-s="1"></div>
     <div class="step-pick" data-s="1"></div>
     <div class="step-q" data-s="1"></div>
     <div class="step-cards" data-s="1" data-g="0"></div>
@@ -383,6 +360,7 @@
 
   <section class="step" id="step-2">
     <h2>{{step:2}}</h2>
+    <div class="minimap" data-s="2"></div>
     <div class="step-pick" data-s="2"></div>
     <div class="step-q" data-s="2"></div>
     <div class="step-cards" data-s="2" data-g="0"></div>
@@ -391,6 +369,7 @@
 
   <section class="step" id="step-3">
     <h2>{{step:3}}</h2>
+    <div class="minimap" data-s="3"></div>
     <div class="step-pick" data-s="3"></div>
     <div class="step-q" data-s="3"></div>
     <h3>方法解剖台</h3>
@@ -415,6 +394,9 @@
     </div>
     <div class="plate-note">人物、剪影、關節都由程序化步行模型產生；排名用的距離是<b>從畫出來的像素與關節實際算出的玩具特徵</b>（外觀 = 區塊平均色；輪廓 = 剪影平均；骨架 = 關節角度與比例；體型 = 加入估計誤差的身體尺寸；融合 = 依門控權重加總）。它示範的是「每類方法依賴什麼、在哪裡失效」的機制，<b>不是任何真實模型的成績</b>；真實數字見右側「文獻數字」。</div>
   </figure>
+    <h3>③ 總表：七組方法在同一組槽位上的差異</h3>
+    <p>七組方法共用同一組槽位（前處理、表示方式、骨幹模型、訓練目標、片段聚合、輸出），依組分段列出主要方法；標 ★ 的格子是和該組第一列不同的地方。各組的並排比較在下面各組的槽位表上方。</p>
+    <table class="tbl slot-tbl" id="slot-overview" data-s="3"></table>
     <div class="step-cards" data-s="3" data-g="app"></div>
     <details class="more"><summary>公開基準數字：外觀骨幹在 MSMT17 的 mAP</summary><div class="more-body">
     <figure class="plate">
@@ -448,6 +430,7 @@
 
   <section class="step" id="step-4">
     <h2>{{step:4}}</h2>
+    <div class="minimap" data-s="4"></div>
     <div class="step-pick" data-s="4"></div>
     <div class="step-q" data-s="4"></div>
     <div class="step-cards" data-s="4" data-g="0"></div>
@@ -463,6 +446,7 @@
 
   <section class="step" id="step-5">
     <h2>{{step:5}}</h2>
+    <div class="minimap" data-s="5"></div>
     <div class="step-pick" data-s="5"></div>
     <div class="step-q" data-s="5"></div>
     <div class="step-cards" data-s="5" data-g="0"></div>
@@ -478,6 +462,7 @@
 
   <section class="step" id="step-6">
     <h2>{{step:6}}</h2>
+    <div class="minimap" data-s="6"></div>
     <div class="step-pick" data-s="6"></div>
     <div class="step-q" data-s="6"></div>
     <p>下圖示範建議的演算法（約束式凝聚分群）怎麼一步步合併，以及時空約束怎麼擋下錯誤合併：</p>
@@ -515,6 +500,7 @@
 
   <section class="step" id="step-7">
     <h2>{{step:7}}</h2>
+    <div class="minimap" data-s="7"></div>
     <div class="step-pick" data-s="7"></div>
     <div class="step-q" data-s="7"></div>
     <p>「未知者被錯認成已知人」與「已知人排第二」是完全不同等級的系統風險；開放世界 ReID（Li et al., ECCV 2018）直接定義了這個問題。我們的決策流程（先看品質、再看分數、未知者不硬配）畫在{{ch:approach}}。</p>
@@ -549,20 +535,61 @@
     <li><b>第一版元件：</b>每一步各自選好第一版用的方法（{{step:1-7|sym}}），收成下面這張清單。</li>
     <li><b>怎麼驗證：</b>所有選擇都靠自建資料與{{count:exps|zh}}個實驗驗證，見{{ch:plan}}。</li>
   </ol>
-  <!-- Phase 4b：#master-approach（D1 主圖，ours 模式，每步顯示關鍵設定）放在這裡 -->
+  <figure class="plate">
+    <div class="plate-head">
+      <div class="plate-title"><span class="fig"></span>我們的做法：每一步與它的關鍵設定</div>
+      <button type="button" class="fp-btn" data-op="all" title="開一個視窗，逐步播放這個方法、系統或步驟"><i></i>動畫：從頭到尾</button>
+      <button class="btn ghost" id="master-approach-tour" aria-pressed="true">❚❚ 暫停</button>
+    </div>
+    <div class="plate-body" id="master-approach"></div>
+    <div class="plate-note">每個方塊下方是這一步最關鍵的設定（建議值，用自建資料調整）；點任一步看它的第一版選擇與完整設定。</div>
+  </figure>
 
   <h2>第一版系統元件</h2>
   <p>點步驟名稱可回到{{ch:methods|num}}看該步的候選方法與理由；各元件的程式碼、權重、輸入格式在{{ch:methods|num}}卡片的「實作資訊」裡。</p>
   <div class="tbl-wrap"><table class="tbl" id="v1-table"></table></div>
   <p class="small muted">授權欄為本次研究讀到的狀態，正式採用前需法務確認。步態元件（OpenGait）僅限學術：研究期可用，正式系統需取得授權或重新實作。</p>
 
-  <!-- Phase 4b：這裡依序放「部署架構」（#deploy-arch）、「每天怎麼運作」（#daily-timeline）、「關鍵判斷怎麼做」（#dec-gate、#dec-shape、#dec-identify） -->
+  <h2>部署架構</h2>
+  <p>營區現有的攝影機與錄影主機照舊運作；夜間把當天的錄影交給營區伺服器處理，結果進資料庫，再由查詢介面給人看、給人覆核。名冊與門禁刷卡只在最後的{{step:7|short}}進來。</p>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>部署架構：從攝影機到查詢介面</div></div>
+    <div class="plate-body"><div id="deploy-arch"></div></div>
+    <div class="plate-note">虛線箭頭是每週的回饋：人工覆核的結果更新註冊資料與門檻。點任一個方塊看說明與對應的步驟。</div>
+  </figure>
+
+  <h2>每天怎麼運作</h2>
+  <p>白天照常錄影，夜間批次處理，早上看報表並覆核；每週再把覆核的結果回饋給系統。圖上的時間只是示意，實際時程要等營區試錄與伺服器實測後才定。</p>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>一天與每週的運作（示意）</div></div>
+    <div class="plate-body"><div id="daily-timeline"></div></div>
+    <div class="plate-note">時間為示意，不是實測值。夜間處理要在多長的窗口內跑完，見下方的「營區伺服器跑不跑得動」。</div>
+  </figure>
+
+  <h2>關鍵判斷怎麼做</h2>
+  <p>三個判斷決定系統的結果：每一段片段該用哪些線索、相關的線索怎麼合成體型組、最後把群對到名冊時怎麼判斷確認、待確認或未知。每個方塊的設定都取自{{ch:methods|num}}各步的「我們的選擇」。</p>
+  <h3>{{step:3|short}}：線索可用條件</h3>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>每條線索什麼時候用、什麼時候不用</div></div>
+    <div class="plate-body"><div id="dec-gate"></div></div>
+  </figure>
+  <h3>{{step:4|short}}：體型組</h3>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>相關的線索怎麼合成體型組</div></div>
+    <div class="plate-body"><div id="dec-shape"></div></div>
+  </figure>
+  <h3>{{step:7|short}}：確認、待確認、未知與刷卡不一致</h3>
+  <figure class="plate">
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>把群對到名冊的判斷流程</div></div>
+    <div class="plate-body"><div id="dec-identify"></div></div>
+    <div class="plate-note">刷卡只能加分、不能單獨決定身分；不一致或疑似尾隨只標記，交人工覆核。</div>
+  </figure>
 
   <h2>身分怎麼一步步確定</h2>
   <p>前面的步驟不需要人員名冊，就能回答「今天出現過幾個不同的人、各自去過哪裡」；名冊與刷卡只在最後一步參與。這樣即使名冊不完整、刷卡也不可靠（{{cav:card-aux}}），路徑仍然成立。</p>
   <figure class="plate">
-    <div class="plate-head"><div class="plate-title"><span class="fig"></span>身分的四層：從片段到真實身分</div></div>
-    <div class="plate-body"><svg id="sys-layers" viewBox="0 0 980 320" role="img" aria-label="身分分層"></svg></div>
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>身分怎麼一步步確定：從片段到真實身分</div></div>
+    <div class="plate-body"><div id="id-states"></div></div>
     <div class="plate-note">分類（前三層）與識別（最後一層）分開：沒有資料庫時，系統照樣能數人、畫軌跡；資料庫只在最後一步參與，而且用整群的多段證據比對，比單段比對穩定。</div>
   </figure>
 
@@ -579,7 +606,10 @@
     <div class="plate-note">平面圖、人員與軌跡皆為虛構示意。軌跡座標由腳點經單應性轉換到平面圖；低信心的連結以虛線顯示並列入人工覆核。</div>
   </figure>
 
-  <!-- Phase 4b：「存什麼、存多久」（#data-store）放在這裡 -->
+  <h2>存什麼、存多久</h2>
+  <p>各類資料分開保存，註冊資料與匿名軌跡分開；保存期限與誰可以看，要由單位依規定核定，這裡先列出每一類資料的歸屬。</p>
+  <div class="tbl-wrap"><table class="tbl" id="data-store"></table></div>
+  <p class="small muted" id="data-store-note"></p>
 
   <h2>營區伺服器跑不跑得動</h2>
   <p class="srv-concl" id="srv-concl"></p>
@@ -868,6 +898,7 @@
 <script src="assets/js/viz-kit.js"></script>
 <script src="assets/js/ch-methods.js"></script>
 <script src="assets/js/ch-fusion.js"></script>
+<script src="assets/js/pipeview.js"></script>
 <script src="assets/js/ch-deploy.js"></script>
 <script src="assets/js/ch-deep.js"></script>
 <script src="assets/js/ch-plan.js"></script>

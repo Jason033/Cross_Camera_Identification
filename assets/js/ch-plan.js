@@ -16,45 +16,16 @@
   /* ======================= 8 系統假想 ======================= */
   CH.system = {
     init: function () {
-      if ($('#sys-layers')) drawLayers(); if ($('#bud-svg')) initBudget(); if ($('#out-map')) initOut();
+      if ($('#id-states')) drawStates(); if ($('#bud-svg')) initBudget(); if ($('#out-map')) initOut();
       if ($('#fail-tbl')) table('fail-tbl', ['失敗方式', '成因', '對策'], R.FAILS);
     }
   };
-  function drawLayers() {
-    var svg = $('#sys-layers');
-    var cols = [
-      { x: 0, t: '片段（tracklet）', n: '1,240 段', s: '單相機追蹤的輸出', c: '#8d968e' },
-      { x: 250, t: '日內匿名 ID', n: '186 個 / 天', s: '同一天的同一人', c: '#2a78d6' },
-      { x: 500, t: '全域匿名 ID', n: '214 個 / 7 天', s: '跨日的同一人', c: '#4f5c30' },
-      { x: 750, t: '身分', n: '已註冊 171 · 未知 43', s: '比對資料庫的結果', c: '#1c251f' }
-    ];
-    var r = U.rng(7);
-    cols.forEach(function (c, i) {
-      el('rect', { x: c.x, y: 20, width: 220, height: 200, rx: 8, fill: '#fff', stroke: 'var(--rule)' }, svg);
-      txt(svg, c.x + 14, 44, c.t, { 'font-weight': 700, 'font-size': 14 });
-      txt(svg, c.x + 14, 64, c.s, { fill: 'var(--ink-3)', 'font-size': 12 });
-      var n = [35, 14, 9, 9][i];
-      for (var k = 0; k < n; k++) {
-        var cx = c.x + 22 + (k % 7) * 28, cy = 92 + Math.floor(k / 7) * 22;
-        if (i === 0) el('rect', { x: cx - 10 + r() * 4, y: cy - 4, width: 12 + r() * 10, height: 8, rx: 2, fill: c.c, opacity: 0.75 }, svg);
-        else if (i === 3) {
-          var known = k < 7;
-          el('circle', { cx: cx, cy: cy, r: 8, fill: known ? c.c : '#fff', stroke: c.c, 'stroke-width': 1.5, 'stroke-dasharray': known ? null : '3 2' }, svg);
-        } else el('circle', { cx: cx, cy: cy, r: 8 + (i === 2 ? 1 : 0), fill: c.c, opacity: 0.85 }, svg);
-      }
-      txt(svg, c.x + 14, 206, c.n, { 'font-weight': 700, class: 'num', 'font-size': 14 });
-      if (i < 3) arrow(svg, c.x + 222, 120, c.x + 248, 120);
-    });
-    var labs = [
-      [125, 610, '分類（不需資料庫）', '#2a78d6', ['同日分群：所有線索 + 時空約束', '跨日連結：只用臉、步態、身高等跨日穩定線索']],
-      [650, 960, '識別（需要資料庫）', '#1c251f', ['整群多段證據比對資料庫', '證據不足就保持「未知-#N」']]
-    ];
-    labs.forEach(function (l) {
-      el('path', { d: 'M' + l[0] + ' 232 v8 H' + l[1] + ' v-8', fill: 'none', stroke: l[3], 'stroke-width': 1.6 }, svg);
-      txt(svg, (l[0] + l[1]) / 2, 260, l[2], { 'text-anchor': 'middle', 'font-weight': 700, fill: l[3] });
-      l[4].forEach(function (t, k) { txt(svg, (l[0] + l[1]) / 2, 280 + k * 17, t, { 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--ink-2)' }); });
-    });
-    txt(svg, 0, 314, '數字為示意', { 'text-anchor': 'end', 'font-size': 11, fill: 'var(--ink-3)' });
+  // D10 身分狀態圖（取代原本的 #sys-layers）；「身分的四層」動畫按鈕掛在圖標題列，由 ourplay 的 data-op 委派處理
+  function drawStates() {
+    var box = $('#id-states');
+    global.PipeView.idStates(box);
+    var head = box.closest('figure') && box.closest('figure').querySelector('.plate-head');
+    if (head && !head.querySelector('[data-op="layers"]')) head.insertAdjacentHTML('beforeend', '<button type="button" class="fp-btn" data-op="' + global.PIPE.ID_STATES.anim + '" title="開一個視窗，逐步播放這個方法、系統或步驟"><i></i>動畫</button>');
   }
   // ---- 算力試算 ----
   var bud = { cams: 10, hrs: 24, occ: 40, fps: 5, det: 38.9, dec: 4, crops: 1600, reid: 15, win: 10, proc: 1 };

@@ -22,10 +22,10 @@
 
   /** 主要方法：怎麼運作 ＋ 在我們的條件下 */
   function pbtn(id) { return '<button type="button" class="fp-btn" data-mp="' + id + '" title="用動畫說明這個方法怎麼運作"><i></i>動畫</button>'; }
-  function wide(c, id) {
+  function wide(c, id, domId) {
     var m = info(c), h = c.how || {}, us = c.us || {};
     var flow = [['輸入', h.in], ['處理', h.proc], ['訓練', h.train], ['輸出', h.out]].filter(function (r) { return r[1]; });
-    return '<article class="mcard wide t-' + c.tag + '">' +
+    return '<article class="mcard wide t-' + c.tag + '"' + (domId ? ' id="' + domId + '"' : '') + '>' +
       '<header><b>' + name(m) + '</b>' + (m.v ? '<span class="mv">' + m.v + '</span>' : '') + tag(c.tag) + (id ? pbtn(id) : '') + '</header>' +
       '<p class="mi">' + c.idea + '</p>' +
       '<div class="mw">' +
@@ -68,9 +68,14 @@
       (rest.length ? '<details class="more cfg-rest"><summary>其餘設定（' + rest.length + ' 項）</summary><div class="more-body"><table class="tbl cfg">' + CFGHEAD + '<tbody>' + rest.map(function (r) { return cfgRow(r); }).join('') + '</tbody></table></div></details>' : '');
   }
 
+  /** 槽位表（D6）：放在組標題與導言之後、第一張方法卡之前；並排比較按鈕由 cmpplay 插在它的正上方 */
+  function slotTbl(st, g, gi) { return global.PipeView ? global.PipeView.slotTable(st, g, gi, !!(global.CmpPlay && global.CmpPlay.CMP[st.id + '-' + gi])) : ''; }
+
   CH.steps = { info: info,
     init: function () {
       S.forEach(function (st) {
+        var mm = $('.minimap[data-s="' + st.id + '"]');
+        if (mm && global.PipeView) mm.innerHTML = global.PipeView.minimap(st.id);
         var pk = $('.step-pick[data-s="' + st.id + '"]');
         if (pk) pk.innerHTML = '<span class="sp-l">我們選：</span><a class="sp-v" href="#/methods?a=choice-' + st.id + '">' + pickText(st) + '</a>';
         var q = $('.step-q[data-s="' + st.id + '"]');
@@ -87,7 +92,7 @@
           var restTags = []; rest.forEach(function (c) { if (restTags.indexOf(c.tag) < 0) restTags.push(c.tag); });
           var restLabel = restTags.map(function (t) { return TAG[t][0]; }).join('／');
           box.innerHTML = (g.n ? '<h3>' + sym(st.id) + ' ' + g.n + '</h3>' : '') + (g.lead ? '<p>' + g.lead + '</p>' : '') +
-            main.map(function (c) { return wide(c, st.id + '-' + gi + '-' + g.cards.indexOf(c)); }).join('') +
+            slotTbl(st, g, gi) + main.map(function (c) { return wide(c, st.id + '-' + gi + '-' + g.cards.indexOf(c), 'mc-' + st.id + '-' + gi + '-' + g.cards.indexOf(c)); }).join('') +
             (rest.length ? '<details class="more rest-more"><summary>' + (main.length ? '其他 ' + rest.length + ' 個方法' : rest.length + ' 個方法') + '（' + restLabel + '）</summary><div class="more-body"><div class="mgrid">' + rest.map(function (c) { return small(c, st.id + '-' + gi + '-' + g.cards.indexOf(c)); }).join('') + '</div></div></details>' : '');
         });
         var ch = $('.step-choice[data-s="' + st.id + '"]');
@@ -99,6 +104,9 @@
             '<dl><dt>' + tag('try') + '</dt><dd>' + c.later + '</dd><dt>' + tag('skip') + '</dt><dd>' + c.not + '</dd></dl>';
         }
       });
+      // ③ 總表：七組共用一組槽位，依組分段
+      var ov = $('#slot-overview');
+      if (ov && global.PipeView) ov.innerHTML = global.PipeView.slotOverview(S[2]);
       // 第 4 章：第一版元件表
       var t = $('#v1-table');
       if (t) t.innerHTML = '<thead><tr><th>步驟</th><th>第一版用什麼</th><th>授權</th><th>現況</th><th>算力</th><th>之後再加</th></tr></thead><tbody>' +

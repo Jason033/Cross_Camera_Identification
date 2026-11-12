@@ -11,15 +11,15 @@
 
   /* ---------- 章節（順序＝路由順序；num 依位置自動產生，附錄／參考文獻用字母） ---------- */
   P.CHAPTERS = [
-    { id: 'home', title: '總覽', mods: ['home', 'intro', 'steps'],
+    { id: 'home', title: '總覽', mods: ['home', 'intro', 'steps', 'pipeview'],
       takeaway: '這個專案要重建「誰、何時、去過哪」；難在同制服再加上換裝；整個系統是一條從影像到身分的資料流，前段不需要名冊；讀完能看懂三句研究結論，需要時可以打開名詞表。' },
     { id: 'problem', title: '問題定義', h1: '問題定義：我們要做出什麼', mods: ['problem', 'primer'],
       takeaway: '先弄清楚範圍（5 人、白天、會換裝、刷卡只輔助）、ReID 怎麼評分（Rank-1、mAP、FPIR）、怎樣才算成功，以及為什麼外觀一旦換裝就不可靠。' },
-    { id: 'others', title: '別人怎麼做', mods: ['others'],
+    { id: 'others', title: '別人怎麼做', mods: ['others', 'pipeview'],
       takeaway: '所有系統都走同一條資料流（影像到身分），差別只在跳過、合併、額外或特色；六種常見架構是在這條線上強調不同的段落；沒有任何系統同時處理同制服與換裝；最後說明我們組合了其中哪幾種、從系統裡歸納出的{{count:lessons|zh}}條可借用做法，以及{{ch:approach|num}}採用了哪幾條。' },
-    { id: 'methods', title: '方法總覽', mods: ['fusion', 'cues', 'methods', 'steps', 'methodplay', 'cmpplay'],
+    { id: 'methods', title: '方法總覽', mods: ['fusion', 'cues', 'methods', 'steps', 'pipeview', 'methodplay', 'cmpplay'],
       takeaway: '先懂「線索」，也就是同一個人有哪些可用資訊；每一步拆成固定的槽位，各方法只在一兩個槽位不同，看槽位表就知道差在哪；每一步我們選哪個、為什麼，也在這一章。' },
-    { id: 'approach', title: '我們的做法', mods: ['system', 'steps', 'ourplay', 'server'],
+    { id: 'approach', title: '我們的做法', mods: ['system', 'steps', 'pipeview', 'ourplay', 'server'],
       takeaway: '第一版系統做什麼、為什麼；部署長什麼樣、每天怎麼跑、關鍵判斷怎麼做、身分怎麼一步步確定、存什麼；營區伺服器跑不跑得動；刻意不做什麼與主要風險。' },
     { id: 'plan', title: '執行計畫', mods: ['roadmap', 'validation', 'camera'],
       takeaway: '哪些已經知道、哪些還不知道；自建資料怎麼拍；{{count:exps|zh}}個實驗各自回答什麼問題；六個月的查核點怎麼排。' },
