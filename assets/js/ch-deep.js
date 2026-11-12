@@ -179,18 +179,32 @@
     hbar(svg, R.CH_BRIAR.map(function (r) { return [r.n, r.a, r.n === '三者融合' ? 'pick' : '']; }), { x: 0, labelW: 90, w: 300, rowH: 34, max: 100, title: '臉可見' });
     hbar(svg, R.CH_BRIAR.map(function (r) { return [r.n, r.b, r.n === '三者融合' ? 'pick' : r.n === '臉' ? 'bad' : '']; }), { x: 460, labelW: 90, w: 300, rowH: 34, max: 100, title: '臉受限（較像營區監視器）' });
   }
+  /* 線索入門的合併表：8 種線索 × （是什麼／用到它的方法組／換裝後／系統中的角色／理由／驗證實驗）。
+     每列 id = cue-role-<key>，是各線索注意事項的唯一出處（其他地方只放 {{cav:…}} 連結）。缺的格寫「—」。 */
+  var CUE_ROWS = [
+    { key: 'app', n: '外觀', c: 'var(--c-app)', what: '衣服顏色、紋理、配件', grp: '{{grp:3:app}}',
+      cloth: '失效（只在同一天、同一套服裝內可靠）', role: '日內關聯主力',
+      why: '同一天的鞋、背包、袖口仍有差異；跨日不可靠。衣服以外的殘餘細部外觀沒有公開證據，靠自建資料判斷（待驗證，E1 附帶分析）', exp: '{{exp:E1|id}}、{{exp:E2|id}}' },
+    { key: 'sil', n: '輪廓', c: 'var(--c-sil)', what: '剪影：哪些像素屬於這個人（原始表示，本身不是身分特徵）', grp: '動態：{{grp:3:gait}}（剪影序列）；靜態：{{grp:3:shape}}（FSAM）',
+      cloth: '大致有效；冬季外套、鋼盔會改變輪廓', role: '—', why: '—', exp: '—' },
+    { key: 'skel', n: '骨架', c: 'var(--c-skel)', what: '關節點與肢段（由 RTMPose 估出）', grp: '動態：{{grp:3:gait}}（SkeletonGait++、GPGait）；靜態：{{grp:3:shape}}（肢體比例、骨架序列再辨識）',
+      cloth: '有效；但遠距時關節估不準', role: '—', why: '—', exp: '—' },
+    { key: 'shape', n: '體型／3D', c: 'var(--c-3d)', what: '身材比例：肩寬、胖瘦、腿長比', grp: '{{grp:3:shape}}（3DSL、肢體比例）；{{grp:3:cc}}裡的 CLIP3DReID、3DInvarReID 也靠它',
+      cloth: '有效；厚外套會干擾估計', role: '暫不採用（SMPL 3D 重建）', why: 'BRIAR 中最弱；重建需 GPU', exp: '—' },
+    { key: 'body', n: '身高', c: 'var(--c-3d)', what: '幾公分（唯一有絕對大小的）', grp: '{{grp:3:body}}（攝影機幾何）；輪廓與骨架都已縮放，算不出身高',
+      cloth: '有效；鋼盔約高 2–3 cm，可修正', role: '弱先驗', why: '誤差約 5–6 cm，與人群散佈相近，只能過濾候選；單目估計的誤差範圍約 4–9 cm', exp: '併入 {{exp:E3|id}}' },
+    { key: 'gait', n: '步態', c: 'var(--c-gait)', what: '走路的動作：步幅、擺臂、步頻', grp: '{{grp:3:gait}}（從輪廓或骨架的連續畫面學）',
+      cloth: '有效；跑步和走路不同', role: '副線（臉不可用時）', why: 'BRIAR 臉受限時步態 61.2% vs 臉 30.7%；高俯角需微調', exp: '{{exp:E5|id}}' },
+    { key: 'face', n: '臉', c: 'var(--c-face)', what: '臉部特徵', grp: '{{grp:3:face}}（近距點位）',
+      cloth: '有效', role: '主線，限近距點位', why: '最強的身分資訊，但監視對監視 R1 只有 35%，俯角超過 30° 急降', exp: '{{exp:E4|id}}' },
+    { key: 'tag', n: '制服記號', c: 'var(--olive)', what: '姓名條、階級章', grp: '{{grp:3:tag}}（近距點位）',
+      cloth: '只在穿迷彩服時有', role: '—', why: '—', exp: '—' }
+  ];
   function cueDecision() {
-    var rows = [
-      ['時空約束', '主線', '成本近乎零、完全不受制服影響；st-ReID R1 +6～10 點', 'E3'],
-      ['人臉（品質門控）', '主線，限近距點位', '最強的身分資訊，但監視對監視 R1 只有 35%，俯角超過 30° 急降', 'E4'],
-      ['當日外觀', '日內關聯主力', '同一天的鞋、背包、袖口仍有差異；跨日不可靠', 'E1、E2'],
-      ['步態', '副線（臉不可用時）', 'BRIAR 臉受限時步態 61.2% vs 臉 30.7%；高俯角需微調', 'E5'],
-      ['身高', '弱先驗', '誤差約 5–6 cm，與人群散佈相近，只能過濾候選', '併入 E3'],
-      ['體型／SMPL', '暫不採用', 'BRIAR 中最弱；重建需 GPU', '—'],
-      ['殘餘細部外觀', '待驗證', '沒有公開證據；靠自建資料判斷', 'E1 附帶分析']
-    ];
-    $('#cue-decision').innerHTML = '<thead><tr><th>線索</th><th>角色</th><th>理由</th><th>驗證實驗</th></tr></thead><tbody>' +
-      rows.map(function (r) { return '<tr><td><b>' + r[0] + '</b></td><td>' + r[1] + '</td><td>' + r[2] + '</td><td class="num">' + r[3] + '</td></tr>'; }).join('') + '</tbody>';
+    $('#cue-decision').innerHTML = '<thead><tr><th>線索</th><th>是什麼</th><th>用到它的方法組</th><th>換裝後</th><th>系統中的角色</th><th>理由</th><th>驗證實驗</th></tr></thead><tbody>' +
+      CUE_ROWS.map(function (r) {
+        return '<tr id="cue-role-' + r.key + '"><td><span class="sw-dot" style="--c:' + r.c + '"></span><b>' + r.n + '</b></td><td>' + r.what + '</td><td class="small">' + r.grp + '</td><td>' + r.cloth + '</td><td>' + r.role + '</td><td>' + r.why + '</td><td class="num">' + r.exp + '</td></tr>';
+      }).join('') + '</tbody>';
   }
 
   wrapInit('cues', function () { if ($('#feas-chart')) initFeas(); if ($('#briar')) drawBriar(); if ($('#cue-decision')) cueDecision(); });

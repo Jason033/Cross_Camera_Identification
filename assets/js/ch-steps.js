@@ -1,4 +1,4 @@
-/* ch-steps.js — 依 steps.js 的資料，產生第 2 章的路線地圖、方法卡片與各步結論、第 4 章的第一版元件表、總覽的一頁摘要 */
+/* ch-steps.js — 依 steps.js 的資料，產生方法總覽每一節的「我們選」徽章、路線地圖、方法卡片與我們的選擇，以及我們的做法的第一版元件表 */
 (function (global) {
   'use strict';
   var $ = U.$, R = global.R, S = global.STEPS, TAG = global.TAGS, PIPE = global.PIPE;
@@ -29,8 +29,8 @@
       '<header><b>' + name(m) + '</b>' + (m.v ? '<span class="mv">' + m.v + '</span>' : '') + tag(c.tag) + (id ? pbtn(id) : '') + '</header>' +
       '<p class="mi">' + c.idea + '</p>' +
       '<div class="mw">' +
-        '<div><h4>怎麼運作</h4><ol class="flow">' + flow.map(function (r) { return '<li><span>' + r[0] + '</span>' + r[1] + '</li>'; }).join('') + '</ol>' +
-          (h.key ? '<p class="mkey"><b>關鍵差異：</b>' + h.key + '</p>' : '') + '</div>' +
+        '<div>' + (h.key ? '<p class="mkey"><b>關鍵差異：</b>' + h.key + '</p>' : '') +
+          '<details class="mhow"><summary>怎麼運作：輸入 → 處理 → 訓練 → 輸出</summary><ol class="flow">' + flow.map(function (r) { return '<li><span>' + r[0] + '</span>' + r[1] + '</li>'; }).join('') + '</ol></details></div>' +
         '<div><h4>在我們的條件下</h4><table class="us">' + DIMS.map(function (d) {
             var v = us[d[0]] || ['n', '—'];
             return '<tr class="u-' + v[0] + '"><th>' + d[1] + '</th><td class="ul" title="' + LV[v[0]][1] + '">' + LV[v[0]][0] + '</td><td>' + v[1] + '</td></tr>';
@@ -45,9 +45,34 @@
       '<p class="mi">' + c.idea + '</p>' + (m.res ? '<p class="small muted" style="margin:0 0 4px">' + m.res + '</p>' : '') + '<p class="mfit"><b>判定理由：</b>' + c.fit + '</p></article>';
   }
 
+  /** 「我們選」徽章：choice.v1 的第一個子句（以「；」「（」「。」「→」切），超過 29 字截斷加「…」 */
+  function pickText(st) {
+    var t = PIPE.text(st.choice.v1).split(/[；（。→]/)[0].replace(/[，、\s]+$/, '');
+    return t.length > 30 ? t.slice(0, 29) + '…' : t;
+  }
+  /** 我們的選擇 v1：含「；」拆成條列、含「→」拆成流程鏈（只改渲染，不改資料） */
+  function v1html(v) {
+    if (v.indexOf('；') >= 0) return '<ul class="cv1-list">' + v.split('；').map(function (x) { return '<li>' + x.replace(/。$/, '') + '</li>'; }).join('') + '</ul>';
+    if (v.indexOf('→') >= 0) return '<ol class="chain">' + v.split('→').map(function (x) { return '<li>' + x.trim().replace(/。$/, '') + '</li>'; }).join('') + '</ol>';
+    return '<p class="cv1">' + v + '</p>';
+  }
+  function cfgRow(r, key) { return '<tr' + (key ? ' class="cfg-key"' : '') + '><td><b>' + r[0] + '</b></td><td>' + (key ? '<b>' + r[1] + '</b>' : r[1]) + '</td><td class="small">' + r[2] + '</td></tr>'; }
+  var CFGHEAD = '<thead><tr><th>項目</th><th>設定</th><th>理由</th></tr></thead>';
+  /** 起始設定：PIPE.OURS[n].key 列出的關鍵列加粗置頂，其餘收進「其餘設定」 */
+  function cfgHtml(st) {
+    var keys = (PIPE.step(st.id) || {}).key || [], c = st.choice.cfg;
+    var top = keys.map(function (k) { return c.filter(function (r) { return r[0] === k; })[0]; }).filter(Boolean);
+    var rest = c.filter(function (r) { return top.indexOf(r) < 0; });
+    if (!top.length) return '<table class="tbl cfg">' + CFGHEAD + '<tbody>' + c.map(function (r) { return cfgRow(r); }).join('') + '</tbody></table>';
+    return '<table class="tbl cfg">' + CFGHEAD + '<tbody>' + top.map(function (r) { return cfgRow(r, 1); }).join('') + '</tbody></table>' +
+      (rest.length ? '<details class="more cfg-rest"><summary>其餘設定（' + rest.length + ' 項）</summary><div class="more-body"><table class="tbl cfg">' + CFGHEAD + '<tbody>' + rest.map(function (r) { return cfgRow(r); }).join('') + '</tbody></table></div></details>' : '');
+  }
+
   CH.steps = { info: info,
     init: function () {
       S.forEach(function (st) {
+        var pk = $('.step-pick[data-s="' + st.id + '"]');
+        if (pk) pk.innerHTML = '<span class="sp-l">我們選：</span><a class="sp-v" href="#/methods?a=choice-' + st.id + '">' + pickText(st) + '</a>';
         var q = $('.step-q[data-s="' + st.id + '"]');
         if (q) {
           q.innerHTML = '<div class="sq-row"><div class="sq"><span>要解決什麼</span><p>' + st.q + '</p></div><div class="sq"><span>怎麼挑</span><p>' + st.pick + '</p></div></div>' +
@@ -59,16 +84,17 @@
           var box = $('.step-cards[data-s="' + st.id + '"][data-g="' + (g.key || gi) + '"]');
           if (!box) return;
           var main = g.cards.filter(function (c) { return c.how; }), rest = g.cards.filter(function (c) { return !c.how; });
-          box.innerHTML = (g.n ? '<h3>' + g.n + '</h3>' : '') + (g.lead ? '<p>' + g.lead + '</p>' : '') +
+          var restTags = []; rest.forEach(function (c) { if (restTags.indexOf(c.tag) < 0) restTags.push(c.tag); });
+          var restLabel = restTags.map(function (t) { return TAG[t][0]; }).join('／');
+          box.innerHTML = (g.n ? '<h3>' + sym(st.id) + ' ' + g.n + '</h3>' : '') + (g.lead ? '<p>' + g.lead + '</p>' : '') +
             main.map(function (c) { return wide(c, st.id + '-' + gi + '-' + g.cards.indexOf(c)); }).join('') +
-            (rest.length ? (main.length ? '<h4 class="rest-h">其他方法</h4>' : '') + '<div class="mgrid">' + rest.map(function (c) { return small(c, st.id + '-' + gi + '-' + g.cards.indexOf(c)); }).join('') + '</div>' : '');
+            (rest.length ? '<details class="more rest-more"><summary>' + (main.length ? '其他 ' + rest.length + ' 個方法' : rest.length + ' 個方法') + '（' + restLabel + '）</summary><div class="more-body"><div class="mgrid">' + rest.map(function (c) { return small(c, st.id + '-' + gi + '-' + g.cards.indexOf(c)); }).join('') + '</div></div></details>' : '');
         });
         var ch = $('.step-choice[data-s="' + st.id + '"]');
         if (ch) {
           var c = st.choice;
-          ch.innerHTML = '<h3>我們的選擇</h3><p class="cv1">' + tag('use') + ' ' + c.v1 + '</p>' +
-            (c.cfg ? '<h4>起始設定（建議值，用自建資料調整）</h4><table class="tbl cfg"><thead><tr><th>項目</th><th>設定</th><th>理由</th></tr></thead><tbody>' +
-              c.cfg.map(function (r) { return '<tr><td><b>' + r[0] + '</b></td><td>' + r[1] + '</td><td class="small">' + r[2] + '</td></tr>'; }).join('') + '</tbody></table>' : '') +
+          ch.innerHTML = '<h3>我們的選擇</h3><div class="cv1-row">' + tag('use') + '</div>' + v1html(c.v1) +
+            (c.cfg ? '<h4>起始設定（建議值，用自建資料調整）</h4>' + cfgHtml(st) : '') +
             (c.pass ? '<h4>怎樣算通過</h4><ul class="pass">' + c.pass.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>' : '') +
             '<dl><dt>' + tag('try') + '</dt><dd>' + c.later + '</dd><dt>' + tag('skip') + '</dt><dd>' + c.not + '</dd></dl>';
         }
@@ -86,10 +112,13 @@
       if (hv) hv.innerHTML = S.map(function (st) {
         return '<a class="hv" href="#/methods?s=' + st.id + '"><span class="num">' + sym(st.id) + '</span><b>' + nm(st.id) + '</b><span>' + st.table.use + '</span></a>';
       }).join('');
-      // 標籤說明
+      // 標籤說明與按鈕圖例（圖例只寫一份資料：PIPE.BUTTONS）
       U.$$('.tag-legend').forEach(function (el) {
         el.innerHTML = '<div>' + Object.keys(TAG).map(tag).join(' ') + '</div>' +
-          '<p class="small muted" style="margin:6px 0 0">每一步依序是：路線地圖 → 主要方法（怎麼運作、在我們條件下的優缺點：✓ 有利　△ 有條件　✗ 不利）→ 其他方法 → 我們的選擇（起始設定與通過條件）。點方法名可開出處；展開「實作資訊」看程式碼、權重、輸入格式與第一步怎麼試。</p>';
+          '<p class="small muted" style="margin:6px 0 0">方法卡上的 ✓ 有利　△ 有條件　✗ 不利，是在我們條件下的判斷。點方法名可開出處；展開「實作資訊」看程式碼、權重、輸入格式與第一步怎麼試。</p>';
+      });
+      U.$$('.btn-legend').forEach(function (el) {
+        el.innerHTML = '<ul>' + PIPE.BUTTONS.map(function (b) { return '<li><span class="bl-b">' + b.label + '</span><span class="small muted">' + b.d + '</span></li>'; }).join('') + '</ul>';
       });
     }
   };

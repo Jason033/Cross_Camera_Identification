@@ -77,14 +77,12 @@
       if (!head || hs.length < 3) return;
       var nav = U.h('nav', { class: 'ch-toc', 'aria-label': '本章內容' });
       nav.appendChild(U.h('span', { class: 'ch-toc-l' }, '本章內容'));
-      hs.forEach(function (h, i) {
-        var t = h.textContent, circ = /^[①-⑦]/.test(t);
-        // 已有步驟編號（①–⑦）的標題就沿用它，不再加字母
-        var lab = circ ? t.charAt(0) : String.fromCharCode(65 + i), rest = circ ? t.slice(1).trim() : t;
-        var btn = U.h('button', { type: 'button' }, '<span class="num">' + lab + '</span>' + rest);
+      hs.forEach(function (h) {
+        var t = h.textContent.trim(), circ = /^[①-⑦]/.test(t);
+        // 步驟標題（①–⑦）沿用步驟符號；其他標題只放文字（不加字母）
+        var btn = U.h('button', { type: 'button' }, circ ? '<span class="num">' + t.charAt(0) + '</span>' + t.slice(1).trim() : t);
         btn.addEventListener('click', function () { h.scrollIntoView({ behavior: U.reduceMotion ? 'auto' : 'smooth', block: 'start' }); });
         nav.appendChild(btn);
-        if (!circ) h.insertAdjacentHTML('afterbegin', '<span class="h2-mark num">' + lab + '</span>');
       });
       head.parentNode.insertBefore(nav, head.nextSibling);
     });

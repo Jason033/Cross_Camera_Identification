@@ -6,7 +6,7 @@
    所有數字都是粗估（誤差可能到 2 倍），用來比較與找瓶頸；採購前請以實測取代。 */
 (function (global) {
   'use strict';
-  var el = U.el, $ = U.$;
+  var el = U.el, $ = U.$, PIPE = global.PIPE;
   var CH = global.CH = global.CH || {};
   var REF_GHZ = 4.3, REF_TF = 65;
 
@@ -69,9 +69,24 @@
       buildMyServer();
       $('#srv-basis').innerHTML = '<thead><tr><th>運算</th><th class="num">CPU（參考核心毫秒）</th><th class="num">GPU（T4 毫秒）</th><th>依據</th></tr></thead><tbody>' +
         Object.keys(COST).map(function (k) { var c = COST[k]; return '<tr><td>' + c.n + '</td><td class="num">' + c.cpu + '</td><td class="num">' + (c.gpu == null ? '—' : c.gpu) + '</td><td class="small">' + c.src + '</td></tr>'; }).join('') + '</tbody>';
+      conclusion();
       draw();
     }
   };
+
+  /** 章首的兩句結論：依「預設值」（載入時的滑桿與偵測器設定）算出，不隨之後的調整改變 */
+  function conclusion() {
+    var box = $('#srv-concl');
+    if (!box) return;
+    var caps = PRESETS.map(capacity), ok = [], no = [];
+    PRESETS.forEach(function (p, i) { if (caps[i].cams >= st.cams) ok.push(p.id + '（' + p.n + '）'); else no.push(p.id); });
+    var cpuOnly = PRESETS.map(function (p, i) { return { p: p, c: caps[i] }; }).filter(function (x) { return !(x.p.tf > 0); });
+    var cfg = DET_N[st.det] + (st.gait ? '＋步態' : '') + (st.face ? '＋臉部' : '');
+    var s1 = '依預設條件（' + st.cams + ' 台攝影機、有人時段 ' + st.occ + '%、每晚處理 ' + st.win + ' 小時、' + cfg + '），' + PIPE.zh(PRESETS.length) + '個常見等級中，' +
+      (ok.length ? '只有 ' + ok.join('、') + ' 夠用' : '沒有一個夠用') + (no.length && ok.length ? '，其餘（' + no.join('、') + '）不夠' : '') + '。';
+    var s2 = cpuOnly.length ? '沒有 GPU 的等級（' + cpuOnly.map(function (x) { return x.p.id; }).join('、') + '）約只能支援 ' + cpuOnly.map(function (x) { return fmtC(x.c.cams); }).join('、') + ' 台，瓶頸是' + cpuOnly[0].c.r.bott + '。' : '';
+    box.innerHTML = '<b>' + s1 + s2 + '</b><br><span class="small muted">這是粗估（誤差可能到 2 倍），採購前請照下方「實測五個數字」確認。</span>';
+  }
 
   function slider(box, id, label, min, max, step, obj, key, fmt) {
     var d = U.h('div', { class: 'slider' }, '<label for="' + id + '">' + label + '</label><output class="num" id="' + id + '-o"></output><input type="range" id="' + id + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + obj[key] + '">');

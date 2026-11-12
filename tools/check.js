@@ -6,7 +6,7 @@
    輸出：PASS/WARN/FAIL [id] 訊息；有 FAIL 則 exit 1。
    每項檢查有 since（階段）；since > PHASE 的檢查只會印 WARN（不會 FAIL）。 */
 'use strict';
-const PHASE_NAME = '3a'; // 3a＝Phase 3 的第一步（總覽、第 1 章、順序、附錄拆分）；3a+3b 都完成後改成 '3'
+const PHASE_NAME = '3'; // 3a＝Phase 3 的第一步（總覽、第 1 章、順序、附錄拆分）；3a+3b 都完成後為 '3'
 const PHASE = PHASE_NAME === '3a' ? 2.5 : Number(PHASE_NAME);
 
 const fs = require('fs'), path = require('path');
@@ -276,9 +276,20 @@ function checkHeadings() {
   report('headings-end', 2.5, e, '每章（總覽、參考文獻除外）有 .ch-end');
   const g = [];
   const body = stripTags(html);
-  if (/3[A-G] /.test(body)) g.push('文字含 3A–3G 前綴');
-  if (/架構[一二三四五六]/.test(body)) g.push('文字含「架構一–六」');
-  report('headings-ch3', 3, g, '無 3A–3G、架構一–六');
+  // 3A–3G 組名前綴（「3D」同時是「3D 人體」的 3D，所以只在「3D 臉」時才算組名；前面接英數字的如 Gait3D 不算）
+  const G3 = /(?<![A-Za-z0-9])(3[A-CE-G]|3D\s*臉)(?![A-Za-z0-9])/;
+  if (G3.test(body)) g.push('index.html 文字含 3A–3G 前綴');
+  if (/架構[一二三四五六]/.test(body)) g.push('index.html 文字含「架構一–六」');
+  const dataHits = [], othersHits = [];
+  textSources().forEach((s) => {
+    if (s.file === 'index.html') return;
+    if (/架構[一二三四五六]/.test(s.text) && !/pipeline\.js/.test(s.file) && !/flowplay/.test(s.file)) dataHits.push(s.file + '：含「架構一–六」');
+    const m = s.text.match(new RegExp(G3.source + '|第\\s*3[A-G]\\s*步'));
+    if (m) (/^data:OTHERS/.test(s.file) ? othersHits : dataHits).push(s.file + '：…' + snip(s.text, m.index, m[0].length) + '…');
+  });
+  report('headings-ch3', 3, g.concat(dataHits), '無 3A–3G、架構一–六');
+  // others.js 屬於 Phase 4a(b) 的資料檔（第 3b 步不可改）：殘留的「第 3A 步」之類只列警告
+  othersHits.forEach((h) => emit('WARN', 'headings-ch3-others', '（others.js，待 Phase 4a(b)）' + h));
 }
 
 /* ================= smoke（Playwright） ================= */

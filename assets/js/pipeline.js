@@ -16,8 +16,8 @@
     { id: 'problem', title: '問題定義', h1: '問題定義：我們要做出什麼', mods: ['problem', 'primer'],
       takeaway: '先弄清楚範圍（5 人、白天、會換裝、刷卡只輔助）、ReID 怎麼評分（Rank-1、mAP、FPIR）、怎樣才算成功，以及為什麼外觀一旦換裝就不可靠。' },
     { id: 'others', title: '別人怎麼做', mods: ['others'],
-      takeaway: '所有系統都走同一條九步流程，差別只在跳過、合併、額外或特色；六種常見架構是在這條線上強調不同的段落；沒有任何系統同時處理同制服與換裝；我們組合了其中幾種，可借用的{{count:lessons|zh}}條做法裡，{{ch:approach|num}}採用了哪些也在這裡看。' },
-    { id: 'methods', title: '方法總覽', mods: ['fusion', 'cues', 'methods', 'openset', 'steps', 'methodplay', 'cmpplay'],
+      takeaway: '所有系統都走同一條資料流（影像到身分），差別只在跳過、合併、額外或特色；六種常見架構是在這條線上強調不同的段落；沒有任何系統同時處理同制服與換裝；最後說明我們組合了其中哪幾種、從系統裡歸納出的{{count:lessons|zh}}條可借用做法，以及{{ch:approach|num}}採用了哪幾條。' },
+    { id: 'methods', title: '方法總覽', mods: ['fusion', 'cues', 'methods', 'steps', 'methodplay', 'cmpplay'],
       takeaway: '先懂「線索」，也就是同一個人有哪些可用資訊；每一步拆成固定的槽位，各方法只在一兩個槽位不同，看槽位表就知道差在哪；每一步我們選哪個、為什麼，也在這一章。' },
     { id: 'approach', title: '我們的做法', mods: ['system', 'steps', 'ourplay', 'server'],
       takeaway: '第一版系統做什麼、為什麼；部署長什麼樣、每天怎麼跑、關鍵判斷怎麼做、身分怎麼一步步確定、存什麼；營區伺服器跑不跑得動；刻意不做什麼與主要風險。' },
@@ -122,14 +122,17 @@
   ];
 
   /* ---------- 注意事項：每項只有一個唯一出處，其他地方只放連結；checker 以 sig 計數、超過 max 即失敗（第 3 階段起） ---------- */
+  // sig 只算「把這個注意事項再講一遍」的字句：整格就是這句的結構化判斷（方法卡「在我們條件下」表的格子）、欄位名稱不算。
+  // max 依目前資料設定；超過就代表有人又在別處重述，請改成 {{cav:…}} 連結。
   P.CAVEATS = [
-    { id: 'app-cloth', short: '外觀換裝後失效', at: 'methods', a: 'cue-role-app', sig: /換裝後(即)?失效|換裝後.{0,4}不能/g, max: 3 },
-    { id: 'face-near', short: '臉只在近距點位可用', at: 'methods', a: 'cue-role-face', sig: /臉[^。；]{0,8}近距點位|近距點位[^。；]{0,8}臉/g, max: 4 },
-    { id: 'height-err', short: '身高誤差約 4–9 cm', at: 'methods', a: 'cue-role-body', sig: /誤差\s*4\s*[–-]\s*9\s*cm/g, max: 2 },
-    { id: 'card-aux', short: '刷卡可能被代刷，只當輔助', at: 'problem', a: 'role-card', sig: /代刷/g, max: 6 },
-    { id: 'lic-legal', short: '授權待法務確認', at: 'approach', a: 'v1-table', sig: /待法務確認|法務確認/g, max: 3 },
+    { id: 'app-cloth', short: '外觀換裝後失效', at: 'methods', a: 'cue-role-app', sig: /(?<=.)換裝後(即)?失效|換裝後.{0,4}不能/g, max: 3 },
+    { id: 'face-near', short: '臉只在近距點位可用', at: 'methods', a: 'cue-role-face', sig: /臉(?:只|僅|限)[^。；]{0,8}近距點位|臉（近距點位|限近距點位|近距點位[^。；]{0,3}臉/g, max: 9 },
+    { id: 'height-err', short: '身高誤差約 4–9 cm', at: 'methods', a: 'cue-role-body', sig: /(?:誤差|MAE)[^。；]{0,4}4\s*[–-]\s*9\s*cm/g, max: 2 },
+    { id: 'card-aux', short: '刷卡可能被代刷，只當輔助', at: 'problem', a: 'role-card', sig: /(?<!與)代刷/g, max: 13 },
+    { id: 'lic-legal', short: '授權待法務確認', at: 'approach', a: 'v1-table', sig: /待法務確認|法務確認/g, max: 4 },
     { id: 'same-day', short: '同日同相機成績偏高', at: 'plan', a: 'split-fig', sig: /同日同相機/g, max: 3 }
   ];
+
 
   /* ---------- 小工具 ---------- */
   var CIRC = { 1: '①', 2: '②', 3: '③', 4: '④', 5: '⑤', 6: '⑥', 7: '⑦', Q: 'Q' };

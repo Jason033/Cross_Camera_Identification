@@ -241,8 +241,9 @@
         var box = sec.querySelector('.step-cards[data-s="' + p[0] + '"][data-g="' + (g.key || p[1]) + '"]');
         if (!box) return;
         var html = '<div class="cmp-bar"><button type="button" class="fp-btn big" data-cmp="' + id + '"><i></i>並排比較：' + CMP[id].names.length + ' 個方法差在哪</button><span class="small muted">' + CMP[id].names.map(short).join('、') + '</span></div>';
-        var h = box.querySelector('h3');
-        if (h) h.insertAdjacentHTML('afterend', html); else box.insertAdjacentHTML('afterbegin', html);
+        // 插在卡片區最前（組標題與導言之後、第一張方法卡之前）；之後槽位表出現時改插在槽位表正上方
+        var first = box.querySelector('.mcard');
+        if (first) first.insertAdjacentHTML('beforebegin', html); else box.insertAdjacentHTML('beforeend', html);
       });
       sec.addEventListener('click', function (e) { var b = e.target.closest('[data-cmp]'); if (b) FlowPlay.open(spec(b.getAttribute('data-cmp'))); });
     }
