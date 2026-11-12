@@ -564,6 +564,60 @@
     return g;
   };
 
+  /* ======================= 3E 靜態體型、第 4 步合組 ======================= */
+  S.m_limb = function (t) {
+    var g = stick(150, 262, 4.4, 0, ORNG), s = 4.4;
+    var B = [['身高', 150 - 70, 262, 150 - 70, 262 - 50 * s, 0], ['腿長', 150 + 48, 262, 150 + 48, 262 - 11 * s - 11 * s * 0 - 0, 1], ['肩寬', 150 - 7 * s, 262 - 40 * s - 14, 150 + 7 * s, 262 - 40 * s - 14, 2]];
+    g += g_(seg(t, 0.1, 0.25), Ln(80, 262, 80, 262 - 50 * s, GOLD, 2.5) + T(70, 160, '身高', { size: 12, a: 'end', c: GOLD, w: 1 }));
+    g += g_(seg(t, 0.2, 0.35), Ln(206, 262, 206, 262 - 22 * s, BLUE, 2.5) + T(214, 220, '腿長', { size: 12, a: 'start', c: BLUE, w: 1 }));
+    g += g_(seg(t, 0.3, 0.45), Ln(150 - 7 * s, 262 - 40 * s - 12, 150 + 7 * s, 262 - 40 * s - 12, PINK, 2.5) + T(150, 262 - 40 * s - 20, '肩寬', { size: 12, c: PINK, w: 1 }));
+    g += g_(seg(t, 0.45, 0.6), arrow(250, 150, 290, 150) + R(300, 70, 150, 150, { f: '#fff', s: '#c5ccc2' }) + T(375, 94, '透視修正', { size: 13, w: 1 }) + T(375, 118, '俯視時腿看起來變短', { size: 11, c: INK3 }) + T(375, 138, '→ 依俯角補回', { size: 11, c: INK3 }) + T(375, 172, '只用全身可見、', { size: 11, c: INK3 }) + T(375, 190, '站直或行走中段的幀', { size: 11, c: INK3 }));
+    g += g_(seg(t, 0.65, 0.8), arrow(456, 150, 486, 150) + T(560, 100, '腿長／身高 0.47', { size: 13, w: 1, c: BLUE }) + T(560, 128, '肩寬／身高 0.23', { size: 13, w: 1, c: PINK }) + T(560, 156, '上肢／下肢 0.81', { size: 13, w: 1 }) + T(560, 190, '取整段的中位數', { size: 11, c: INK3 }));
+    return g + caption(380, 284, '比例跨視角相對穩定，但單獨鑑別力弱：和身高一起當「體型組」', {});
+  };
+  S.m_fsam = function (t) {
+    var g = R(40, 50, 90, 140, { f: '#fff', s: '#c5ccc2' }) + person(85, 182, 2.3, 0.3, { mark: IDC[0] }) + T(85, 212, '彩色圖', { size: 11, c: INK3 });
+    g += g_(seg(t, 0.1, 0.25), arrow(136, 90, 176, 70) + R(184, 30, 80, 90, { f: '#111' }) + person(224, 112, 1.5, 0.3, { sil: 1 }).replace(/#1c251f/g, '#fff') + arrow(268, 75, 298, 75) + R(304, 48, 150, 54, { f: '#fff', s: K.SC[2], sw: 2 }) + T(379, 72, '輪廓流', { size: 13, w: 1, c: '#1baf7a' }) + T(379, 90, '學身材形狀', { size: 11 }));
+    g += g_(seg(t, 0.25, 0.4), arrow(136, 150, 296, 175) + R(304, 150, 150, 54, { f: '#fff', s: BLUE, sw: 2 }) + T(379, 174, '外觀流', { size: 13, w: 1, c: BLUE }) + T(379, 192, '一般 ReID', { size: 11 }));
+    var a = t * Math.PI * 6;
+    g += g_(seg(t, 0.45, 0.6), '<path d="M379,104 L379,148" stroke="' + GOLD + '" stroke-width="3" stroke-dasharray="5 4"/>' + Ci(379, 126 + 16 * Math.sin(a), 4, { f: GOLD }) + T(392, 130, '互相學習：把體型知識教給外觀流', { size: 12, a: 'start', c: GOLD, w: 1 }));
+    g += g_(seg(t, 0.7, 0.85), T(530, 240, '推論時只用外觀流', { size: 13, w: 1 }) + T(530, 262, '（訓練才需要剪影與姿態）', { size: 11, c: INK3 }));
+    return g;
+  };
+  S.m_3dsl = function (t) {
+    var g = R(40, 60, 100, 170, { f: '#fff', s: '#c5ccc2' }) + person(90, 220, 2.8, 0.3, { mark: IDC[0] }) + arrow(146, 145, 186, 145) + net(192, 145, 90, 90, PURP, '骨幹');
+    g += g_(seg(t, 0.2, 0.35), arrow(288, 120, 328, 100) + R(334, 50, 110, 100, { f: '#fff', s: GOLD, sw: 2 }) + person(389, 140, 1.6, 0, { sil: 1, op: 0.55 }) + '<ellipse cx="389" cy="100" rx="22" ry="44" fill="none" stroke="' + GOLD + '" stroke-dasharray="3 3"/>' + T(389, 166, '3D 人體重建', { size: 11, c: INK3 }));
+    g += g_(seg(t, 0.4, 0.55), '<path d="M446,100 C520,100 520,220 300,220 L150,220" fill="none" stroke="' + ORNG + '" stroke-width="2" stroke-dasharray="5 4"/>' + T(520, 160, '投回 2D，', { size: 12, a: 'start', c: ORNG, w: 1 }) + T(520, 178, '和關節點、剪影比對', { size: 12, a: 'start', c: ORNG }));
+    g += g_(seg(t, 0.65, 0.8), arrow(288, 170, 328, 200) + bars(334, 262, 10, 9, 36, GOLD, 1, 12) + T(390, 282, '不受紋理影響的體型特徵', { size: 11, c: INK3 }));
+    return g;
+  };
+  S.m_skelreid = function (t) {
+    var g = '';
+    for (var i = 0; i < 5; i++) g += stick(70 + i * 70, 200, 2.6, i * 1.1, ORNG, seg(t, i * 0.06, i * 0.06 + 0.15));
+    g += T(210, 236, '只有關節點序列，不看影像', { size: 12, c: INK3 });
+    g += g_(seg(t, 0.4, 0.55), arrow(420, 150, 460, 150) + Ci(500, 110, 7, { f: ORNG }) + Ci(540, 140, 7, { f: ORNG }) + Ci(500, 180, 7, { f: ORNG }) + Ci(570, 190, 7, { f: ORNG }) + Ln(500, 110, 540, 140, ORNG, 2) + Ln(540, 140, 500, 180, ORNG, 2) + Ln(540, 140, 570, 190, ORNG, 2) + Ln(500, 110, 500, 180, ORNG, 1.5, { dash: '3 3' }) + T(535, 225, '肢段長度＋關節關係', { size: 11, c: INK3 }));
+    g += g_(seg(t, 0.65, 0.8), R(120, 30, 400, 34, { f: '#fff8e1', s: WARN }) + T(320, 52, '多數結果來自深度攝影機（Kinect）的 3D 骨架', { size: 12, w: 1, c: WARN }));
+    return g + caption(320, 284, '一般監視器估出的 2D 骨架誤差大，不能直接套用');
+  };
+  S.m_anthro = function (t) {
+    var g = person(170, 262, 4.4, 0, { mark: IDC[0] });
+    var M = [['身高', 'h'], ['肩寬', 's'], ['臂長', 'a'], ['腿長', 'l']];
+    g += g_(seg(t, 0.1, 0.2), Ln(100, 262, 100, 262 - 51 * 4.4, GOLD, 2) + T(92, 160, '身高', { size: 12, a: 'end', c: GOLD, w: 1 }));
+    g += g_(seg(t, 0.2, 0.3), Ln(170 - 31, 262 - 37 * 4.4, 170 + 31, 262 - 37 * 4.4, PINK, 2) + T(170, 262 - 37 * 4.4 - 8, '肩寬', { size: 12, c: PINK, w: 1 }));
+    g += g_(seg(t, 0.3, 0.4), Ln(240, 262, 240, 262 - 14 * 4.4, BLUE, 2) + T(248, 240, '腿長', { size: 12, a: 'start', c: BLUE, w: 1 }));
+    g += g_(seg(t, 0.45, 0.6), camera(420, 70, 1.3) + T(470, 74, '深度攝影機（RGB-D）', { size: 12, a: 'start', w: 1 }) + T(380, 130, '「軟生物特徵」：鑑別力低於臉，', { size: 13, a: 'start' }) + T(380, 152, '但不隨衣服改變', { size: 13, a: 'start' }));
+    g += g_(seg(t, 0.7, 0.85), T(380, 200, '多數研究用深度資料量測；', { size: 12, a: 'start', c: WARN, w: 1 }) + T(380, 220, '單目監視器的誤差要自己量', { size: 12, a: 'start', c: WARN, w: 1 }));
+    return g;
+  };
+  S.m_corr = function (t) {
+    var C = [['步態', 2.0, PINK], ['換裝 CAL', 1.6, BLUE], ['身高', 0.9, GOLD], ['肢體比例', 0.8, ORNG]], u = 22, g = T(320, 26, '同一位身材特別高瘦的人：四條線索都因為「身材」加分', { size: 13, w: 1 });
+    C.forEach(function (c, i) { var y = 44 + i * 30, o = seg(t, i * 0.06, i * 0.06 + 0.15); g += g_(o, T(130, y + 15, c[0], { size: 12, a: 'end', w: 1, c: c[2] }) + R(140, y + 2, c[1] * u, 18, { f: c[2] }) + T(146 + c[1] * u, y + 15, '+' + c[1], { size: 11, a: 'start', c: INK3 })); });
+    var naive = 5.3, grp = 2.0 + 0.5 * (1.6 + 0.9 + 0.8);
+    g += g_(seg(t, 0.35, 0.5), T(130, 192, '直接相加', { size: 12, a: 'end', w: 1, c: BAD }) + R(140, 180, naive * u, 20, { f: BAD, op: 0.8 }) + T(146 + naive * u, 195, '+' + naive.toFixed(1) + '　同一件事算了四次', { size: 11, a: 'start', c: BAD, w: 1 }));
+    g += g_(seg(t, 0.6, 0.75), T(130, 232, '體型組合組', { size: 12, a: 'end', w: 1, c: GOOD }) + R(140, 220, 2.0 * u, 20, { f: PINK }) + R(140 + 2.0 * u, 220, (grp - 2.0) * u, 20, { f: GOOD, op: 0.6 }) + T(146 + grp * u, 235, '+' + grp.toFixed(2) + '　最強一項＋其餘各取一半', { size: 11, a: 'start', c: GOOD, w: 1 }));
+    return g + caption(320, 284, '組上限 +6；折扣比例與要不要合組，用 E11 在營區資料上決定');
+  };
+
   /* ======================= 每張卡要播什麼 ======================= */
   var CORE = {
     'YOLOX-S': 'm_yolox', 'YOLOv7（你現有）': 'm_yolov7', 'NanoDet-Plus-m': 'm_nanodet', 'ByteTrack': 'o2_bytetrack', '片段淨化（自行實作）': 'o2_purify', 'OC-SORT': 'm_ocsort',
@@ -578,17 +632,17 @@
     'YOLO26n': 'm_yolo26', 'DanceTrack（外觀一樣時的追蹤基準）': 'x_dance', 'BoT-SORT': 'm_botsort', 'PU-ReID（穿制服的人員再辨識）': 'x_ortho', 'SC-ReID（同衣服人員再辨識）': 'x_sameclothes',
     'TransReID': 'm_transreid', 'BoT（BagTricks）R50': 'm_botr50', 'AIM': 'm_aim', 'BigGait（ViT-S）': 'x_frozen', 'MobileFaceNet': 'm_mobileface', 'CR-FIQA': 'm_crfiqa',
     'BPBreID': 'm_parts', 'KPR': 'm_kpr', '姓名條文字辨識（偵測＋OCR）': 'x_tag', '階級章與臂章分類': 'x_tag', 'FarSight／BRIAR 融合': 'x_quality_gate', 'HAMoBE': 'm_hamobe',
-    'AI City Challenge 多攝影機追蹤方法': 'x_anchor_cluster', 'PPLR': 'm_pplr', '圖神經網路分群（Linkage-GCN、STAR-FC 等）': 'm_gnn', '門禁防尾隨與刷卡比臉': 'x_cardface', '開放世界 ReID': 'o7_out', 'Instruct-ReID': 'm_instruct', '3DInvarReID': 'm_3dinvar', 'CCAF': 'm_ccaf', 'DSKC': 'm_dskc'
+    'AI City Challenge 多攝影機追蹤方法': 'x_anchor_cluster', 'PPLR': 'm_pplr', '圖神經網路分群（Linkage-GCN、STAR-FC 等）': 'm_gnn', '門禁防尾隨與刷卡比臉': 'x_cardface', '開放世界 ReID': 'o7_out', '肢體比例（由骨架估計，自行實作）': 'm_limb', 'FSAM（輪廓體型引導外觀）': 'm_fsam', '3DSL（從單張圖學 3D 體型）': 'm_3dsl', '骨架序列再辨識（MG-SCR、Hi-MPC、MoCos 等）': 'm_skelreid', '人體量測軟生物特徵（Barbosa 2012、Nambiar 等）': 'm_anthro', '相關線索合組（避免重複計算）': 'm_corr', 'Instruct-ReID': 'm_instruct', '3DInvarReID': 'm_3dinvar', 'CCAF': 'm_ccaf', 'DSKC': 'm_dskc'
   };
   var IN = { 1: 'frame', 2: 'boxes', 4: 'scores', 5: 'tracklets', 6: 'tracklets', 7: 'group' };
-  var INX = { app: 'crop', cc: 'crop', gait: 'seq', face: 'face', body: 'tracklets' };
+  var INX = { app: 'crop', cc: 'crop', gait: 'seq', face: 'face', body: 'tracklets', shape: 'skel' };
   var OUT = { 1: 'boxes', 2: 'tracklets', 4: 'evidence', 5: 'constraints', 6: 'clusters', 7: 'identity' };
-  var OUTX = { app: 'vec', cc: 'vec', gait: 'vec', face: 'vec', body: 'height' };
+  var OUTX = { app: 'vec', cc: 'vec', gait: 'vec', face: 'vec', body: 'height', shape: 'vec' };
   var OVR = {
     'RTMPose（MMPose）': ['crop', 'kp'], 'GPGait': ['skel', 'vec'], 'SCRFD-2.5GF': ['frame', 'boxes'], '小型學習式門控': ['scores', 'prob'], 'st-ReID': ['tracklets', 'prob'], '畫面座標轉平面圖（單應性）': ['frame', 'plan'],
     'Cluster Contrast': ['tracklets', 'model'], '在營區攝影機下建立註冊資料': ['videos', 'protos'], 'SapiensID': ['crop', 'vec'], '品質加權片段聚合': ['tracklets', 'vec'], '片段淨化（自行實作）': ['tracklets', 'tracklets']
   };
-  var GC = { app: BLUE, cc: BLUE, gait: PINK, face: PURP, body: GOLD };
+  var GC = { app: BLUE, cc: BLUE, gait: PINK, face: PURP, body: GOLD, shape: GOLD };
   var STEPN = ['', '攝影機與偵測', '追蹤成片段', '身分線索特徵', '融合成證據', '時空約束', '分群', '比對名冊'];
   var DK = FlowPlay.DURK; DK.m_in = 5000; DK.m_out = 5000; DK.m_train = 6000; DK.m_us = 7500; DK.m_gauntlet = 9500; DK.m_verdict = 6500; DK.m_idea = 6000;
 

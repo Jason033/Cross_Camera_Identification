@@ -155,6 +155,17 @@
     return g + caption(320, 292, '封閉集一定說出一個名字；開放集會說「不認識」；用整群比較不會因單段太差而漏認');
   };
 
+  S.c_shape = function (t) {
+    var Rw = [['輪廓', '#1baf7a', ['g', 'g', 'm']], ['骨架比例', ORNG, ['g', 'm', 'b']], ['3D 體型', GOLD, ['g', 'b', 'b']]], D = [['近（人高 300 像素）', 1.6], ['中（120 像素）', 0.9], ['遠（50 像素）', 0.45]], g = evTag('inferred') + T(20, 24, '同一個人在不同距離：三種表示還剩多少資訊', { size: 14, a: 'start', w: 1 });
+    D.forEach(function (d, j) { var x = 220 + j * 140; g += person(x, 110, d[1], 0.3, { mark: IDC[0] }) + T(x, 128, d[0], { size: 11, c: INK3 }); });
+    Rw.forEach(function (r, i) {
+      var y = 150 + i * 42;
+      g += T(150, y + 22, r[0], { size: 13, a: 'end', w: 1, c: r[1] });
+      r[2].forEach(function (v, j) { var x = 220 + j * 140, o = seg(t, 0.15 + i * 0.15 + j * 0.05, 0.25 + i * 0.15 + j * 0.05); g += g_(o, R(x - 56, y + 4, 112, 30, { f: LV[v][1], op: 0.16, rx: 4 }) + T(x, y + 25, LV[v][0], { size: 18, w: 1, c: LV[v][1] })); });
+    });
+    return g + caption(320, 290, '越遠越只剩輪廓；骨架比例在中距就開始不準，3D 體型需要近距高解析');
+  };
+
   /* ======================= 比較規格 ======================= */
   function cols(names) { return names.map(function (n) { var c = card(n); return c ? { n: c.m.n, tag: c.c.tag, idea: (c.c.how && c.c.how.key) || c.c.idea, inp: c.m.input || '' } : { n: n, tag: 'ref', idea: '' }; }); }
   var CMP = {
@@ -182,6 +193,10 @@
       ['需要什麼', 'c_req', { cols: ['輸入', '算力', '換資料集', '授權'], rows: [['DeepGaitV2-P3D', '剪影', 'g 2.9 GFLOPs', 'm', 'm 學術'], ['GaitBase', '剪影', 'g 1.18／幀', 'b 掉很多', 'm 學術'], ['SkeletonGait++', '剪影＋骨架', 'm 多跑姿態', 'm', 'm 學術'], ['GPGait', '只有骨架', 'g 小', 'g 掉得少', 'm 待查'], ['BigGait（ViT-S）', '原始彩色', 'b 12.7 GFLOPs', 'g 跨域強', 'm 學術']] }],
       ['在我們的條件下', 'c_matrix', { names: ['DeepGaitV2-P3D', 'GaitBase', 'SkeletonGait++', 'GPGait'] }]],
       key: 'SkeletonGait++ 分數最高但要多跑姿態；DeepGaitV2 精度與算力最平衡，第一版採用；GaitBase 最省當對照；GPGait 換資料集掉得少但絕對分數低；BigGait 跨域強但需 GPU。注意 OpenGait 系列授權僅限學術。' },
+    '3-4': { title: '靜態體型並排比較', names: ['肢體比例（由骨架估計，自行實作）', 'FSAM（輪廓體型引導外觀）', '3DSL（從單張圖學 3D 體型）', '骨架序列再辨識（MG-SCR、Hi-MPC、MoCos 等）', '人體量測軟生物特徵（Barbosa 2012、Nambiar 等）'], frames: [
+      ['它們怎麼做', 'c_idea'], ['換衣成績', 'c_bars', { metric: 'PRCC 換衣 Rank-1（體型類方法）', ev: 'proven', rows: [['FSAM（輪廓）', 54.5, '約 54.5（待核對）'], ['3DSL（3D）', 51.3, '約 51.3（待核對）'], ['CLIP3DReID（3D，見 3B）', 60.6], ['CAL（對照，見 3B）', 55.2, '55.2', BLUE], ['肢體比例', null, '沒有公開成績，要自己量']], max: 80, note: 'FSAM、3DSL 的數字來自第三方整理，尚未對照原論文' }],
+      ['不同距離', 'c_shape'], ['需要什麼', 'c_req', { cols: ['表示', '需要什麼', '一般監視器', '授權'], rows: [['肢體比例（由骨架估計，自行實作）', '骨架', 'g RTMPose 已在跑', 'm 中近距＋透視修正', 'g 自行實作'], ['FSAM（輪廓體型引導外觀）', '輪廓', 'm 訓練需分割＋姿態', 'm 推論只用外觀流', 'm 待查'], ['3DSL（從單張圖學 3D 體型）', '3D', 'b 3D 重建輔助訓練', 'm', 'm 待查'], ['骨架序列再辨識（MG-SCR、Hi-MPC、MoCos 等）', '骨架序列', 'm', 'b 多為深度攝影機結果', 'm 待查'], ['人體量測軟生物特徵（Barbosa 2012、Nambiar 等）', '量測值', 'm', 'b 多為深度攝影機結果', '—']] }]],
+      key: '靜態體型只能當弱證據。第一版先用骨架算肢體比例（RTMPose 已在跑、幾乎零成本），和身高合成「體型組」；FSAM、3DSL 證明輪廓與 3D 體型可用於換裝，但訓練成本高、成績和 CAL 相當；骨架再辨識與人體量測多以深度攝影機驗證，不能直接套用。' },
     '3-3': { title: '臉部方法並排比較', names: ['SCRFD-2.5GF', 'MagFace', 'AdaFace R100', 'MobileFaceNet', 'CR-FIQA'], frames: [
       ['它們怎麼做', 'c_idea'], ['它們怎麼搭配', 'c_facepipe'],
       ['角色、算力、授權', 'c_req', { cols: ['角色', '算力', '授權'], rows: [['SCRFD-2.5GF', '找臉＋5 點', 'g 2.5 GFLOPs', 'b 非商用'], ['MagFace', '認臉＋品質分數', 'm R100', 'g 寬鬆'], ['AdaFace R100', '認臉（低品質強）', 'm R100', 'g 寬鬆'], ['MobileFaceNet', '輕量認臉', 'g 0.99M', 'm 待查'], ['CR-FIQA', '品質評估', 'm R50／R100', 'b 非商用']] }],
@@ -207,7 +222,7 @@
       ['三種路線', 'c_routes'], ['我們用的元件', 'c_idea'], ['在我們的條件下', 'c_matrix']],
       key: '封閉集一定會說出一個名字，陌生人會被認錯；開放集能說「不認識」；再用整群多段證據比，才不會因單段角度差而漏認。刷卡與註冊資料是搭配的元件。' }
   };
-  var DK = FlowPlay.DURK; ['c_idea', 'c_req', 'c_matrix'].forEach(function (k) { DK[k] = 9000; }); DK.c_bars = 8000; ['c_det', 'c_trk', 'c_facepipe', 'c_fuse', 'c_clu', 'c_routes'].forEach(function (k) { DK[k] = 9500; });
+  var DK = FlowPlay.DURK; ['c_idea', 'c_req', 'c_matrix'].forEach(function (k) { DK[k] = 9000; }); DK.c_bars = 8000; ['c_det', 'c_trk', 'c_facepipe', 'c_fuse', 'c_clu', 'c_routes', 'c_shape'].forEach(function (k) { DK[k] = 9500; });
   var STEPN = ['', '攝影機與偵測', '追蹤成片段', '身分線索特徵', '融合成證據', '時空約束', '分群', '比對名冊'];
 
   function spec(id) {

@@ -120,7 +120,7 @@
     <a href="#/methods"><span class="n">2</span><b>方法總覽</b><span class="d">依系統七步：每一步有哪些方法、成績、授權、算力，我們選哪個</span></a>
     <a href="#/others"><span class="n">3</span><b>別人怎麼做</b><span class="d">十個面向、六種架構、31 個系統：比賽、聚檔、商用搜尋、同制服研究、軍營與機場門禁、感測器綁定；評估與治理；十二條可借用的做法</span></a>
     <a href="#/approach"><span class="n">4</span><b>我們的做法</b><span class="d">第一版元件清單、系統要交出什麼、跑不跑得動、不做什麼與風險</span></a>
-    <a href="#/plan"><span class="n">5</span><b>執行計畫</b><span class="d">已知與未知；自建資料怎麼拍；十個實驗；六個月查核點</span></a>
+    <a href="#/plan"><span class="n">5</span><b>執行計畫</b><span class="d">已知與未知；自建資料怎麼拍；十一個實驗；六個月查核點</span></a>
     <a href="#/appendix"><span class="n">A</span><b>附錄</b><span class="d">資料集、55 個方法完整表、研究空缺、TRL 與月報範本</span></a>
   </nav>
 </section>
@@ -316,6 +316,22 @@
     </div>
     <div class="plate-note">像素由針孔模型計算（方形像素、平地、人站立；兩眼間距 0.063 m、頭高 0.23 m）。門檻：人臉兩眼間距 ≥ 10 px、俯角 ≤ 30°（<span class="ev proven"><i></i>文獻證實</span>，但為受控 1:1 實驗）；外觀 ReID 人高 ≥ 128 px、步態人高 ≥ 64 px 且俯角 ≤ 30°、身高人高 ≥ 100 px（<span class="ev inferred"><i></i>合理推論</span>，依常用輸入尺寸與高俯角研究推估）。實際門檻要用 E4、E5 實驗量測。</div>
   </figure>
+    <h3>線索與方法的對照</h3>
+    <p>網站裡提到的「線索」是人身上的資訊；「方法」是把畫面變成可比對特徵的模型。同一種線索可能被好幾組方法用到：</p>
+    <div class="tbl-wrap"><table class="tbl cue-map">
+      <thead><tr><th>線索</th><th>是什麼</th><th>用到它的方法組</th><th>換裝後</th></tr></thead>
+      <tbody>
+        <tr><td><span class="sw-dot" style="--c:var(--c-app)"></span><b>外觀</b></td><td>衣服顏色、紋理、配件</td><td>3A 外觀 ReID</td><td>失效（只在同一天、同一套服裝內可靠）</td></tr>
+        <tr><td><span class="sw-dot" style="--c:var(--c-sil)"></span><b>輪廓</b></td><td>剪影：哪些像素屬於這個人（原始表示，本身不是身分特徵）</td><td>動態：3C 步態（剪影序列）；靜態：3E 靜態體型（FSAM）</td><td>大致有效；冬季外套、鋼盔會改變輪廓</td></tr>
+        <tr><td><span class="sw-dot" style="--c:var(--c-skel)"></span><b>骨架</b></td><td>關節點與肢段（由 RTMPose 估出）</td><td>動態：3C 步態（SkeletonGait++、GPGait）；靜態：3E 肢體比例、骨架序列再辨識</td><td>有效；但遠距時關節估不準</td></tr>
+        <tr><td><span class="sw-dot" style="--c:var(--c-3d)"></span><b>體型／3D</b></td><td>身材比例：肩寬、胖瘦、腿長比</td><td>3E（3DSL、肢體比例）；3B 換裝裡的 CLIP3DReID、3DInvarReID 也靠它</td><td>有效；厚外套會干擾估計</td></tr>
+        <tr><td><span class="sw-dot" style="--c:var(--c-3d)"></span><b>身高</b></td><td>幾公分（唯一有絕對大小的）</td><td>3F 身高（攝影機幾何）；輪廓與骨架都已縮放，算不出身高</td><td>有效；鋼盔約高 2–3 cm，可修正</td></tr>
+        <tr><td><span class="sw-dot" style="--c:var(--c-gait)"></span><b>步態</b></td><td>走路的動作：步幅、擺臂、步頻</td><td>3C 步態（從輪廓或骨架的連續畫面學）</td><td>有效；跑步和走路不同</td></tr>
+        <tr><td><span class="sw-dot" style="--c:var(--c-face)"></span><b>臉</b></td><td>臉部特徵</td><td>3D 臉（近距點位）</td><td>有效</td></tr>
+        <tr><td><span class="sw-dot" style="--c:var(--olive)"></span><b>制服記號</b></td><td>姓名條、階級章</td><td>3G 名牌與階級章（近距點位）</td><td>只在穿迷彩服時有</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small muted">步態、換裝（CAL、CLIP3DReID）、肢體比例、身高都帶有「體型」資訊，彼此相關。第 4 步把它們合成「體型組」，避免同一件事被重複加分。</p>
     <div class="step-cards" data-s="3" data-g="app"></div>
     <figure class="plate">
     <div class="plate-head"><div class="plate-title"><span class="fig"></span>外觀骨幹：MSMT17 mAP</div></div>
@@ -335,6 +351,7 @@
     <div class="plate-note">Gait3D 是 39 台相機、4,000 人的室內野外資料。DeepGaitV2-P3D 以 2.9 GFLOPs 達 74.4，是精度與算力的平衡點。所有方法都在接近平視的視角訓練。</div>
   </figure>
     <div class="step-cards" data-s="3" data-g="face"></div>
+    <div class="step-cards" data-s="3" data-g="shape"></div>
     <div class="step-cards" data-s="3" data-g="body"></div>
     <div class="step-cards" data-s="3" data-g="tag"></div>
     <h3>各線索在系統中的角色</h3>
@@ -613,11 +630,11 @@
     <div class="plate-body"><svg id="protocols" viewBox="0 0 960 300" role="img" aria-label="四種評估協定"></svg></div>
   </figure>
 
-  <h2>十個實驗與通過條件</h2>
-  <p>每個實驗只回答一個可以被否證的問題。全站提到的 E1–E10 都指這十個實驗；E10（換裝連結）是依本專案範圍新增的。</p>
+  <h2>十一個實驗與通過條件</h2>
+  <p>每個實驗只回答一個可以被否證的問題。全站提到的 E1–E11 都指這十一個實驗；E10（換裝連結）與 E11（體型類線索重複計算）是依本專案範圍新增的。</p>
   <figure class="plate">
-    <div class="plate-head"><div class="plate-title"><span class="fig"></span>十個實驗，每個都回答一個可被否證的問題（點選查看）</div></div>
-    <div class="plate-body"><svg id="val-exp" viewBox="0 0 980 230" role="img" aria-label="實驗順序"></svg><div id="val-exp-d" class="detail" style="margin-top:10px"></div></div>
+    <div class="plate-head"><div class="plate-title"><span class="fig"></span>十一個實驗，每個都回答一個可被否證的問題（點選查看）</div></div>
+    <div class="plate-body"><svg id="val-exp" viewBox="0 0 1080 230" role="img" aria-label="實驗順序"></svg><div id="val-exp-d" class="detail" style="margin-top:10px"></div></div>
   </figure>
 
   <h2>六個月查核點</h2>

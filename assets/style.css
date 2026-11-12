@@ -573,3 +573,5 @@ body.fp-open { overflow: hidden; }
 #v1-table .fp-btn { margin-left: 0; }
 .plate-head .fp-btn { margin-left: auto; }
 .cmp-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 6px 0 14px; padding: 10px 12px; background: #eef2e4; border: 1px solid var(--olive-2); border-radius: var(--radius-m); }
+.cue-map td:first-child { white-space: nowrap; }
+.cue-map .sw-dot { margin-right: 6px; vertical-align: -1px; }

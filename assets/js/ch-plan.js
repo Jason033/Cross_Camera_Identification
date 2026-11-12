@@ -270,7 +270,7 @@
   }
   function drawExp(sel) {
     var svg = U.clear($('#val-exp'));
-    var phases = [['基準', ['E1', 'E2']], ['單一線索', ['E3', 'E4', 'E5']], ['融合與系統', ['E6', 'E10', 'E7', 'E8', 'E9']]];
+    var phases = [['基準', ['E1', 'E2']], ['單一線索', ['E3', 'E4', 'E5']], ['融合與系統', ['E6', 'E10', 'E11', 'E7', 'E8', 'E9']]];
     var x = 0, w = 84, gap = 10;
     phases.forEach(function (ph, pi) {
       var x0 = x;
@@ -290,7 +290,7 @@
       txt(svg, (x0 + x - gap) / 2, 16, ph[0], { 'text-anchor': 'middle', 'font-weight': 700, 'font-size': 12.5, fill: 'var(--ink-2)' });
       if (pi < 2) { arrow(svg, x - gap + 2, 100, x + 14, 100); x += 18; }
     });
-    txt(svg, 0, 196, '對應本章的六個月查核點：第 2 月 E1、第 3 月 E2–E3、第 4 月 E4–E5、第 5 月 E10 與 E7、第 6 月 E9', { 'font-size': 12, fill: 'var(--ink-3)' });
+    txt(svg, 0, 196, '對應本章的六個月查核點：第 2 月 E1、第 3 月 E2–E3、第 4 月 E4–E5、第 5 月 E10、E11 與 E7、第 6 月 E9', { 'font-size': 12, fill: 'var(--ink-3)' });
     var e = R.EXPS.filter(function (z) { return z.id === sel; })[0];
     $('#val-exp-d').innerHTML = '<h3 style="margin-top:0">' + e.id + '：' + e.q + '</h3><dl><dt>基準</dt><dd>' + e.base + '</dd><dt>改變</dt><dd>' + e.mod + '</dd><dt>必看指標</dt><dd>' + e.m + '</dd><dt>通過／停止</dt><dd>' + e.go + '</dd></dl>';
   }
